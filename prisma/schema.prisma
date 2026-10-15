@@ -1,0 +1,241 @@
+// Persistent classes of the MVP data model (12 tables).
+// Spanish names from the architecture document are noted next to each model.
+
+generator client {
+  provider = "prisma-client"
+  output   = "../data-access/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Rol
+enum Role {
+  ADMIN
+  DEPARTMENT_HEAD
+  PROFESSOR
+  STUDENT
+}
+
+// EstadoInscripcion: PRE_ENROLLED is a saved selection without payment, PENDING is an attempted or
+// rejected payment and CONFIRMED is an approved payment.
+enum EnrollmentStatus {
+  PRE_ENROLLED
+  PENDING
+  CONFIRMED
+}
+
+// EstadoPago
+enum PaymentStatus {
+  APPROVED
+  REJECTED
+}
+
+// EstadoNota
+enum GradeStatus {
+  PASSED
+  FAILED
+}
+
+// DiaSemana
+enum Weekday {
+  MON
+  TUE
+  WED
+  THU
+  FRI
+  SAT
+}
+
+// Usuario: a student must belong to a career; deactivating keeps the history.
+model User {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String
+  email        String   @unique
+  passwordHash String
+  role         Role
+  active       Boolean  @default(true)
+  careerId     String?  @db.Uuid
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  career            Career?       @relation(fields: [careerId], references: [id])
+  headedDepartment  Department?   @relation("DepartmentHead")
+  taughtSections    Section[]
+  enrollments       Enrollment[]
+  grades            Grade[]
+
+  @@index([careerId])
+}
+
+// Departamento: one head per department.
+model Department {
+  id        String   @id @default(uuid()) @db.Uuid
+  name      String   @unique
+  headId    String?  @unique @db.Uuid
+  createdAt DateTime @default(now())
+
+  head    User?    @relation("DepartmentHead", fields: [headId], references: [id])
+  careers Career[]
+}
+
+// Carrera: a career with students or subjects cannot be deleted.
+model Career {
+  id           String   @id @default(uuid()) @db.Uuid
+  name         String   @unique
+  active       Boolean  @default(true)
+  departmentId String   @db.Uuid
+  createdAt    DateTime @default(now())
+
+  department Department @relation(fields: [departmentId], references: [id], onDelete: Restrict)
+  subjects   Subject[]
+  students   User[]
+}
+
+// Materia: code unique per career, one subject per grid cell (term 1–12, branch 1–5), credits greater than zero.
+// `alternativeCredits` passed credits from subjects whose code starts with `alternativeCreditBlock` replace every
+// other requirement of the subject (flowchart rules such as "BPTFI02 ó 57 cr BP").
+model Subject {
+  id                     String   @id @default(uuid()) @db.Uuid
+  careerId               String   @db.Uuid
+  code                   String
+  name                   String
+  credits                Int
+  term                   Int
+  branch                 Int
+  minCredits             Int?
+  alternativeCredits     Int?
+  alternativeCreditBlock String?
+  createdAt              DateTime @default(now())
+
+  career         Career         @relation(fields: [careerId], references: [id], onDelete: Restrict)
+  prerequisites  Prerequisite[] @relation("SubjectPrerequisites")
+  requiredBy     Prerequisite[] @relation("PrerequisiteRequirement")
+  sections       Section[]
+
+  @@unique([careerId, code])
+  @@unique([careerId, term, branch])
+}
+
+// Prelacion: association class between a subject and the subject it requires.
+model Prerequisite {
+  subjectId     String @db.Uuid
+  requirementId String @db.Uuid
+
+  subject     Subject @relation("SubjectPrerequisites", fields: [subjectId], references: [id], onDelete: Cascade)
+  requirement Subject @relation("PrerequisiteRequirement", fields: [requirementId], references: [id], onDelete: Cascade)
+
+  @@id([subjectId, requirementId])
+}
+
+// Periodo: end after start, a single open term at a time, rate per credit greater than zero.
+model Term {
+  id              String   @id @default(uuid()) @db.Uuid
+  name            String   @unique
+  startsAt        DateTime @db.Date
+  endsAt          DateTime @db.Date
+  open            Boolean  @default(false)
+  ratePerCredit   Decimal  @db.Decimal(10, 2)
+  maxCredits      Int
+  createdAt       DateTime @default(now())
+
+  sections    Section[]
+  enrollments Enrollment[]
+}
+
+// Seccion: capacity greater than zero; cannot be deleted while it has enrolled students.
+model Section {
+  id          String   @id @default(uuid()) @db.Uuid
+  number      Int
+  capacity    Int
+  subjectId   String   @db.Uuid
+  termId      String   @db.Uuid
+  professorId String   @db.Uuid
+  createdAt   DateTime @default(now())
+
+  subject           Subject            @relation(fields: [subjectId], references: [id], onDelete: Restrict)
+  term              Term               @relation(fields: [termId], references: [id], onDelete: Restrict)
+  professor         User               @relation(fields: [professorId], references: [id])
+  scheduleBlocks    ScheduleBlock[]
+  enrollmentDetails EnrollmentDetail[]
+  grades            Grade[]
+
+  @@unique([subjectId, termId, number])
+  @@index([termId])
+}
+
+// BloqueHorario: end time after start time; a professor cannot have overlapping blocks.
+model ScheduleBlock {
+  id        String   @id @default(uuid()) @db.Uuid
+  sectionId String   @db.Uuid
+  weekday   Weekday
+  startTime DateTime @db.Time(0)
+  endTime   DateTime @db.Time(0)
+
+  section Section @relation(fields: [sectionId], references: [id], onDelete: Cascade)
+
+  @@index([sectionId])
+}
+
+// Inscripcion: one per student and term.
+model Enrollment {
+  id        String           @id @default(uuid()) @db.Uuid
+  studentId String           @db.Uuid
+  termId    String           @db.Uuid
+  status    EnrollmentStatus @default(PRE_ENROLLED)
+  amount    Decimal          @default(0) @db.Decimal(10, 2)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  student  User               @relation(fields: [studentId], references: [id], onDelete: Restrict)
+  term     Term               @relation(fields: [termId], references: [id], onDelete: Restrict)
+  details  EnrollmentDetail[]
+  payments SimulatedPayment[]
+
+  @@unique([studentId, termId])
+}
+
+// DetalleInscripcion: association class between an enrollment and a section.
+model EnrollmentDetail {
+  enrollmentId String   @db.Uuid
+  sectionId    String   @db.Uuid
+  createdAt    DateTime @default(now())
+
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+  section    Section    @relation(fields: [sectionId], references: [id], onDelete: Restrict)
+
+  @@id([enrollmentId, sectionId])
+  @@index([sectionId])
+}
+
+// PagoSimulado: unique reference; a confirmed enrollment is not paid again.
+model SimulatedPayment {
+  id           String        @id @default(uuid()) @db.Uuid
+  enrollmentId String        @db.Uuid
+  reference    String        @unique
+  amount       Decimal       @db.Decimal(10, 2)
+  status       PaymentStatus
+  createdAt    DateTime      @default(now())
+
+  enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
+
+  @@index([enrollmentId])
+}
+
+// Calificacion: grade between 0 and 20, uploaded by the section professor.
+model Grade {
+  sectionId String      @db.Uuid
+  studentId String      @db.Uuid
+  value     Int
+  status    GradeStatus
+  published Boolean     @default(false)
+  createdAt DateTime    @default(now())
+  updatedAt DateTime    @updatedAt
+
+  section Section @relation(fields: [sectionId], references: [id], onDelete: Restrict)
+  student User    @relation(fields: [studentId], references: [id], onDelete: Restrict)
+
+  @@id([sectionId, studentId])
+  @@index([studentId])
+}

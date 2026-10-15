@@ -1,0 +1,61 @@
+codigo,nombre,uc,trimestre,rama,uc_minimas,prelaciones,alternativa
+FBTMM01,Matemática Básica,3,1,1,,,
+BPTMI01,Matemáticas I,3,2,1,,FBTMM01,
+BPTMI02,Matemáticas II,3,3,1,,BPTMI01,
+BPTMI03,Matemáticas III,3,4,1,,BPTMI02,
+BPTMI04,Matemáticas IV,3,5,1,,BPTMI03,
+BPTMI11,Ecuaciones Diferenciales,3,6,1,,BPTMI04,
+BPTMI05,Matemáticas V,3,7,1,,BPTMI04,
+FPTPI09,Gestión Cadena de Suministro I,3,8,1,,FPTSP17,
+FPTSP28,Sistemas Distribuidos,3,9,1,,BPTSP03,
+FPTEN23,Sistemas de Redes,3,10,1,,BPTFI02,57BP
+FPTSP18,Seguridad de la Información,3,11,1,,FPTEN23,57BP
+FPTSP14,Proyectos de Ingeniería,3,12,1,150,,57BP
+FBTSP03,Introducción a la Ingeniería,3,1,2,,,
+FBTHE05,Investigación y Sustentabilidad,3,2,2,,,
+BPTFI01,Física I,3,3,2,,BPTMI01,
+BPTFI02,Física II,3,4,2,,BPTFI01|BPTMI02,
+BPTFI05,Laboratorio de Física Aplicada,3,5,2,,BPTFI02,
+BPTMI06,Estadística para Ingenieros I,3,6,2,,BPTMI02,
+BPTMI07,Estadística para Ingenieros II,3,7,2,,BPTMI06|BPTMI03,
+BPTMM91,Cálculo Numérico,3,8,2,,BPTMI11,
+FPTSP21,Modelación de Sistemas en Redes,3,9,2,,BPTSP06,
+FPTSP27,Análisis de Datos,3,10,2,,BPTMI07,57BP
+FPTSP11,Gerencia de Proyectos TIC,3,11,2,,FPTSP04,57BP
+FPTSP15,Ingeniería Económica,3,12,2,150,,57BP
+FBTSP04,Pensamiento Computacional,3,1,3,,,
+BPTPI07,Diseño Asistido por Computador,3,2,3,,,
+BPTSP05,Algoritmos y Programación,3,3,3,,FBTSP04,
+BPTSP06,Estructuras de Datos,3,4,3,,BPTSP05,
+FPTSP04,Sistemas de Información,3,5,3,,BPTSP06,
+FPTSP01,Bases de Datos I,3,6,3,,BPTSP06,
+FPTSP26,Bases de Datos II,3,7,3,,FPTSP01,
+FPTSP07,Ingeniería de Software,3,8,3,,FPTSP01|FPTSP04,
+FPTSP20,Simulación,3,9,3,,BPTMI06,
+FPTSP23,Sistemas de Apoyo,3,10,3,,BPTMI07,57BP
+FPTSP25,Computación Emergente,3,11,3,,BPTMI31,57BP
+FPTCS16,Ingeniería Ambiental,3,12,3,150,,57BP
+FBTEM01,Competencias para Emprender,3,1,4,,,
+BPTQI21,Química General,3,2,4,,FBTMM01,
+BPTQI22,Laboratorio de Química General,3,3,4,,BPTQI21,
+BPTMI30,Matemáticas Discretas,3,4,4,,BPTMI01,
+BPTEN12,Arquitectura del Computador,3,5,4,,BPTSP05,
+BPTSP03,Organización del Computador,3,6,4,,BPTEN12,
+FPTSP17,Optimización I,3,7,4,,BPTMI11,
+FPTSP19,Optimización II,3,8,4,,FPTSP17,
+FPTMI21,Modelos Estocásticos,3,9,4,,BPTMI06,
+FPS1,Seminario Profesional,3,10,4,120,,
+FPTEN27,Robótica Industrial,3,11,4,,BPTSP05,
+FGE5,Electiva de Formación General,3,12,4,,,
+FBTLI14,Inglés IV,3,1,5,,,
+FBTLI15,Inglés V,3,2,5,,FBTLI14,
+FBTEM02,Ideas Emprendedoras,3,3,5,,,
+FBTHE11,"Venezuela, Identidad y Contexto",3,4,5,,,
+BPTMI31,Álgebra Lineal,3,5,5,,BPTMI03,
+FGE1,Electiva de Formación General,3,6,5,,,
+BPTSP04,Sistemas Operativos,3,7,5,,BPTSP03,
+FGE2,Electiva de Formación General,3,8,5,,,
+FPTSP22,Taller de Trabajo de Grado,3,9,5,120,,57BP
+FGE3,Electiva de Formación General,3,10,5,,,
+FPS2,Seminario Profesional II,3,11,5,120,,
+FGE4,Electiva de Formación General,3,12,5,,,
