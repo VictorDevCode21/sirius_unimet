@@ -4,7 +4,7 @@ Course-enrollment system for Universidad Metropolitana (FPTSP07 Ingeniería de S
 
 ## Language rules
 
-- All code, identifiers, file names and code comments are written in **English**.
+- Everything that is not user-facing text is written in **English**: code, identifiers, comments, file and folder names, URL routes, database schema, CSV headers, log messages and documentation.
 - Only text rendered in the UI (labels, messages, toasts, validation errors shown to users) is written in **Spanish**.
 - Comments describe what a piece of code does. Never write comments that narrate changes, history or updates ("added", "now", "fixed", "refactored", "new").
 
@@ -23,7 +23,8 @@ Dependencies only point downward: `app` → `presentation` / `control` → `doma
 | Data | `prisma/` | Schema (12 tables), migrations, seed, curriculum CSVs. |
 
 ```
-app/                          Routes. One folder per portal: estudiante/ (profesor/, jefe/, admin/ later)
+app/                          Routes. One folder per portal: student/ (professor/, department-head/, admin/ later)
+                              student/{flowchart,pre-enrollment,history,receipt}, login/, forbidden/
 presentation/
   components/{ui,brand,shared,auth,layout}
   portals/student/            Student portal components (flowchart, pre-enrollment)
@@ -36,7 +37,7 @@ domain/
   prerequisites/              Prerequisite engine (statuses, cycle detection) and prerequisite service
   enrollment/                 Enrollment validator (open term, capacity, clashes, max credits, one section per subject)
   billing/                    Amount calculator (credits × rate per credit)
-  pensum/                     CSV importer (validates and imports a curriculum in one transaction)
+  curriculum/                 CSV importer (validates and imports a curriculum in one transaction)
   grades/                     Academic progress and grade rules
   shared/                     DomainError
 data-access/
@@ -44,10 +45,10 @@ data-access/
   repositories/               *.repository.ts
   generated/prisma/           Generated client (git-ignored)
 prisma/                       schema.prisma, migrations/, seed.ts, data/*.csv
-middleware.ts                 Session + role check before every route; 403 rewrite to /acceso-denegado
+middleware.ts                 Session + role check before every route; 403 rewrite to /forbidden
 ```
 
-Controllers map to the workshop class diagram: `authentication.controller.ts` (ControladorAutenticacion), `flowchart.controller.ts` (ControladorFlujograma), `enrollment.controller.ts` (ControladorInscripcion), `academic-record.controller.ts` (student history read model). Pending: Usuarios, Academico, Pensum, Oferta, Pago, Notas.
+Controllers map to the workshop class diagram: `authentication.controller.ts` (ControladorAutenticacion), `flowchart.controller.ts` (ControladorFlujograma), `enrollment.controller.ts` (ControladorInscripcion), `academic-record.controller.ts` (student history read model). Pending: users, academic setup, curriculum, course offer, payment and grades controllers.
 
 ### Rules to keep
 
@@ -56,13 +57,25 @@ Controllers map to the workshop class diagram: `authentication.controller.ts` (C
 - Read controllers used by pages are `server-only` modules, not Server Actions.
 - `control/auth/auth.config.ts` and `control/auth/authorization.ts` must stay edge-safe (no Prisma, no Node APIs) because the middleware imports them.
 - Seat assignment runs inside a transaction with `SELECT … FOR UPDATE` on the section (RNF-03).
-- Curriculum data enters the database only through `domain/pensum/csv-importer.ts`.
+- Curriculum data enters the database only through `domain/curriculum/csv-importer.ts`. CSV columns: `code,name,credits,term,branch,min_credits,prerequisites,alternative` (`prerequisites` separated by `|`).
 
 ## Data model
 
-12 persistent classes (Spanish name in the schema comments): User, Department, Career, Subject, Prerequisite, Term, Section, ScheduleBlock, Enrollment, EnrollmentDetail, SimulatedPayment, Grade. Roles: `ADMIN`, `DEPARTMENT_HEAD`, `PROFESSOR`, `STUDENT`.
+12 persistent classes: User, Department, Career, Subject, Prerequisite, Term, Section, ScheduleBlock, Enrollment, EnrollmentDetail, SimulatedPayment, Grade. Roles: `ADMIN`, `DEPARTMENT_HEAD`, `PROFESSOR`, `STUDENT`.
 
-- Subject: code unique per career, one subject per cell (term 1–12, branch 1–5), optional `minCredits`. `alternativeCredits` + `alternativeCreditBlock` model flowchart "ó" rules: N passed credits from subjects whose code starts with the block (e.g. 57 credits of `BP`) satisfy the subject regardless of its other requirements. In the pensum CSV this is the `alternativa` column (e.g. `57BP`).
+Equivalence with the class names used in the architecture workshop document:
+
+| Code | Workshop | Code | Workshop |
+| --- | --- | --- | --- |
+| User | Usuario | ScheduleBlock | BloqueHorario |
+| Department | Departamento | Enrollment | Inscripcion |
+| Career | Carrera | EnrollmentDetail | DetalleInscripcion |
+| Subject | Materia | SimulatedPayment | PagoSimulado |
+| Prerequisite | Prelacion | Grade | Calificacion |
+| Term | Periodo | Role / EnrollmentStatus / PaymentStatus / GradeStatus / Weekday | Rol / EstadoInscripcion / EstadoPago / EstadoNota / DiaSemana |
+| Section | Seccion | | |
+
+- Subject: code unique per career, one subject per cell (term 1–12, branch 1–5), optional `minCredits`. `alternativeCredits` + `alternativeCreditBlock` model flowchart "ó" rules: N passed credits from subjects whose code starts with the block (e.g. 57 credits of `BP`) satisfy the subject regardless of its other requirements. In the curriculum CSV this is the `alternative` column (e.g. `57BP`).
 - Prerequisite: subject → required subject; must come from an earlier term, no self-reference, no cycles.
 - A subject is PASSED with a published passing grade (≥ 10 on 0–20), IN_PROGRESS when it is in a CONFIRMED enrollment of the current term without a published grade.
 - The current term is the one whose date range contains today; the open term (`open = true`) receives pre-enrollments.
@@ -79,7 +92,7 @@ npm run dev          # development server
 npm run build        # production build
 npm run typecheck    # tsc --noEmit
 npm run db:migrate   # prisma migrate dev
-npm run db:seed      # departments, careers, Systems Engineering pensum (CSV), terms, sections, sample student
+npm run db:seed      # departments, careers, Systems Engineering curriculum (CSV), terms, sections, sample student
 npm run db:reset     # drop, migrate and seed
 npm run db:studio    # Prisma Studio
 ```

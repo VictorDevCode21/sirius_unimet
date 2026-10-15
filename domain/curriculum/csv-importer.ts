@@ -1,10 +1,10 @@
 // CSV importer: validates a curriculum file and creates subjects and prerequisites in a single transaction.
 import { createsCycle, type AlternativeRequirement } from '@/domain/prerequisites/prerequisite-engine'
 
-// `alternativa` holds credits plus block code (e.g. "57BP") that replace every other requirement of the row.
-export const PENSUM_CSV_HEADERS = ['codigo', 'nombre', 'uc', 'trimestre', 'rama', 'uc_minimas', 'prelaciones', 'alternativa'] as const
+// `alternative` holds credits plus block code (e.g. "57BP") that replace every other requirement of the row.
+export const CURRICULUM_CSV_HEADERS = ['code', 'name', 'credits', 'term', 'branch', 'min_credits', 'prerequisites', 'alternative'] as const
 
-export interface PensumRow {
+export interface CurriculumRow {
   code: string
   name: string
   credits: number
@@ -15,8 +15,8 @@ export interface PensumRow {
   alternative: AlternativeRequirement | null
 }
 
-export interface PensumWriter {
-  replaceCareerPensum(careerId: string, rows: PensumRow[]): Promise<void>
+export interface CurriculumWriter {
+  replaceCareerCurriculum(careerId: string, rows: CurriculumRow[]): Promise<void>
 }
 
 export type ImportResult = { ok: true; subjects: number; prerequisites: number } | { ok: false; errors: string[] }
@@ -72,20 +72,20 @@ function toInteger(value: string) {
   return /^\d+$/.test(trimmed) ? Number(trimmed) : NaN
 }
 
-export function validatePensumCsv(text: string): { rows: PensumRow[]; errors: string[] } {
+export function validateCurriculumCsv(text: string): { rows: CurriculumRow[]; errors: string[] } {
   const [header, ...records] = parseCsv(text.replace(/^﻿/, ''))
   const errors: string[] = []
 
   const normalizedHeader = header?.map((value) => value.trim().toLowerCase()) ?? []
-  if (PENSUM_CSV_HEADERS.some((column, index) => normalizedHeader[index] !== column)) {
-    return { rows: [], errors: [`El encabezado debe ser: ${PENSUM_CSV_HEADERS.join(',')}`] }
+  if (CURRICULUM_CSV_HEADERS.some((column, index) => normalizedHeader[index] !== column)) {
+    return { rows: [], errors: [`El encabezado debe ser: ${CURRICULUM_CSV_HEADERS.join(',')}`] }
   }
 
-  const rows: PensumRow[] = records.map((record, index) => {
+  const rows: CurriculumRow[] = records.map((record, index) => {
     const line = index + 2
     const [code = '', name = '', credits = '', term = '', branch = '', minCredits = '', prerequisites = '', alternative = ''] = record
     const parsedAlternative = parseAlternative(alternative)
-    const row: PensumRow = {
+    const row: CurriculumRow = {
       code: code.trim().toUpperCase(),
       name: name.trim(),
       credits: toInteger(credits),
@@ -114,7 +114,7 @@ export function validatePensumCsv(text: string): { rows: PensumRow[]; errors: st
     return row
   })
 
-  const byCode = new Map<string, PensumRow>()
+  const byCode = new Map<string, CurriculumRow>()
   const cells = new Set<string>()
   for (const row of rows) {
     if (byCode.has(row.code)) errors.push(`El código ${row.code} está repetido.`)
@@ -145,12 +145,12 @@ export function validatePensumCsv(text: string): { rows: PensumRow[]; errors: st
   return { rows, errors }
 }
 
-export async function importPensum(careerId: string, csvText: string, writer: PensumWriter): Promise<ImportResult> {
-  const { rows, errors } = validatePensumCsv(csvText)
+export async function importCurriculum(careerId: string, csvText: string, writer: CurriculumWriter): Promise<ImportResult> {
+  const { rows, errors } = validateCurriculumCsv(csvText)
   if (!rows.length && !errors.length) errors.push('El archivo no contiene materias.')
   if (errors.length) return { ok: false, errors }
 
-  await writer.replaceCareerPensum(careerId, rows)
+  await writer.replaceCareerCurriculum(careerId, rows)
   return {
     ok: true,
     subjects: rows.length,

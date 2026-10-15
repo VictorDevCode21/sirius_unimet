@@ -21,7 +21,7 @@ export const authConfig = {
       if (!user) return false
       if (nextUrl.pathname === '/') return NextResponse.redirect(new URL(ROLE_HOME[user.role], nextUrl))
       if (!authorize(user.role, nextUrl.pathname)) {
-        return NextResponse.rewrite(new URL('/acceso-denegado', nextUrl), { status: 403 })
+        return NextResponse.rewrite(new URL('/forbidden', nextUrl), { status: 403 })
       }
       return true
     },

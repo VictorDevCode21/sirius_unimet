@@ -4,9 +4,9 @@ import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import bcrypt from 'bcryptjs'
 import { prisma } from '../data-access/prisma'
-import { createPensumRepository } from '../data-access/repositories/pensum.repository'
+import { createCurriculumRepository } from '../data-access/repositories/curriculum.repository'
 import type { Weekday } from '../data-access/generated/prisma/client'
-import { importPensum } from '../domain/pensum/csv-importer'
+import { importCurriculum } from '../domain/curriculum/csv-importer'
 import { calculateAmount } from '../domain/billing/amount-calculator'
 import { resolveGradeStatus } from '../domain/grades/academic-progress'
 
@@ -126,12 +126,12 @@ async function seedAcademicStructure() {
   }
 }
 
-async function seedSystemsPensum() {
+async function seedSystemsCurriculum() {
   const career = await prisma.career.findUniqueOrThrow({ where: { name: 'Ingeniería en Sistemas' } })
-  const csv = await readFile(path.join(__dirname, 'data', 'pensum-ingenieria-en-sistemas.csv'), 'utf8')
-  const result = await importPensum(career.id, csv, createPensumRepository(prisma))
-  if (!result.ok) throw new Error(`Pensum import failed:\n${result.errors.join('\n')}`)
-  console.log(`Pensum imported: ${result.subjects} subjects, ${result.prerequisites} prerequisites`)
+  const csv = await readFile(path.join(__dirname, 'data', 'systems-engineering-curriculum.csv'), 'utf8')
+  const result = await importCurriculum(career.id, csv, createCurriculumRepository(prisma))
+  if (!result.ok) throw new Error(`Curriculum import failed:\n${result.errors.join('\n')}`)
+  console.log(`Curriculum imported: ${result.subjects} subjects, ${result.prerequisites} prerequisites`)
   return career
 }
 
@@ -233,7 +233,7 @@ async function seedOpenTermOffer(careerId: string, professorIds: string[]) {
 async function main() {
   await reset()
   await seedAcademicStructure()
-  const career = await seedSystemsPensum()
+  const career = await seedSystemsCurriculum()
   const { professorIds, studentId } = await seedUsers(career.id)
   await seedStudentHistory(career.id, studentId, professorIds)
   await seedOpenTermOffer(career.id, professorIds)

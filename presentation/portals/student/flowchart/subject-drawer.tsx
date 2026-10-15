@@ -99,7 +99,7 @@ export function SubjectDrawer({ subject, onClose, showEnrollLink = true }: Subje
 
         <div className="mt-auto pt-8">
           {subject.status === 'AVAILABLE' && showEnrollLink ? (
-            <Link href="/estudiante/pre-inscripcion" className="primary-button w-full">
+            <Link href="/student/pre-enrollment" className="primary-button w-full">
               Ir a pre-inscripción <ArrowRight />
             </Link>
           ) : (

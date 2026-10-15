@@ -1,5 +1,4 @@
 // Persistent classes of the MVP data model (12 tables).
-// Spanish names from the architecture document are noted next to each model.
 
 generator client {
   provider = "prisma-client"
@@ -10,7 +9,7 @@ datasource db {
   provider = "postgresql"
 }
 
-// Rol
+// Access role of a user.
 enum Role {
   ADMIN
   DEPARTMENT_HEAD
@@ -18,7 +17,7 @@ enum Role {
   STUDENT
 }
 
-// EstadoInscripcion: PRE_ENROLLED is a saved selection without payment, PENDING is an attempted or
+// Enrollment lifecycle: PRE_ENROLLED is a saved selection without payment, PENDING is an attempted or
 // rejected payment and CONFIRMED is an approved payment.
 enum EnrollmentStatus {
   PRE_ENROLLED
@@ -26,19 +25,19 @@ enum EnrollmentStatus {
   CONFIRMED
 }
 
-// EstadoPago
+// Result of a simulated payment.
 enum PaymentStatus {
   APPROVED
   REJECTED
 }
 
-// EstadoNota
+// Outcome of a grade.
 enum GradeStatus {
   PASSED
   FAILED
 }
 
-// DiaSemana
+// Day of a schedule block.
 enum Weekday {
   MON
   TUE
@@ -48,7 +47,7 @@ enum Weekday {
   SAT
 }
 
-// Usuario: a student must belong to a career; deactivating keeps the history.
+// A student must belong to a career; deactivating keeps the history.
 model User {
   id           String   @id @default(uuid()) @db.Uuid
   name         String
@@ -69,7 +68,7 @@ model User {
   @@index([careerId])
 }
 
-// Departamento: one head per department.
+// One head per department.
 model Department {
   id        String   @id @default(uuid()) @db.Uuid
   name      String   @unique
@@ -80,7 +79,7 @@ model Department {
   careers Career[]
 }
 
-// Carrera: a career with students or subjects cannot be deleted.
+// A career with students or subjects cannot be deleted.
 model Career {
   id           String   @id @default(uuid()) @db.Uuid
   name         String   @unique
@@ -93,9 +92,9 @@ model Career {
   students   User[]
 }
 
-// Materia: code unique per career, one subject per grid cell (term 1–12, branch 1–5), credits greater than zero.
+// Code unique per career, one subject per grid cell (term 1–12, branch 1–5), credits greater than zero.
 // `alternativeCredits` passed credits from subjects whose code starts with `alternativeCreditBlock` replace every
-// other requirement of the subject (flowchart rules such as "BPTFI02 ó 57 cr BP").
+// other requirement of the subject (flowchart rules such as "BPTFI02 or 57 BP credits").
 model Subject {
   id                     String   @id @default(uuid()) @db.Uuid
   careerId               String   @db.Uuid
@@ -118,7 +117,7 @@ model Subject {
   @@unique([careerId, term, branch])
 }
 
-// Prelacion: association class between a subject and the subject it requires.
+// Association class between a subject and the subject it requires.
 model Prerequisite {
   subjectId     String @db.Uuid
   requirementId String @db.Uuid
@@ -129,7 +128,7 @@ model Prerequisite {
   @@id([subjectId, requirementId])
 }
 
-// Periodo: end after start, a single open term at a time, rate per credit greater than zero.
+// End after start, a single open term at a time, rate per credit greater than zero.
 model Term {
   id              String   @id @default(uuid()) @db.Uuid
   name            String   @unique
@@ -144,7 +143,7 @@ model Term {
   enrollments Enrollment[]
 }
 
-// Seccion: capacity greater than zero; cannot be deleted while it has enrolled students.
+// Capacity greater than zero; cannot be deleted while it has enrolled students.
 model Section {
   id          String   @id @default(uuid()) @db.Uuid
   number      Int
@@ -165,7 +164,7 @@ model Section {
   @@index([termId])
 }
 
-// BloqueHorario: end time after start time; a professor cannot have overlapping blocks.
+// End time after start time; a professor cannot have overlapping blocks.
 model ScheduleBlock {
   id        String   @id @default(uuid()) @db.Uuid
   sectionId String   @db.Uuid
@@ -178,7 +177,7 @@ model ScheduleBlock {
   @@index([sectionId])
 }
 
-// Inscripcion: one per student and term.
+// One per student and term.
 model Enrollment {
   id        String           @id @default(uuid()) @db.Uuid
   studentId String           @db.Uuid
@@ -196,7 +195,7 @@ model Enrollment {
   @@unique([studentId, termId])
 }
 
-// DetalleInscripcion: association class between an enrollment and a section.
+// Association class between an enrollment and a section.
 model EnrollmentDetail {
   enrollmentId String   @db.Uuid
   sectionId    String   @db.Uuid
@@ -209,7 +208,7 @@ model EnrollmentDetail {
   @@index([sectionId])
 }
 
-// PagoSimulado: unique reference; a confirmed enrollment is not paid again.
+// Unique reference; a confirmed enrollment is not paid again.
 model SimulatedPayment {
   id           String        @id @default(uuid()) @db.Uuid
   enrollmentId String        @db.Uuid
@@ -223,7 +222,7 @@ model SimulatedPayment {
   @@index([enrollmentId])
 }
 
-// Calificacion: grade between 0 and 20, uploaded by the section professor.
+// Grade between 0 and 20, uploaded by the section professor.
 model Grade {
   sectionId String      @db.Uuid
   studentId String      @db.Uuid

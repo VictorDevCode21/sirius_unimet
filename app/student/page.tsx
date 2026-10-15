@@ -36,13 +36,13 @@ export default async function SummaryPage() {
             </p>
             <div className="mt-7 flex flex-wrap gap-3">
               <Link
-                href="/estudiante/pre-inscripcion"
+                href="/student/pre-enrollment"
                 className="inline-flex items-center gap-2 rounded-full bg-[#f68629] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-orange-950/30 transition hover:-translate-y-0.5 hover:bg-[#ff8200]"
               >
                 Pre-inscribir materias <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
-                href="/estudiante/flujograma"
+                href="/student/flowchart"
                 className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-5 py-3 text-sm font-bold text-white backdrop-blur transition hover:bg-white/20"
               >
                 Ver mi flujograma
@@ -177,7 +177,7 @@ export default async function SummaryPage() {
           <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
             Solo podrás seleccionar secciones de materias cuyas prelaciones ya aprobaste.
           </p>
-          <Link href="/estudiante/pre-inscripcion" className="primary-button mt-6 w-full">
+          <Link href="/student/pre-enrollment" className="primary-button mt-6 w-full">
             Ir a pre-inscripción <ArrowRight />
           </Link>
         </section>

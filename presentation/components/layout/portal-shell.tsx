@@ -24,11 +24,11 @@ import { logout } from '@/control/controllers/authentication.controller'
 import { cn } from '@/presentation/lib/utils'
 
 const navItems = [
-  { label: 'Resumen', href: '/estudiante', icon: LayoutDashboard },
-  { label: 'Mi flujograma', href: '/estudiante/flujograma', icon: BookOpen },
-  { label: 'Pre-inscripción', href: '/estudiante/pre-inscripcion', icon: CalendarDays },
-  { label: 'Histórico', href: '/estudiante/historico', icon: Clock3 },
-  { label: 'Comprobante', href: '/estudiante/comprobante', icon: FileText },
+  { label: 'Resumen', href: '/student', icon: LayoutDashboard },
+  { label: 'Mi flujograma', href: '/student/flowchart', icon: BookOpen },
+  { label: 'Pre-inscripción', href: '/student/pre-enrollment', icon: CalendarDays },
+  { label: 'Histórico', href: '/student/history', icon: Clock3 },
+  { label: 'Comprobante', href: '/student/receipt', icon: FileText },
 ]
 
 interface PortalShellProps {
@@ -159,7 +159,7 @@ export function PortalShell({ user, currentTermCode, preEnrollmentTermCode, cart
         <nav className="flex flex-col gap-1.5 px-3" aria-label="Navegación principal">
           {navItems.map((item) => {
             const Icon = item.icon
-            const active = item.href === '/estudiante' ? pathname === item.href : pathname.startsWith(item.href)
+            const active = item.href === '/student' ? pathname === item.href : pathname.startsWith(item.href)
             return (
               <Link
                 key={item.href}
@@ -170,7 +170,7 @@ export function PortalShell({ user, currentTermCode, preEnrollmentTermCode, cart
               >
                 <Icon aria-hidden="true" />
                 <span className={cn(collapsed && 'lg:hidden')}>{item.label}</span>
-                {item.href === '/estudiante/pre-inscripcion' && cartCount > 0 && (
+                {item.href === '/student/pre-enrollment' && cartCount > 0 && (
                   <span
                     className={cn(
                       'ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f68629] px-1.5 text-[0.65rem] font-bold text-white',
@@ -201,7 +201,7 @@ export function PortalShell({ user, currentTermCode, preEnrollmentTermCode, cart
               <p className="relative text-[0.65rem] font-bold uppercase tracking-[0.16em] text-[#ffb36b]">Trimestre {preEnrollmentTermCode}</p>
               <p className="relative mt-1.5 font-display text-xl font-extrabold uppercase leading-none">Pre-inscripciones abiertas</p>
               <Link
-                href="/estudiante/pre-inscripcion"
+                href="/student/pre-enrollment"
                 className="relative mt-4 inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-bold text-[#003087] transition hover:bg-[#ffb36b]"
               >
                 Inscribir materias →

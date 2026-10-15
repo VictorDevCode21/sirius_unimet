@@ -1,4 +1,4 @@
-codigo,nombre,uc,trimestre,rama,uc_minimas,prelaciones,alternativa
+code,name,credits,term,branch,min_credits,prerequisites,alternative
 FBTMM01,Matemática Básica,3,1,1,,,
 BPTMI01,Matemáticas I,3,2,1,,FBTMM01,
 BPTMI02,Matemáticas II,3,3,1,,BPTMI01,

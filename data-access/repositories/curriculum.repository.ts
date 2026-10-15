@@ -1,11 +1,11 @@
 import type { PrismaClient } from '@/data-access/generated/prisma/client'
 import { prisma as defaultClient } from '@/data-access/prisma'
-import type { PensumRow, PensumWriter } from '@/domain/pensum/csv-importer'
+import type { CurriculumRow, CurriculumWriter } from '@/domain/curriculum/csv-importer'
 
 // Replaces every subject and prerequisite of a career inside one transaction.
-export function createPensumRepository(client: PrismaClient = defaultClient): PensumWriter {
+export function createCurriculumRepository(client: PrismaClient = defaultClient): CurriculumWriter {
   return {
-    async replaceCareerPensum(careerId: string, rows: PensumRow[]) {
+    async replaceCareerCurriculum(careerId: string, rows: CurriculumRow[]) {
       await client.$transaction(async (tx) => {
         await tx.prerequisite.deleteMany({ where: { subject: { careerId } } })
         await tx.subject.deleteMany({ where: { careerId, sections: { none: {} } } })

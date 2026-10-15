@@ -2,16 +2,16 @@
 import type { Role } from '@/data-access/generated/prisma/enums'
 
 export const ROLE_HOME: Record<Role, string> = {
-  STUDENT: '/estudiante',
-  PROFESSOR: '/profesor',
-  DEPARTMENT_HEAD: '/jefe',
+  STUDENT: '/student',
+  PROFESSOR: '/professor',
+  DEPARTMENT_HEAD: '/department-head',
   ADMIN: '/admin',
 }
 
 const PORTAL_ROLES: [prefix: string, role: Role][] = [
-  ['/estudiante', 'STUDENT'],
-  ['/profesor', 'PROFESSOR'],
-  ['/jefe', 'DEPARTMENT_HEAD'],
+  ['/student', 'STUDENT'],
+  ['/professor', 'PROFESSOR'],
+  ['/department-head', 'DEPARTMENT_HEAD'],
   ['/admin', 'ADMIN'],
 ]
 

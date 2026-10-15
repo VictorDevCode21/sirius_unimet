@@ -95,7 +95,7 @@ export type Offer = NonNullable<Awaited<ReturnType<typeof listOffer>>>
 async function runUseCase(useCase: () => Promise<string>): Promise<ActionResult> {
   try {
     const message = await useCase()
-    revalidatePath('/estudiante', 'layout')
+    revalidatePath('/student', 'layout')
     return { ok: true, message }
   } catch (error) {
     if (error instanceof DomainError) return { ok: false, message: error.message }
