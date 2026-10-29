@@ -44,7 +44,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           </span>
           <div>
             <p className="text-sm font-bold">Prelaciones verificadas</p>
-            <p className="text-[0.7rem] text-white/65">Solo ves lo que puedes inscribir</p>
+            <p className="text-[0.7rem] text-white/65">Solo ves lo que puedes pre-inscribir</p>
           </div>
         </div>
 
@@ -62,7 +62,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
             <span className="line-accent">Aquí.</span>
           </h1>
           <p className="reveal reveal-2 mt-6 max-w-md text-[0.95rem] leading-relaxed text-white/75 lg:text-base">
-            Planifica tu trimestre, revisa tus prelaciones y pre-inscribe tus materias en un solo lugar, sin filas ni
+            Planifica tu período, revisa tus prelaciones y pre-inscribe tus materias en un solo lugar, sin filas ni
             papeleo.
           </p>
         </div>

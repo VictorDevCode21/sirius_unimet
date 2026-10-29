@@ -198,13 +198,13 @@ export function PortalShell({ user, currentTermCode, preEnrollmentTermCode, cart
           <div className="mt-auto p-4">
             <div className="relative overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-[#003087] to-[#1859a9] p-5 text-white">
               <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[#f68629]/40 blur-2xl" />
-              <p className="relative text-[0.65rem] font-bold uppercase tracking-[0.16em] text-[#ffb36b]">Trimestre {preEnrollmentTermCode}</p>
+              <p className="relative text-[0.65rem] font-bold uppercase tracking-[0.16em] text-[#ffb36b]">Período {preEnrollmentTermCode}</p>
               <p className="relative mt-1.5 font-display text-xl font-extrabold uppercase leading-none">Pre-inscripciones abiertas</p>
               <Link
                 href="/student/pre-enrollment"
                 className="relative mt-4 inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-bold text-[#003087] transition hover:bg-[#ffb36b]"
               >
-                Inscribir materias →
+                Pre-inscribir materias →
               </Link>
             </div>
           </div>
@@ -217,10 +217,19 @@ export function PortalShell({ user, currentTermCode, preEnrollmentTermCode, cart
             <button type="button" className="icon-button lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Abrir menú">
               <Menu />
             </button>
-            <div>
-              <p className="text-[0.65rem] font-bold uppercase tracking-[0.16em] text-muted-foreground">Período actual</p>
-              <p className="font-display text-lg font-extrabold leading-tight">{currentTermCode ?? '—'}</p>
-            </div>
+            <p className="flex flex-col text-sm leading-tight sm:flex-row sm:items-baseline sm:gap-2">
+              <span>
+                <span className="text-muted-foreground">Período en curso: </span>
+                <strong className="font-display text-base font-extrabold">{currentTermCode ?? '—'}</strong>
+              </span>
+              {preEnrollmentTermCode && (
+                <span>
+                  <span className="hidden text-muted-foreground sm:inline">· </span>
+                  <span className="text-muted-foreground">Pre-inscripción para: </span>
+                  <strong className="font-display text-base font-extrabold">{preEnrollmentTermCode}</strong>
+                </span>
+              )}
+            </p>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
             <ThemeToggle />
