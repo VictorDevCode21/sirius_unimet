@@ -10,7 +10,10 @@ export default function ForbiddenPage() {
         </span>
         <p className="eyebrow mt-6">Error 403</p>
         <h1 className="page-title mt-2">Acceso denegado</h1>
-        <p className="mt-3 text-sm text-muted-foreground">Tu rol no tiene permiso para ver esta sección.</p>
+        <p className="mt-3 text-sm leading-relaxed text-muted-foreground">
+          Tu cuenta no tiene permiso para ver esta sección del portal. Si crees que deberías tener acceso, solicítalo a
+          Control de Estudios.
+        </p>
         <Link href="/" className="primary-button mt-6">
           Volver a mi portal
         </Link>

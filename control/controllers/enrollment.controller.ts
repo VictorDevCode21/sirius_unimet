@@ -114,10 +114,14 @@ export async function addSection(rawSectionId: string): Promise<ActionResult> {
     validateTermOpen(term)
 
     const section = await findSectionById(parsed.data)
-    if (!section || section.termId !== term!.id) throw new DomainError('La sección no pertenece al período abierto.')
+    if (!section || section.termId !== term!.id) {
+      throw new DomainError('La sección no pertenece al período abierto. Recarga la página para ver la oferta vigente.')
+    }
 
     const enrollment = await findEnrollment(profile.id, term!.id)
-    if (enrollment && enrollment.status !== 'PRE_ENROLLED') throw new DomainError('Tu inscripción ya no admite cambios.')
+    if (enrollment && enrollment.status !== 'PRE_ENROLLED') {
+      throw new DomainError('Tu inscripción ya no admite cambios porque está en proceso de pago o confirmada.')
+    }
 
     const selected = (enrollment?.details ?? []).map((detail) => toCandidate(detail.section))
     const candidate = toCandidate(section)
@@ -148,8 +152,12 @@ export async function removeSection(rawSectionId: string): Promise<ActionResult>
 
     const enrollment = await findEnrollment(profile.id, term!.id)
     const detail = enrollment?.details.find((item) => item.sectionId === parsed.data)
-    if (!enrollment || !detail) throw new DomainError('La sección no está en tu pre-inscripción.')
-    if (enrollment.status !== 'PRE_ENROLLED') throw new DomainError('Tu inscripción ya no admite cambios.')
+    if (!enrollment || !detail) {
+      throw new DomainError('La sección no está en tu pre-inscripción. Recarga la página para ver tu selección actual.')
+    }
+    if (enrollment.status !== 'PRE_ENROLLED') {
+      throw new DomainError('Tu inscripción ya no admite cambios porque está en proceso de pago o confirmada.')
+    }
 
     await removeEnrollmentSection(enrollment.id, parsed.data, (credits) => calculateAmount(credits, Number(term!.ratePerCredit)))
     return `${detail.section.subject.name} se retiró de tu pre-inscripción.`
