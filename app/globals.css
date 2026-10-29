@@ -33,6 +33,9 @@
   --brand-orange: #f68629;
   --brand-tangerine: #ff8200;
   --brand-ink: #00143d;
+  /* Accessible pairings (WCAG 2.2): text on brand orange and orange used as small text. */
+  --on-orange: #00143d;
+  --orange-text: #b34700;
 
   --background: #f4f6fb;
   --foreground: #0b1b3d;
@@ -43,20 +46,20 @@
   --primary: var(--brand-blue);
   --primary-foreground: #ffffff;
   --border: #e1e6f0;
-  --ring: var(--brand-orange);
+  --ring: #b34700;
   --sidebar: #ffffff;
   --accent-text: var(--brand-blue);
   --shadow-soft: 0 1px 2px rgb(0 48 135 / 4%), 0 12px 32px -12px rgb(0 48 135 / 14%);
   --shadow-lift: 0 2px 4px rgb(0 48 135 / 6%), 0 24px 48px -16px rgb(0 48 135 / 26%);
   --radius: 1.25rem;
 
-  --status-passed: #0e9f6e;
+  --status-passed: #0b7a55;
   --status-passed-bg: rgb(14 159 110 / 9%);
   --status-progress: var(--brand-sky);
   --status-progress-bg: rgb(24 89 169 / 10%);
-  --status-available: #d9690b;
+  --status-available: #b34700;
   --status-available-bg: rgb(246 134 41 / 12%);
-  --status-blocked: #8a94aa;
+  --status-blocked: #5b6884;
   --status-blocked-bg: #f1f3f8;
 }
 
@@ -68,7 +71,9 @@
   --card-foreground: #e9eefb;
   --muted: #13213f;
   --muted-foreground: #8e9bbb;
-  --primary: #3d7be0;
+  --primary: #2f6fd0;
+  --ring: var(--brand-orange);
+  --orange-text: var(--brand-orange);
   --border: rgb(255 255 255 / 8%);
   --sidebar: #081127;
   --accent-text: #8fb8ff;
@@ -81,7 +86,7 @@
   --status-progress-bg: rgb(127 176 255 / 12%);
   --status-available: #ffa45c;
   --status-available-bg: rgb(246 134 41 / 14%);
-  --status-blocked: #6b7896;
+  --status-blocked: #8a97b5;
   --status-blocked-bg: rgb(255 255 255 / 3%);
 }
 
@@ -106,7 +111,7 @@
     cursor: pointer;
   }
   :focus-visible {
-    outline: 2px solid var(--brand-orange);
+    outline: 2px solid var(--ring);
     outline-offset: 2px;
   }
 }
@@ -119,7 +124,7 @@
 }
 
 .eyebrow {
-  color: var(--brand-orange);
+  color: var(--orange-text);
   font-size: 0.7rem;
   font-weight: 800;
   letter-spacing: 0.16em;
@@ -364,7 +369,7 @@
   border-radius: 1.1rem;
   background: linear-gradient(100deg, var(--brand-orange), var(--brand-tangerine));
   padding: 1.05rem 1.5rem;
-  color: white;
+  color: var(--on-orange);
   font-weight: 700;
   letter-spacing: 0.01em;
   box-shadow: 0 14px 28px -12px rgb(246 134 41 / 70%);
@@ -519,7 +524,7 @@
   justify-content: space-between;
   gap: 1rem;
   background: color-mix(in srgb, var(--background) 82%, transparent);
-  padding: 0 clamp(1rem, 3vw, 2.5rem);
+  padding: 0 clamp(0.75rem, 3vw, 2.5rem);
   backdrop-filter: blur(16px) saturate(1.4);
 }
 
@@ -562,7 +567,7 @@
   justify-content: center;
   border-radius: 999px;
   background: linear-gradient(135deg, var(--brand-orange), var(--brand-tangerine));
-  color: white;
+  color: var(--on-orange);
   font-size: 0.8rem;
   font-weight: 800;
 }
@@ -733,7 +738,7 @@
 
 .primary-button {
   background: linear-gradient(100deg, var(--brand-orange), var(--brand-tangerine));
-  color: white;
+  color: var(--on-orange);
   box-shadow: 0 12px 24px -12px rgb(246 134 41 / 70%);
 }
 
@@ -1132,7 +1137,7 @@
 .office-hero h1 { margin-top: 0.7rem; font-family: var(--font-display); font-size: clamp(2.5rem, 6vw, 5rem); font-weight: 800; letter-spacing: -0.03em; line-height: 0.92; text-transform: uppercase; }
 .office-hero h1 span { color: #ffb56a; }
 .office-hero p:not(.eyebrow) { max-width: 30rem; margin-top: 1.3rem; color: rgb(255 255 255 / 72%); font-size: 0.95rem; line-height: 1.7; }
-.office-cta { display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 1.6rem; border-radius: 999px; background: var(--brand-orange); padding: 0.85rem 1.2rem; color: white; font-size: 0.8rem; font-weight: 800; }
+.office-cta { display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 1.6rem; border-radius: 999px; background: var(--brand-orange); padding: 0.85rem 1.2rem; color: var(--on-orange); font-size: 0.8rem; font-weight: 800; }
 .office-cta svg { height: 1rem; width: 1rem; }
 .office-orb { position: relative; display: flex; min-height: 18rem; align-items: center; justify-content: center; }
 .office-orb::before { position: absolute; height: 19rem; width: 19rem; border: 1px solid rgb(255 255 255 / 20%); border-radius: 50%; background: rgb(255 255 255 / 5%); content: ''; }
@@ -1218,6 +1223,13 @@
 }
 
 /* ---------- Responsive ---------- */
+
+@media (max-width: 40rem) {
+  .topbar .icon-button {
+    height: 2.5rem;
+    width: 2.5rem;
+  }
+}
 
 @media (max-width: 64rem) {
   .login-page {

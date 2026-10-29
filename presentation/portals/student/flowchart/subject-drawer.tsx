@@ -89,7 +89,7 @@ export function SubjectDrawer({ subject, onClose, showEnrollLink = true }: Subje
             <h3 className="text-sm font-bold">Desbloquea</h3>
             <div className="mt-3 flex flex-wrap gap-2">
               {subject.unlocks.map((item) => (
-                <span key={item.id} className="rounded-full bg-[#f68629]/10 px-3 py-1.5 text-xs font-semibold text-[#c25a06] dark:text-[#ffa45c]">
+                <span key={item.id} className="rounded-full bg-[#f68629]/10 px-3 py-1.5 text-xs font-semibold text-[var(--orange-text)]">
                   {item.name}
                 </span>
               ))}

@@ -5,7 +5,7 @@ import { listOffer } from '@/control/controllers/enrollment.controller'
 import { getFlowchart } from '@/control/controllers/flowchart.controller'
 import { firstName, formatGrade, formatLongDate, toRoman } from '@/presentation/lib/format'
 
-const courseColors = ['bg-[#003087]', 'bg-[#f68629]', 'bg-[#1859a9]', 'bg-[#0e9f6e]', 'bg-[#ff8200]', 'bg-[#5b4bd6]']
+const courseColors = ['bg-[#003087]', 'bg-[#f68629] text-[var(--on-orange)]', 'bg-[#1859a9]', 'bg-[#0b7a55]', 'bg-[#ff8200] text-[var(--on-orange)]', 'bg-[#5b4bd6]']
 
 export default async function SummaryPage() {
   const [{ stats, career, subjects, currentTerm }, record, offer] = await Promise.all([getFlowchart(), getAcademicRecord(), listOffer()])
@@ -36,7 +36,7 @@ export default async function SummaryPage() {
             <div className="mt-4 flex flex-wrap gap-2.5">
               <Link
                 href="/student/pre-enrollment"
-                className="inline-flex items-center gap-2 rounded-full bg-[#f68629] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-orange-950/30 transition hover:-translate-y-0.5 hover:bg-[#ff8200]"
+                className="inline-flex items-center gap-2 rounded-full bg-[#f68629] px-5 py-2.5 text-sm font-bold text-[var(--on-orange)] shadow-lg shadow-orange-950/30 transition hover:-translate-y-0.5 hover:bg-[#ff8200]"
               >
                 Pre-inscribir materias <ArrowRight className="h-4 w-4" />
               </Link>
@@ -100,7 +100,7 @@ export default async function SummaryPage() {
           <p className="mt-1 text-xs text-muted-foreground">{stats.planCredits} UC en el plan de estudios</p>
         </div>
         <div className="stat-card reveal reveal-2">
-          <div className="stat-icon bg-[#f68629]/15 text-[#f68629]">
+          <div className="stat-icon bg-[#f68629]/15 text-[var(--orange-text)]">
             <Sparkles />
           </div>
           <p className="mt-5 text-xs font-semibold text-muted-foreground">Índice acumulado</p>
@@ -165,7 +165,7 @@ export default async function SummaryPage() {
           <h3 className="mt-1 text-xl font-bold">{offer ? `Período ${offer.term.name}` : 'Sin período abierto'}</h3>
           <div className="mt-5 grid grid-cols-2 gap-3">
             <div className="rounded-2xl bg-[#f68629]/10 p-4">
-              <p className="font-display text-3xl font-extrabold text-[#d9690b] dark:text-[#ffa45c]">{availableCount}</p>
+              <p className="font-display text-3xl font-extrabold text-[var(--orange-text)]">{availableCount}</p>
               <p className="mt-1 text-xs font-semibold text-muted-foreground">Disponibles</p>
             </div>
             <div className="rounded-2xl bg-[#003087]/8 p-4 dark:bg-white/5">

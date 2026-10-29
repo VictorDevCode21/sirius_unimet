@@ -87,7 +87,7 @@ function ProfileMenu({ user }: { user: PortalShellProps['user'] }) {
     <div className="relative" ref={containerRef}>
       <button
         type="button"
-        className="flex items-center gap-2.5 rounded-full border border-border bg-card py-1 pl-1 pr-3 transition hover:shadow-[var(--shadow-soft)]"
+        className="flex items-center gap-2.5 rounded-full border border-border bg-card p-1 transition hover:shadow-[var(--shadow-soft)] sm:pr-3"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         aria-haspopup="menu"
@@ -97,7 +97,7 @@ function ProfileMenu({ user }: { user: PortalShellProps['user'] }) {
           <strong className="block text-[0.8rem] leading-tight">{user.name}</strong>
           <small className="block text-[0.68rem] text-muted-foreground">Estudiante</small>
         </span>
-        <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition', open && 'rotate-180')} />
+        <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition max-sm:hidden', open && 'rotate-180')} />
       </button>
       {open && (
         <div className="profile-menu reveal" role="menu">
@@ -174,7 +174,7 @@ export function PortalShell({ user, currentTermCode, preEnrollmentTermCode, cart
                 {item.href === '/student/pre-enrollment' && cartCount > 0 && (
                   <span
                     className={cn(
-                      'ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f68629] px-1.5 text-[0.65rem] font-bold text-white',
+                      'ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f68629] px-1.5 text-[0.65rem] font-bold text-[var(--on-orange)]',
                       collapsed && 'lg:absolute lg:right-2.5 lg:top-1.5 lg:h-4 lg:min-w-4 lg:px-1 lg:text-[0.58rem]',
                     )}
                   >
@@ -214,7 +214,7 @@ export function PortalShell({ user, currentTermCode, preEnrollmentTermCode, cart
 
       <div className="main-content">
         <header className="topbar">
-          <div className="flex items-center gap-3">
+          <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <button type="button" className="icon-button lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Abrir menú">
               <Menu />
             </button>
@@ -232,7 +232,7 @@ export function PortalShell({ user, currentTermCode, preEnrollmentTermCode, cart
               )}
             </p>
           </div>
-          <div className="flex items-center gap-2 sm:gap-3">
+          <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
             <HelpPanel />
             <ThemeToggle />
             <ProfileMenu user={user} />

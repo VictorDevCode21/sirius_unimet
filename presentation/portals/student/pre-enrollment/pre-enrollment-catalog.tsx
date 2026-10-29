@@ -230,8 +230,8 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_23rem]">
       <div className="min-w-0">
-        <div className="reveal reveal-1 mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="search-box">
+        <div className="reveal reveal-1 mb-6 flex flex-wrap items-center gap-3">
+          <div className="search-box basis-full">
             <Search />
             <input
               ref={searchRef}
@@ -283,7 +283,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
                   style={{ animationDelay: `${Math.min(index, 8) * 0.04}s` }}
                 >
                   <div className="flex items-center justify-between gap-2">
-                    <span className="font-mono text-xs font-bold text-[var(--brand-orange)]">{subject.code}</span>
+                    <span className="font-mono text-xs font-bold text-[var(--orange-text)]">{subject.code}</span>
                     <span className="rounded-full bg-muted px-2.5 py-1 text-[0.66rem] font-bold text-muted-foreground">
                       Trim. {toRoman(subject.term)} · {subject.credits} UC
                     </span>
@@ -327,7 +327,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
       <aside className="surface reveal reveal-2 h-fit p-5 xl:sticky xl:top-24">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
-            <span className="stat-icon bg-[#f68629]/15 text-[var(--brand-orange)]">
+            <span className="stat-icon bg-[#f68629]/15 text-[var(--orange-text)]">
               <ShoppingBag />
             </span>
             <div>
