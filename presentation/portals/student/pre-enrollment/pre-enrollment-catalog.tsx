@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  CalendarDays,
   CheckCircle2,
   ChevronRight,
   Clock3,
@@ -12,7 +13,6 @@ import {
   Plus,
   RotateCcw,
   Search,
-  ShoppingBag,
   Trash2,
   UserRound,
   UsersRound,
@@ -24,6 +24,7 @@ import { blocksOverlap } from '@/domain/enrollment/enrollment-validator'
 import { StatusBadge } from '@/presentation/components/shared/status-badge'
 import { formatCurrency, formatSchedule, toRoman } from '@/presentation/lib/format'
 import { SubjectDrawer } from '@/presentation/portals/student/flowchart/subject-drawer'
+import { WeeklySchedule } from '@/presentation/portals/student/pre-enrollment/weekly-schedule'
 import { cn } from '@/presentation/lib/utils'
 
 type View = 'AVAILABLE' | 'UNAVAILABLE'
@@ -328,7 +329,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <span className="stat-icon bg-[#f68629]/15 text-[var(--orange-text)]">
-              <ShoppingBag />
+              <CalendarDays />
             </span>
             <div>
               <p className="font-bold">Tu selección</p>
@@ -367,6 +368,8 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
             Aún no has agregado secciones.
           </p>
         )}
+
+        <WeeklySchedule sections={selected} />
 
         <div className="mt-5 border-t border-border pt-4">
           <div className="flex items-center justify-between text-sm">

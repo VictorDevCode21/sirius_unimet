@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { CalendarCheck2, CheckCircle2, GitBranch, Sparkles } from 'lucide-react'
+import { CalendarCheck2, CheckCircle2, GitBranch, LockKeyholeOpen } from 'lucide-react'
 import { UnimetLogo } from '@/presentation/components/brand/unimet-logo'
 import { LoginForm } from '@/presentation/components/auth/login-form'
 
@@ -30,7 +30,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           <div className="flex items-center justify-between">
             <span className="font-mono text-[0.7rem] font-bold text-white/70">FPTSP07</span>
             <span className="inline-flex items-center gap-1 rounded-full bg-[#f68629] px-2 py-1 text-[0.62rem] font-bold">
-              <Sparkles className="h-3 w-3" /> Disponible
+              <LockKeyholeOpen className="h-3 w-3" /> Disponible
             </span>
           </div>
           <p className="mt-2 font-display text-lg font-bold uppercase leading-tight">Ingeniería de Software</p>
