@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import {
   CheckCircle2,
   ChevronRight,
@@ -27,12 +27,33 @@ import { SubjectDrawer } from '@/presentation/portals/student/flowchart/subject-
 import { cn } from '@/presentation/lib/utils'
 
 type View = 'AVAILABLE' | 'UNAVAILABLE'
+type SortKey = 'TERM' | 'SEATS' | 'NAME'
 type OfferSubject = Offer['subjects'][number]
 
 // Toast message; `undoSectionId` offers re-adding a section that was just removed.
 interface Toast extends ActionResult {
   undoSectionId?: string
 }
+
+const sortOptions: { value: SortKey; label: string }[] = [
+  { value: 'TERM', label: 'Trimestre' },
+  { value: 'SEATS', label: 'Cupos disponibles' },
+  { value: 'NAME', label: 'Nombre' },
+]
+
+// Highest number of free seats among the subject's sections.
+const freeSeats = (subject: OfferSubject) =>
+  Math.max(0, ...subject.sections.map((section) => section.capacity - section.occupied))
+
+const comparators: Record<SortKey, (a: OfferSubject, b: OfferSubject) => number> = {
+  TERM: (a, b) => a.term - b.term || a.branch - b.branch,
+  SEATS: (a, b) => freeSeats(b) - freeSeats(a) || a.term - b.term,
+  NAME: (a, b) => a.name.localeCompare(b.name, 'es'),
+}
+
+// True when the keyboard focus is inside a field where `/` must be typed as text.
+const isTypingTarget = (target: EventTarget | null) =>
+  target instanceof HTMLElement && (target.isContentEditable || ['INPUT', 'TEXTAREA', 'SELECT'].includes(target.tagName))
 
 const TOAST_MS = 4500
 const UNDO_MS = 5000
@@ -46,6 +67,8 @@ const statusLabels: Record<string, string> = {
 export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
   const [view, setView] = useState<View>('AVAILABLE')
   const [query, setQuery] = useState('')
+  const [sortKey, setSortKey] = useState<SortKey>('TERM')
+  const searchRef = useRef<HTMLInputElement>(null)
   const [detail, setDetail] = useState<OfferSubject | null>(null)
   const [toast, setToast] = useState<Toast | null>(null)
   const [pendingId, setPendingId] = useState<string | null>(null)
@@ -61,14 +84,26 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
     return () => clearTimeout(timeout)
   }, [toast])
 
+  useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key !== '/' || event.metaKey || event.ctrlKey || event.altKey || isTypingTarget(event.target)) return
+      event.preventDefault()
+      searchRef.current?.focus()
+    }
+    document.addEventListener('keydown', onKeyDown)
+    return () => document.removeEventListener('keydown', onKeyDown)
+  }, [])
+
   const isEnrollable = (subject: OfferSubject) => subject.status === 'AVAILABLE' && subject.sections.length > 0
   const availableCount = offer.subjects.filter(isEnrollable).length
   const needle = query.trim().toLowerCase()
-  const visible = offer.subjects.filter(
-    (subject) =>
-      (view === 'AVAILABLE' ? isEnrollable(subject) : !isEnrollable(subject)) &&
-      (!needle || subject.name.toLowerCase().includes(needle) || subject.code.toLowerCase().includes(needle)),
-  )
+  const visible = offer.subjects
+    .filter(
+      (subject) =>
+        (view === 'AVAILABLE' ? isEnrollable(subject) : !isEnrollable(subject)) &&
+        (!needle || subject.name.toLowerCase().includes(needle) || subject.code.toLowerCase().includes(needle)),
+    )
+    .sort(comparators[sortKey])
 
   const run = async (sectionId: string, action: (id: string) => Promise<ActionResult>) => {
     setPendingId(sectionId)
@@ -198,8 +233,32 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
         <div className="reveal reveal-1 mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="search-box">
             <Search />
-            <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Buscar por código o nombre…" aria-label="Buscar materias" />
+            <input
+              ref={searchRef}
+              value={query}
+              onChange={(event) => setQuery(event.target.value)}
+              onKeyDown={(event) => {
+                if (event.key === 'Escape') setQuery('')
+              }}
+              placeholder="Buscar por código o nombre… (tecla /)"
+              aria-label="Buscar materias"
+              aria-keyshortcuts="/"
+            />
           </div>
+          <label className="pill shrink-0 self-start !py-2 text-muted-foreground">
+            Ordenar por
+            <select
+              value={sortKey}
+              onChange={(event) => setSortKey(event.target.value as SortKey)}
+              className="cursor-pointer bg-transparent font-bold text-foreground outline-none"
+            >
+              {sortOptions.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </label>
           <div className="segmented self-start" role="group" aria-label="Filtrar materias">
             <button type="button" aria-pressed={view === 'AVAILABLE'} onClick={() => setView('AVAILABLE')}>
               Disponibles ({availableCount})
