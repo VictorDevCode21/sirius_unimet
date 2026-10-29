@@ -9,11 +9,13 @@ import {
   LoaderCircle,
   LockKeyhole,
   Plus,
+  RotateCcw,
   Search,
   ShoppingBag,
   Trash2,
   UserRound,
   UsersRound,
+  X,
   XCircle,
 } from 'lucide-react'
 import { addSection, removeSection, type ActionResult, type Offer, type SectionView } from '@/control/controllers/enrollment.controller'
@@ -25,6 +27,14 @@ import { cn } from '@/presentation/lib/utils'
 type View = 'AVAILABLE' | 'UNAVAILABLE'
 type OfferSubject = Offer['subjects'][number]
 
+// Toast message; `undoSectionId` offers re-adding a section that was just removed.
+interface Toast extends ActionResult {
+  undoSectionId?: string
+}
+
+const TOAST_MS = 4500
+const UNDO_MS = 5000
+
 const statusLabels: Record<string, string> = {
   PRE_ENROLLED: 'Pre-inscrita',
   PENDING: 'Pago pendiente',
@@ -35,7 +45,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
   const [view, setView] = useState<View>('AVAILABLE')
   const [query, setQuery] = useState('')
   const [detail, setDetail] = useState<OfferSubject | null>(null)
-  const [toast, setToast] = useState<ActionResult | null>(null)
+  const [toast, setToast] = useState<Toast | null>(null)
   const [pendingId, setPendingId] = useState<string | null>(null)
 
   const selected = offer.enrollment?.sections ?? []
@@ -45,7 +55,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
 
   useEffect(() => {
     if (!toast) return
-    const timeout = setTimeout(() => setToast(null), 4500)
+    const timeout = setTimeout(() => setToast(null), toast.undoSectionId ? UNDO_MS : TOAST_MS)
     return () => clearTimeout(timeout)
   }, [toast])
 
@@ -65,6 +75,21 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
     } finally {
       setPendingId(null)
     }
+  }
+
+  const removeWithUndo = async (sectionId: string) => {
+    setPendingId(sectionId)
+    try {
+      const result = await removeSection(sectionId)
+      setToast(result.ok ? { ...result, undoSectionId: sectionId } : result)
+    } finally {
+      setPendingId(null)
+    }
+  }
+
+  const undoRemoval = (sectionId: string) => {
+    setToast(null)
+    run(sectionId, addSection)
   }
 
   const renderSection = (section: SectionView, subject: OfferSubject) => {
@@ -96,12 +121,23 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
         {isSelected ? (
           <button
             type="button"
-            className="secondary-button !px-3.5 !py-2 text-xs"
+            className="secondary-button group !px-3.5 !py-2 text-xs hover:border-red-500/40 hover:text-red-600 focus:border-red-500/40 focus:text-red-600"
             disabled={isLocked || pendingId === section.id}
-            onClick={() => run(section.id, removeSection)}
+            onClick={() => removeWithUndo(section.id)}
+            aria-label={`Quitar ${subject.name}`}
           >
-            {pendingId === section.id ? <LoaderCircle className="animate-spin" /> : <CheckCircle2 className="text-[var(--status-passed)]" />}
-            Agregada
+            {pendingId === section.id ? (
+              <LoaderCircle className="animate-spin" />
+            ) : (
+              <>
+                <span className="inline-flex items-center gap-1.5 group-hover:hidden group-focus:hidden">
+                  <CheckCircle2 className="text-[var(--status-passed)]" /> Agregada
+                </span>
+                <span className="hidden items-center gap-1.5 group-hover:inline-flex group-focus:inline-flex">
+                  <X /> Quitar
+                </span>
+              </>
+            )}
           </button>
         ) : (
           <button
@@ -220,7 +256,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
                   <button
                     type="button"
                     className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition hover:bg-red-500/10 hover:text-red-500"
-                    onClick={() => run(section.id, removeSection)}
+                    onClick={() => removeWithUndo(section.id)}
                     disabled={pendingId === section.id}
                     aria-label={`Quitar ${section.subject.name}`}
                   >
@@ -273,7 +309,16 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
           ) : (
             <XCircle className="h-5 w-5 shrink-0 text-red-500" />
           )}
-          <p className="text-sm font-semibold">{toast.message}</p>
+          <p className="flex-1 text-sm font-semibold">{toast.message}</p>
+          {toast.undoSectionId && (
+            <button
+              type="button"
+              className="secondary-button shrink-0 !px-3 !py-1.5 text-xs"
+              onClick={() => undoRemoval(toast.undoSectionId!)}
+            >
+              <RotateCcw /> Deshacer
+            </button>
+          )}
         </div>
       )}
     </div>
