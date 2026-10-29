@@ -194,7 +194,7 @@ export function PortalShell({ user, currentTermCode, preEnrollmentTermCode, cart
           {collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
         </button>
 
-        {!collapsed && preEnrollmentTermCode && (
+        {!collapsed && preEnrollmentTermCode && pathname !== '/student' && (
           <div className="mt-auto p-4">
             <div className="relative overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-[#003087] to-[#1859a9] p-5 text-white">
               <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[#f68629]/40 blur-2xl" />
@@ -217,16 +217,16 @@ export function PortalShell({ user, currentTermCode, preEnrollmentTermCode, cart
             <button type="button" className="icon-button lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Abrir menú">
               <Menu />
             </button>
-            <p className="flex flex-col text-sm leading-tight sm:flex-row sm:items-baseline sm:gap-2">
-              <span>
+            <p className="flex flex-col text-xs leading-snug sm:flex-row sm:items-baseline sm:gap-2 sm:text-sm">
+              <span className="whitespace-nowrap">
                 <span className="text-muted-foreground">Período en curso: </span>
-                <strong className="font-display text-base font-extrabold">{currentTermCode ?? '—'}</strong>
+                <strong className="font-display text-sm font-extrabold sm:text-base">{currentTermCode ?? '—'}</strong>
               </span>
               {preEnrollmentTermCode && (
-                <span>
+                <span className="whitespace-nowrap">
                   <span className="hidden text-muted-foreground sm:inline">· </span>
                   <span className="text-muted-foreground">Pre-inscripción para: </span>
-                  <strong className="font-display text-base font-extrabold">{preEnrollmentTermCode}</strong>
+                  <strong className="font-display text-sm font-extrabold sm:text-base">{preEnrollmentTermCode}</strong>
                 </span>
               )}
             </p>
