@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { LockKeyhole, Sparkles } from 'lucide-react'
+import { LockKeyhole, LockKeyholeOpen, MapPin } from 'lucide-react'
 import { SubjectDrawer } from '@/presentation/portals/student/flowchart/subject-drawer'
 import { statusConfig } from '@/presentation/components/shared/status-badge'
 import type { FlowchartSubject } from '@/control/controllers/flowchart.controller'
@@ -62,7 +62,9 @@ export function FlowchartBoard({ subjects, terms, branches, currentTerm }: Flowc
         <div className="flex items-start justify-between gap-2">
           <span className="subject-code">{subject.code}</span>
           {subject.status === 'BLOCKED' && <LockKeyhole className="h-3.5 w-3.5 opacity-50" aria-label="Bloqueada" />}
-          {subject.status === 'AVAILABLE' && <Sparkles className="h-3.5 w-3.5 text-[var(--brand-orange)]" aria-label="Disponible" />}
+          {subject.status === 'AVAILABLE' && (
+            <LockKeyholeOpen className="h-3.5 w-3.5 text-[var(--status-available)]" aria-label="Disponible" />
+          )}
           {subject.status === 'PASSED' && <span className="h-2 w-2 rounded-full bg-[var(--status-passed)]" aria-label="Aprobada" />}
           {subject.status === 'IN_PROGRESS' && <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--status-progress)]" aria-label="En curso" />}
         </div>
@@ -103,7 +105,13 @@ export function FlowchartBoard({ subjects, terms, branches, currentTerm }: Flowc
             {Array.from({ length: terms }, (_, index) => index + 1).map((term) => (
               <div key={`head-${term}`} className="flow-period-head" data-current={term === currentTerm}>
                 <strong>{toRoman(term)}</strong>
-                <small>{term === currentTerm ? 'EN CURSO' : 'TRIMESTRE'}</small>
+                {term === currentTerm ? (
+                  <small className="inline-flex items-center gap-1">
+                    <MapPin className="h-3 w-3" aria-hidden="true" /> ESTÁS AQUÍ
+                  </small>
+                ) : (
+                  <small>TRIMESTRE</small>
+                )}
               </div>
             ))}
             {Array.from({ length: branches }, (_, rowIndex) =>
