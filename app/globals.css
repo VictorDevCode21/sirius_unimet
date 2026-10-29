@@ -524,7 +524,7 @@
   justify-content: space-between;
   gap: 1rem;
   background: color-mix(in srgb, var(--background) 82%, transparent);
-  padding: 0 clamp(1rem, 3vw, 2.5rem);
+  padding: 0 clamp(0.75rem, 3vw, 2.5rem);
   backdrop-filter: blur(16px) saturate(1.4);
 }
 
@@ -1223,6 +1223,13 @@
 }
 
 /* ---------- Responsive ---------- */
+
+@media (max-width: 40rem) {
+  .topbar .icon-button {
+    height: 2.5rem;
+    width: 2.5rem;
+  }
+}
 
 @media (max-width: 64rem) {
   .login-page {

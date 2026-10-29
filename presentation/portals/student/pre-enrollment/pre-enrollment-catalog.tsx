@@ -230,8 +230,8 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
   return (
     <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_23rem]">
       <div className="min-w-0">
-        <div className="reveal reveal-1 mb-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <div className="search-box">
+        <div className="reveal reveal-1 mb-6 flex flex-wrap items-center gap-3">
+          <div className="search-box basis-full">
             <Search />
             <input
               ref={searchRef}
