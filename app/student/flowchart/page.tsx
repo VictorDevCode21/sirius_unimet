@@ -1,4 +1,5 @@
 import { CURRICULUM_BRANCHES, CURRICULUM_TERMS, getFlowchart } from '@/control/controllers/flowchart.controller'
+import { GlossaryTerm } from '@/presentation/components/shared/glossary'
 import { PageHeading } from '@/presentation/components/shared/page-heading'
 import { FlowchartBoard } from '@/presentation/portals/student/flowchart/flowchart-board'
 
@@ -10,7 +11,13 @@ export default async function FlowchartPage() {
       <PageHeading
         eyebrow={career.name}
         title="Mi flujograma"
-        description="Flujograma oficial de componentes educativos obligatorios. Visualiza tu avance y planifica tu próximo paso."
+        description={
+          <>
+            Flujograma oficial de componentes educativos obligatorios. Cada materia muestra sus{' '}
+            <GlossaryTerm entry="uc">UC</GlossaryTerm> y su estado; ábrela para ver sus{' '}
+            <GlossaryTerm entry="prerequisite">prelaciones</GlossaryTerm>.
+          </>
+        }
         actions={
           <>
             <div className="min-w-[11rem] rounded-[1.25rem] border border-border bg-card px-4 py-3">
