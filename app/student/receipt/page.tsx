@@ -35,7 +35,7 @@ export default async function ReceiptPage() {
               PERÍODO {enrollment.term}
             </span>
           </div>
-          <p className="mt-14 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#f68629]">Universidad Metropolitana</p>
+          <p className="mt-14 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#b34700]">Universidad Metropolitana</p>
           <h2 className="mt-2 font-display text-[clamp(1.8rem,3vw,2.6rem)] font-extrabold uppercase leading-none text-[#003087]">
             Comprobante de inscripción
           </h2>
@@ -74,7 +74,7 @@ export default async function ReceiptPage() {
         </div>
 
         <div className="surface reveal reveal-2 h-fit p-6">
-          <div className="stat-icon bg-[#f68629]/15 text-[var(--brand-orange)]">
+          <div className="stat-icon bg-[#f68629]/15 text-[var(--orange-text)]">
             <ShieldCheck />
           </div>
           <h3 className="mt-4 text-xl font-bold">Inscripción confirmada</h3>

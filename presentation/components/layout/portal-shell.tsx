@@ -174,7 +174,7 @@ export function PortalShell({ user, currentTermCode, preEnrollmentTermCode, cart
                 {item.href === '/student/pre-enrollment' && cartCount > 0 && (
                   <span
                     className={cn(
-                      'ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f68629] px-1.5 text-[0.65rem] font-bold text-white',
+                      'ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f68629] px-1.5 text-[0.65rem] font-bold text-[var(--on-orange)]',
                       collapsed && 'lg:absolute lg:right-2.5 lg:top-1.5 lg:h-4 lg:min-w-4 lg:px-1 lg:text-[0.58rem]',
                     )}
                   >
