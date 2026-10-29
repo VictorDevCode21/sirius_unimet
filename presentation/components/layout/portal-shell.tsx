@@ -20,6 +20,7 @@ import {
   X,
 } from 'lucide-react'
 import { UnimetLogo } from '@/presentation/components/brand/unimet-logo'
+import { HelpPanel } from '@/presentation/components/shared/help-panel'
 import { logout } from '@/control/controllers/authentication.controller'
 import { cn } from '@/presentation/lib/utils'
 
@@ -232,6 +233,7 @@ export function PortalShell({ user, currentTermCode, preEnrollmentTermCode, cart
             </p>
           </div>
           <div className="flex items-center gap-2 sm:gap-3">
+            <HelpPanel />
             <ThemeToggle />
             <ProfileMenu user={user} />
           </div>
