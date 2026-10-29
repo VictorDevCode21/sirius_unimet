@@ -6,6 +6,7 @@ import {
   ChevronRight,
   Clock3,
   CreditCard,
+  Info,
   LoaderCircle,
   LockKeyhole,
   Plus,
@@ -19,6 +20,7 @@ import {
   XCircle,
 } from 'lucide-react'
 import { addSection, removeSection, type ActionResult, type Offer, type SectionView } from '@/control/controllers/enrollment.controller'
+import { blocksOverlap } from '@/domain/enrollment/enrollment-validator'
 import { StatusBadge } from '@/presentation/components/shared/status-badge'
 import { formatCurrency, formatSchedule, toRoman } from '@/presentation/lib/format'
 import { SubjectDrawer } from '@/presentation/portals/student/flowchart/subject-drawer'
@@ -92,64 +94,99 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
     run(sectionId, addSection)
   }
 
+  // First selected section of another subject whose schedule overlaps the candidate, with the overlapping blocks.
+  const findClash = (candidate: SectionView) => {
+    for (const other of selected) {
+      if (other.subject.id === candidate.subject.id) continue
+      const overlapping = other.blocks.filter((block) => candidate.blocks.some((own) => blocksOverlap(block, own)))
+      if (overlapping.length) return { subjectName: other.subject.name, schedule: formatSchedule(overlapping) }
+    }
+    return null
+  }
+
   const renderSection = (section: SectionView, subject: OfferSubject) => {
     const isSelected = selectedBySubject.get(subject.id)?.id === section.id
-    const otherSelected = !isSelected && selectedBySubject.has(subject.id)
+    const otherSection = isSelected ? undefined : selectedBySubject.get(subject.id)
     const isFull = section.occupied >= section.capacity
+    const clash = isSelected ? null : findClash(section)
+    const disabledReason = isSelected
+      ? null
+      : isLocked
+        ? 'Tu inscripción ya no admite cambios.'
+        : otherSection
+          ? `Ya tienes la sección ${otherSection.number} de esta materia. Quítala para elegir esta.`
+          : isFull
+            ? 'Sin cupos disponibles en esta sección.'
+            : clash
+              ? `Choca con ${clash.subjectName} (${clash.schedule}).`
+              : null
     return (
       <li
         key={section.id}
         className={cn(
-          'flex flex-col gap-3 rounded-2xl border p-3 transition sm:flex-row sm:items-center',
+          'rounded-2xl border p-3 transition',
           isSelected ? 'border-[var(--brand-orange)] bg-[var(--status-available-bg)]' : 'border-transparent bg-muted',
         )}
       >
-        <div className="min-w-0 flex-1">
-          <p className="text-sm font-bold">Sección {section.number}</p>
-          <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[0.72rem] text-muted-foreground">
-            <span className="inline-flex items-center gap-1">
-              <UserRound className="h-3.5 w-3.5" /> {section.professor}
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <Clock3 className="h-3.5 w-3.5" /> {formatSchedule(section.blocks)}
-            </span>
-            <span className={cn('inline-flex items-center gap-1', isFull && 'font-bold text-red-500')}>
-              <UsersRound className="h-3.5 w-3.5" /> {section.capacity - section.occupied} cupos
-            </span>
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-bold">Sección {section.number}</p>
+            <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[0.72rem] text-muted-foreground">
+              <span className="inline-flex items-center gap-1">
+                <UserRound className="h-3.5 w-3.5" /> {section.professor}
+              </span>
+              <span className="inline-flex items-center gap-1">
+                <Clock3 className="h-3.5 w-3.5" /> {formatSchedule(section.blocks)}
+              </span>
+              <span className={cn('inline-flex items-center gap-1', isFull && 'font-bold text-red-500')}>
+                <UsersRound className="h-3.5 w-3.5" /> {section.capacity - section.occupied} cupos
+              </span>
+            </div>
           </div>
+          {isSelected ? (
+            <button
+              type="button"
+              className="secondary-button group !px-3.5 !py-2 text-xs hover:border-red-500/40 hover:text-red-600 focus:border-red-500/40 focus:text-red-600"
+              disabled={isLocked || pendingId === section.id}
+              onClick={() => removeWithUndo(section.id)}
+              aria-label={`Quitar ${subject.name}`}
+            >
+              {pendingId === section.id ? (
+                <LoaderCircle className="animate-spin" />
+              ) : (
+                <>
+                  <span className="inline-flex items-center gap-1.5 group-hover:hidden group-focus:hidden">
+                    <CheckCircle2 className="text-[var(--status-passed)]" /> Agregada
+                  </span>
+                  <span className="hidden items-center gap-1.5 group-hover:inline-flex group-focus:inline-flex">
+                    <X /> Quitar
+                  </span>
+                </>
+              )}
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="primary-button !px-3.5 !py-2 text-xs"
+              disabled={Boolean(disabledReason) || pendingId === section.id}
+              onClick={() => run(section.id, addSection)}
+              aria-describedby={disabledReason ? `reason-${section.id}` : undefined}
+            >
+              {pendingId === section.id ? <LoaderCircle className="animate-spin" /> : <Plus />}
+              {isFull ? 'Sin cupos' : 'Agregar'}
+            </button>
+          )}
         </div>
-        {isSelected ? (
-          <button
-            type="button"
-            className="secondary-button group !px-3.5 !py-2 text-xs hover:border-red-500/40 hover:text-red-600 focus:border-red-500/40 focus:text-red-600"
-            disabled={isLocked || pendingId === section.id}
-            onClick={() => removeWithUndo(section.id)}
-            aria-label={`Quitar ${subject.name}`}
-          >
-            {pendingId === section.id ? (
-              <LoaderCircle className="animate-spin" />
-            ) : (
-              <>
-                <span className="inline-flex items-center gap-1.5 group-hover:hidden group-focus:hidden">
-                  <CheckCircle2 className="text-[var(--status-passed)]" /> Agregada
-                </span>
-                <span className="hidden items-center gap-1.5 group-hover:inline-flex group-focus:inline-flex">
-                  <X /> Quitar
-                </span>
-              </>
+        {disabledReason && (
+          <p
+            id={`reason-${section.id}`}
+            className={cn(
+              'mt-2 flex items-start gap-1.5 text-[0.72rem] font-semibold leading-snug',
+              clash && !otherSection && !isFull && !isLocked ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground',
             )}
-          </button>
-        ) : (
-          <button
-            type="button"
-            className="primary-button !px-3.5 !py-2 text-xs"
-            disabled={isLocked || otherSelected || isFull || pendingId === section.id}
-            onClick={() => run(section.id, addSection)}
-            title={otherSelected ? 'Ya tienes otra sección de esta materia' : undefined}
           >
-            {pendingId === section.id ? <LoaderCircle className="animate-spin" /> : <Plus />}
-            {isFull ? 'Sin cupos' : 'Agregar'}
-          </button>
+            <Info className="mt-px h-3.5 w-3.5 shrink-0" /> {disabledReason}
+          </p>
         )}
       </li>
     )
