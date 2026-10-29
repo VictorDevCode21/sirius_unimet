@@ -16,47 +16,42 @@ export default async function SummaryPage() {
 
   return (
     <div className="content-container">
-      <section className="hero-card reveal">
-        <div className="login-orb login-orb-orange !h-80 !w-80 opacity-70" />
+      <section className="hero-card reveal !py-6 sm:!py-7">
+        <div className="login-orb login-orb-orange !h-64 !w-64 opacity-60" />
         <div className="login-bars" aria-hidden="true">
           <span />
           <span />
           <span />
         </div>
-        <div className="relative grid gap-8 lg:grid-cols-[1.4fr_0.6fr] lg:items-end">
-          <div>
-            <p className="text-sm font-medium text-white/65">{formatLongDate(new Date())}</p>
-            <h1 className="login-headline mt-3">
-              <span className="line-small">Hola, {firstName(record.student.name)}</span>
-              <span className="line-hero !text-[clamp(2.8rem,6vw,5.5rem)]">Sigue avanzando</span>
+        <div className="relative flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <p className="text-xs font-medium text-white/65">{formatLongDate(new Date())}</p>
+            <h1 className="mt-1 font-display text-3xl font-extrabold uppercase leading-none sm:text-4xl">
+              Hola, <span className="text-[#ffb36b]">{firstName(record.student.name)}</span>
             </h1>
-            <p className="mt-5 max-w-xl text-sm leading-relaxed text-white/75 sm:text-base">
-              Llevas el {stats.progressPercent.toFixed(0)}% de tu carrera. Tienes {availableCount} materias disponibles para
-              pre-inscribir {offer ? `en el período ${offer.term.name}` : 'próximamente'}.
+            <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/75">
+              Tienes {availableCount} materias disponibles para pre-inscribir{' '}
+              {offer ? `en el período ${offer.term.name}` : 'próximamente'}.
             </p>
-            <div className="mt-7 flex flex-wrap gap-3">
+            <div className="mt-4 flex flex-wrap gap-2.5">
               <Link
                 href="/student/pre-enrollment"
-                className="inline-flex items-center gap-2 rounded-full bg-[#f68629] px-5 py-3 text-sm font-bold text-white shadow-lg shadow-orange-950/30 transition hover:-translate-y-0.5 hover:bg-[#ff8200]"
+                className="inline-flex items-center gap-2 rounded-full bg-[#f68629] px-5 py-2.5 text-sm font-bold text-white shadow-lg shadow-orange-950/30 transition hover:-translate-y-0.5 hover:bg-[#ff8200]"
               >
                 Pre-inscribir materias <ArrowRight className="h-4 w-4" />
               </Link>
               <Link
                 href="/student/flowchart"
-                className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-5 py-3 text-sm font-bold text-white backdrop-blur transition hover:bg-white/20"
+                className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-5 py-2.5 text-sm font-bold text-white backdrop-blur transition hover:bg-white/20"
               >
                 Ver mi flujograma
               </Link>
             </div>
           </div>
 
-          <div className="glass-card hidden p-6 lg:block">
-            <div className="flex items-center justify-between">
-              <p className="text-xs font-bold uppercase tracking-[0.14em] text-white/70">Avance</p>
-              <Trophy className="h-4 w-4 text-[#ffb36b]" />
-            </div>
-            <div className="relative mx-auto mt-4 h-36 w-36">
-              <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
+          <div className="glass-card flex shrink-0 items-center gap-4 self-start p-4 sm:self-auto">
+            <div className="relative h-24 w-24 shrink-0">
+              <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90" aria-hidden="true">
                 <circle cx="50" cy="50" r="42" fill="none" stroke="rgb(255 255 255 / 15%)" strokeWidth="10" />
                 <circle
                   cx="50"
@@ -69,19 +64,23 @@ export default async function SummaryPage() {
                   strokeDasharray={`${(stats.progressPercent / 100) * 263.9} 263.9`}
                 />
               </svg>
-              <div className="absolute inset-0 flex flex-col items-center justify-center">
-                <span className="font-display text-4xl font-extrabold">{stats.progressPercent.toFixed(0)}%</span>
-                <span className="text-[0.68rem] text-white/65">de la carrera</span>
-              </div>
+              <span className="absolute inset-0 flex items-center justify-center font-display text-2xl font-extrabold">
+                {stats.progressPercent.toFixed(0)}%
+              </span>
             </div>
-            <p className="mt-4 text-center text-xs text-white/70">
-              {stats.passedCredits} de {stats.planCredits} créditos
-            </p>
+            <div>
+              <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-white/70">
+                <Trophy className="h-3.5 w-3.5 text-[#ffb36b]" /> Avance
+              </p>
+              <p className="mt-1 text-sm font-semibold">
+                {stats.passedCredits} de {stats.planCredits} créditos
+              </p>
+            </div>
           </div>
         </div>
       </section>
 
-      <div className="reveal reveal-1 mb-6 mt-10 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+      <div className="reveal reveal-1 mb-5 mt-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="eyebrow">Panel del estudiante</p>
           <h2 className="page-title mt-2 !text-[clamp(1.6rem,2.6vw,2.2rem)]">Tu resumen académico</h2>
@@ -177,9 +176,6 @@ export default async function SummaryPage() {
           <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
             Solo podrás seleccionar secciones de materias cuyas prelaciones ya aprobaste.
           </p>
-          <Link href="/student/pre-enrollment" className="primary-button mt-6 w-full">
-            Ir a pre-inscripción <ArrowRight />
-          </Link>
         </section>
       </div>
     </div>
