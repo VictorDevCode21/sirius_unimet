@@ -16,6 +16,7 @@ import {
   Moon,
   PanelLeftClose,
   PanelLeftOpen,
+  Settings,
   Sun,
   X,
 } from 'lucide-react'
@@ -111,6 +112,9 @@ function ProfileMenu({ user }: { user: PortalShellProps['user'] }) {
           <div className="pt-1.5">
             <Link href="/microsoft-365" className="menu-item" role="menuitem" onClick={() => setOpen(false)}>
               <ExternalLink /> Microsoft 365
+            </Link>
+            <Link href="/student/settings" className="menu-item" role="menuitem" onClick={() => setOpen(false)}>
+              <Settings /> Ajustes
             </Link>
             <form action={logout}>
               <button type="submit" className="menu-item" role="menuitem">
