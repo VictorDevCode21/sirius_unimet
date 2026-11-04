@@ -91,23 +91,23 @@ export default async function SummaryPage() {
       </div>
 
       <div className="card-grid grid sm:grid-cols-2 xl:grid-cols-4">
-        <div className="stat-card reveal reveal-1">
+        <Link href="/student/flowchart" className="stat-card reveal reveal-1 block">
           <div className="stat-icon bg-[#003087]/10 text-[#003087] dark:bg-[#1859a9]/25 dark:text-[#8fb8ff]">
             <GraduationCap />
           </div>
           <p className="mt-5 text-xs font-semibold text-muted-foreground">Carrera</p>
           <p className="mt-1 text-lg font-bold leading-tight">{career.name}</p>
           <p className="mt-1 text-xs text-muted-foreground">{stats.planCredits} UC en el plan de estudios</p>
-        </div>
-        <div className="stat-card reveal reveal-2">
+        </Link>
+        <Link href="/student/history" className="stat-card reveal reveal-2 block">
           <div className="stat-icon bg-[#f68629]/15 text-[var(--orange-text)]">
             <Sparkles />
           </div>
           <p className="mt-5 text-xs font-semibold text-muted-foreground">Índice acumulado</p>
           <p className="mt-1 font-display text-4xl font-extrabold">{formatGrade(record.average)}</p>
           <p className="mt-1 text-xs text-muted-foreground">Escala de 0 a 20 puntos</p>
-        </div>
-        <div className="stat-card reveal reveal-3">
+        </Link>
+        <Link href="/student/flowchart" className="stat-card reveal reveal-3 block">
           <div className="stat-icon bg-emerald-500/12 text-emerald-600 dark:text-emerald-400">
             <BookOpen />
           </div>
@@ -119,8 +119,8 @@ export default async function SummaryPage() {
           <div className="progress-track mt-3">
             <span style={{ width: `${stats.progressPercent}%` }} />
           </div>
-        </div>
-        <div className="stat-card reveal reveal-4">
+        </Link>
+        <Link href="/student/flowchart" className="stat-card reveal reveal-4 block">
           <div className="stat-icon bg-violet-500/12 text-violet-600 dark:text-violet-400">
             <CalendarDays />
           </div>
@@ -129,7 +129,7 @@ export default async function SummaryPage() {
           <p className="mt-1 text-xs text-muted-foreground">
             {stats.passedSubjects} de {stats.totalSubjects} materias aprobadas
           </p>
-        </div>
+        </Link>
       </div>
 
       <div className="section-grid mt-5 grid xl:grid-cols-[1.35fr_0.65fr]">

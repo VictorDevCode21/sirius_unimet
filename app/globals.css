@@ -74,6 +74,8 @@
   --icon-button-size: 2.35rem;
   /* Minimum pointer target size (WCAG 2.2, 2.5.8); kept in px so it holds at every zoom level. */
   --tap-min: 24px;
+  /* Border color of interactive cards on hover and keyboard focus. */
+  --card-hover-border: var(--brand-orange);
 
   --status-passed: #0b7a55;
   --status-passed-bg: rgb(14 159 110 / 9%);
@@ -677,11 +679,14 @@
 
 .stat-card {
   padding: var(--card-padding);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.2s ease;
 }
 
-.stat-card:hover {
+.stat-card:hover,
+.stat-card:focus-visible,
+.stat-card:focus-within {
   transform: translateY(-3px);
+  border-color: var(--card-hover-border);
   box-shadow: var(--shadow-lift);
 }
 
@@ -811,14 +816,16 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
+  border: 1px solid transparent;
   border-radius: var(--card-radius-sm);
   background: var(--muted);
   padding: var(--card-padding-sm);
-  transition: transform 0.2s ease;
+  transition: transform 0.2s ease, border-color 0.2s ease;
 }
 
 .course-row:hover {
   transform: translateX(3px);
+  border-color: var(--card-hover-border);
 }
 
 .course-mark {
@@ -995,9 +1002,11 @@
   transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease, opacity 0.2s ease;
 }
 
-.subject-card:hover {
+.subject-card:hover,
+.subject-card:focus-visible {
   z-index: 1;
   transform: translateY(-3px);
+  border-color: var(--card-hover-border);
   box-shadow: var(--shadow-lift);
 }
 
@@ -1201,7 +1210,7 @@
 .office-status svg { height: 1rem; width: 1rem; }
 .office-app-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: var(--card-gap); margin-top: 1.25rem; }
 .office-app-card { display: flex; align-items: center; gap: 0.7rem; border: 1px solid var(--border); border-radius: var(--card-radius-md); background: var(--card); padding: calc(var(--card-padding) * 0.8); box-shadow: var(--shadow-soft); transition: transform 0.2s, border-color 0.2s; }
-.office-app-card:hover { transform: translateY(-0.2rem); border-color: var(--brand-orange); }
+.office-app-card:hover, .office-app-card:focus-visible { transform: translateY(-0.2rem); border-color: var(--card-hover-border); }
 .office-app-icon { display: flex; height: var(--icon-box); width: var(--icon-box); flex-shrink: 0; align-items: center; justify-content: center; border-radius: var(--card-radius-sm); color: white; }
 .office-app-icon svg { height: var(--icon-size); width: var(--icon-size); }
 .office-app-card h3 { font-size: 0.9rem; font-weight: 800; }
@@ -1213,8 +1222,9 @@
 
 /* ---------- Motion ---------- */
 
+/* Fill mode `backwards` applies the start state during the delay without pinning `transform` afterwards, so hover lifts still work. */
 .reveal {
-  animation: reveal 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+  animation: reveal 0.7s cubic-bezier(0.2, 0.8, 0.2, 1) backwards;
 }
 
 .reveal-1 { animation-delay: 0.05s; }
@@ -1269,6 +1279,17 @@
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+  }
+
+  .stat-card:hover,
+  .stat-card:focus-visible,
+  .stat-card:focus-within,
+  .course-row:hover,
+  .subject-card:hover,
+  .subject-card:focus-visible,
+  .office-app-card:hover,
+  .office-app-card:focus-visible {
+    transform: none;
   }
 }
 
