@@ -40,3 +40,17 @@ export function validateSectionCapacity(capacity: number, occupied = 0) {
 export function nextSectionNumber(existingNumbers: number[]) {
   return existingNumbers.length ? Math.max(...existingNumbers) + 1 : 1
 }
+
+// A section with enrolled students or grades keeps the history and cannot be deleted.
+export function validateSectionDeletable(occupied: number, grades: number) {
+  if (occupied > 0) {
+    throw new DomainError(
+      `La sección tiene ${occupied} ${occupied === 1 ? 'estudiante inscrito' : 'estudiantes inscritos'} y no se puede eliminar. Puedes editar su cupo o profesor.`,
+    )
+  }
+  if (grades > 0) throw new DomainError('La sección tiene calificaciones registradas y no se puede eliminar.')
+}
+
+export function validateSectionFound(section: unknown) {
+  if (!section) throw new DomainError('La sección no existe o no pertenece a tu departamento. Recarga la lista de secciones.')
+}

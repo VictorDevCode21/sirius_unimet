@@ -21,3 +21,18 @@ export const createSectionSchema = z.object({
 })
 
 export type CreateSectionInput = z.input<typeof createSectionSchema>
+
+export const sectionIdSchema = z.string().uuid('Sección inválida.')
+
+export const updateSectionSchema = z.object({
+  sectionId: sectionIdSchema,
+  professorId: z.string().uuid('Elige un profesor.'),
+  capacity,
+  number: z.coerce
+    .number({ message: 'Indica el número de sección.' })
+    .int('El número de sección debe ser entero.')
+    .min(1, 'El número de sección debe ser mayor que cero.')
+    .max(99, 'El número de sección no puede superar 99.'),
+})
+
+export type UpdateSectionInput = z.input<typeof updateSectionSchema>

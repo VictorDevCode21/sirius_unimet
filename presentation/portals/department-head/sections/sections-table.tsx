@@ -1,3 +1,5 @@
+import Link from 'next/link'
+import { ChevronRight } from 'lucide-react'
 import type { ManagedSectionView } from '@/control/controllers/section-management.queries'
 
 // Sections of a term with subject, number, professor and capacity.
@@ -20,7 +22,10 @@ export function SectionsTable({ sections, termName, highlightId }: { sections: M
             <th scope="col" className="px-5 py-4">Materia</th>
             <th scope="col" className="px-3 py-4">Sección</th>
             <th scope="col" className="px-3 py-4">Profesor</th>
-            <th scope="col" className="px-5 py-4 text-right">Cupo</th>
+            <th scope="col" className="px-3 py-4 text-right">Cupo</th>
+            <th scope="col" className="px-5 py-4 text-right">
+              <span className="sr-only">Acciones</span>
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -34,7 +39,16 @@ export function SectionsTable({ sections, termName, highlightId }: { sections: M
               </td>
               <td className="px-3 py-3.5 font-semibold">{section.number}</td>
               <td className="px-3 py-3.5">{section.professor.name}</td>
-              <td className="px-5 py-3.5 text-right font-display text-lg font-extrabold">{section.capacity}</td>
+              <td className="px-3 py-3.5 text-right font-display text-lg font-extrabold">{section.capacity}</td>
+              <td className="px-5 py-3.5 text-right">
+                <Link
+                  href={`/department-head/sections/${section.id}`}
+                  className="inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-bold text-[var(--accent-text)] hover:bg-muted"
+                  aria-label={`Gestionar sección ${section.number} de ${section.subject.name}`}
+                >
+                  {section.term.editable ? 'Gestionar' : 'Ver'} <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
+                </Link>
+              </td>
             </tr>
           ))}
         </tbody>
