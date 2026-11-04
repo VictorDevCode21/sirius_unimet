@@ -27,7 +27,7 @@ export function SectionsTable({
 
   return (
     <div className="surface reveal reveal-2 overflow-x-auto">
-      <table className="w-full min-w-[66rem] border-collapse text-left text-sm">
+      <table className="w-full min-w-[58rem] border-collapse text-left text-sm">
         <caption className="sr-only">Secciones del período {termName}</caption>
         <thead>
           <tr className="border-b border-border text-[0.68rem] font-bold uppercase tracking-[0.12em] text-muted-foreground">
@@ -38,7 +38,7 @@ export function SectionsTable({
             <th scope="col" className="px-3 py-4 text-right">Cupo</th>
             <th scope="col" className="px-3 py-4 text-right">Inscritos</th>
             <th scope="col" className="px-3 py-4 text-right">Disponibles</th>
-            <th scope="col" className="px-3 py-4">
+            <th scope="col" className="hidden px-3 py-4 2xl:table-cell">
               <span className="sr-only">Ocupación</span>
             </th>
             <th scope="col" className="px-5 py-4 text-right">
@@ -68,8 +68,11 @@ export function SectionsTable({
               </td>
               <td className="px-3 py-3.5 text-right font-display text-lg font-extrabold">{section.capacity}</td>
               <td className="px-3 py-3.5 text-right font-display text-lg font-extrabold">{section.occupancy.enrolled}</td>
-              <td className="px-3 py-3.5 text-right font-display text-lg font-extrabold">{section.occupancy.available}</td>
-              <td className="px-3 py-3.5">
+              <td className="px-3 py-3.5 text-right">
+                <span className="font-display text-lg font-extrabold">{section.occupancy.available}</span>
+                {section.occupancy.full && <span className="block text-[0.68rem] font-bold text-[var(--status-available)] 2xl:hidden">Sin cupos</span>}
+              </td>
+              <td className="hidden px-3 py-3.5 2xl:table-cell">
                 <OccupancyBar occupancy={section.occupancy} />
               </td>
               <td className="px-5 py-3.5 text-right">
