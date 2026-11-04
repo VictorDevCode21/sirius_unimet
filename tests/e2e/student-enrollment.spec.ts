@@ -127,3 +127,14 @@ test.describe('HU-15B remove sections and keep the pre-enrollment', () => {
     await freshContext.close()
   })
 })
+
+test.describe('HU-16A schedule clashes and credit limit', () => {
+  test('shows the clashing subject, day and time and does not let the section be added', async ({ page }) => {
+    await page.goto(PRE_ENROLLMENT)
+    await addSection(page, 'FGE3', 2)
+    const clashing = sectionRow(page, 'FPTSP18', 1)
+    await expect(clashing).toContainText('Choca con Electiva de Formación General (Vie 08:45–11:45).')
+    await expect(clashing.getByRole('button', { name: 'Agregar' })).toBeDisabled()
+    await expect(sectionRow(page, 'FPTSP18', 2).getByRole('button', { name: 'Agregar' })).toBeEnabled()
+  })
+})
