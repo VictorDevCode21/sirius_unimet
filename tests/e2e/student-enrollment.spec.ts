@@ -100,7 +100,8 @@ test.describe('HU-15B remove sections and keep the pre-enrollment', () => {
     await page.goto(PRE_ENROLLMENT)
     const seatsBefore = await seatsOf(page, 'FPTSP27', 1)
     await addSection(page, 'FPTSP27', 1)
-    await expect.poll(() => seatsOf(page, 'FPTSP27', 1)).toBe(seatsBefore - 1)
+    // Pre-enrolling does not take a seat; only confirmed (paid) enrollments do.
+    await expect.poll(() => seatsOf(page, 'FPTSP27', 1)).toBe(seatsBefore)
 
     await selectionPanel(page).getByRole('button', { name: 'Quitar Análisis de Datos' }).click()
     await expect(toast(page)).toContainText('se retiró de tu pre-inscripción')

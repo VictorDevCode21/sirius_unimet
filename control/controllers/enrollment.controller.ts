@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { checkEnrollmentSeats } from '@/control/controllers/enrollment-seats'
 import { getStudentContext } from '@/control/controllers/student-context'
 import { replaceSectionSchema, sectionIdSchema, type ReplaceSectionInput } from '@/control/validation/enrollment.schema'
 import {
@@ -9,6 +10,7 @@ import {
   removeSection as removeEnrollmentSection,
   replaceSectionWithSeatLock,
 } from '@/data-access/repositories/enrollment.repository'
+import { prisma } from '@/data-access/prisma'
 import { findOfferByTerm, findSectionById } from '@/data-access/repositories/section.repository'
 import { findNextTerm, findOpenTerm } from '@/data-access/repositories/term.repository'
 import { calculateAmount } from '@/domain/billing/amount-calculator'
@@ -23,11 +25,16 @@ import {
   type SectionCandidate,
 } from '@/domain/enrollment/enrollment-validator'
 import { isOfferable, isSectionFull, seatsLeft } from '@/domain/enrollment/offer-rules'
+import { fullSectionMessage, type FullSection } from '@/domain/enrollment/seat-rules'
 import { DomainError } from '@/domain/shared/domain-error'
 
 export interface ActionResult {
   ok: boolean
   message: string
+}
+
+export interface SeatValidationResult extends ActionResult {
+  fullSections: FullSection[]
 }
 
 type SectionRecord = NonNullable<Awaited<ReturnType<typeof findSectionById>>>
@@ -211,6 +218,28 @@ export async function removeSection(rawSectionId: string): Promise<ActionResult>
     await removeEnrollmentSection(enrollment.id, parsed.data, (credits) => calculateAmount(credits, Number(term!.ratePerCredit)))
     return `${detail.section.subject.name} se retiró de tu pre-inscripción.`
   })
+}
+
+// Checks, without taking any seat, that every section of the student's pre-enrollment still has seats. Called before
+// going to payment; returns the full sections with a suggested alternative each.
+export async function validateSeats(): Promise<SeatValidationResult> {
+  try {
+    const { profile } = await getStudentContext()
+    const term = await findOpenTerm()
+    validateTermOpen(term)
+    const enrollment = await findEnrollment(profile.id, term!.id)
+    if (!enrollment?.details.length) {
+      return { ok: false, message: 'Tu pre-inscripción está vacía. Agrega al menos una sección antes de pagar.', fullSections: [] }
+    }
+    const fullSections = await checkEnrollmentSeats(prisma, enrollment.id, { lock: false })
+    if (fullSections.length) {
+      return { ok: false, message: fullSections.map(fullSectionMessage).join(' '), fullSections }
+    }
+    return { ok: true, message: 'Todas tus secciones tienen cupo.', fullSections: [] }
+  } catch (error) {
+    if (error instanceof DomainError) return { ok: false, message: error.message, fullSections: [] }
+    throw error
+  }
 }
 
 // Next term that has not started yet, shown when no term is open for pre-enrollment.

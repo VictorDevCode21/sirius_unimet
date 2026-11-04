@@ -97,5 +97,5 @@ export function validateMaxCredits(selected: SectionCandidate[], candidate: Sect
 }
 
 export function validateCapacity(occupied: number, capacity: number) {
-  if (occupied >= capacity) throw new DomainError('La sección no tiene cupos disponibles. Elige otra sección de la materia si la hay.')
+  if (occupied >= capacity) throw new DomainError('La sección está llena: no quedan cupos. Elige otra sección de la materia si la hay.')
 }
