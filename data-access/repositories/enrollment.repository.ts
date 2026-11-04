@@ -11,6 +11,21 @@ export function findEnrollment(studentId: string, termId: string) {
   return prisma.enrollment.findUnique({ where: { studentId_termId: { studentId, termId } }, include: enrollmentInclude })
 }
 
+// Credits of each section in an enrollment and the rate per credit of its term.
+export async function findEnrollmentCredits(enrollmentId: string, client: Pick<typeof prisma, 'enrollment'> = prisma) {
+  const enrollment = await client.enrollment.findUniqueOrThrow({
+    where: { id: enrollmentId },
+    select: {
+      term: { select: { ratePerCredit: true } },
+      details: { select: { section: { select: { subject: { select: { credits: true } } } } } },
+    },
+  })
+  return {
+    ratePerCredit: Number(enrollment.term.ratePerCredit),
+    sections: enrollment.details.map((detail) => ({ credits: detail.section.subject.credits })),
+  }
+}
+
 // Subjects of the student's confirmed enrollment in a term that still have no published grade.
 export async function findInProgressSubjectIds(studentId: string, termId: string) {
   const details = await prisma.enrollmentDetail.findMany({

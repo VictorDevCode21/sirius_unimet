@@ -1,13 +1,14 @@
 'use client'
 
 import { useEffect, useMemo, useRef, useState } from 'react'
+import Link from 'next/link'
 import {
   ArrowLeftRight,
   CalendarDays,
   CheckCircle2,
   ChevronRight,
   Clock3,
-  CreditCard,
+  ClipboardList,
   Info,
   LoaderCircle,
   LockKeyhole,
@@ -31,6 +32,7 @@ import {
 import { blocksOverlap } from '@/domain/enrollment/enrollment-validator'
 import { StatusBadge } from '@/presentation/components/shared/status-badge'
 import { formatCurrency, formatSchedule, toRoman } from '@/presentation/lib/format'
+import { ROUTES } from '@/presentation/lib/routes'
 import { SubjectDrawer } from '@/presentation/portals/student/flowchart/subject-drawer'
 import { WeeklySchedule } from '@/presentation/portals/student/pre-enrollment/weekly-schedule'
 import { cn } from '@/presentation/lib/utils'
@@ -435,7 +437,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
         <div className="mt-5 border-t border-border pt-4">
           <div className="flex items-center justify-between text-sm">
             <span className="text-muted-foreground">Unidades de crédito</span>
-            <strong>
+            <strong className="tabular-nums">
               {totalCredits} / {offer.term.maxCredits} UC
             </strong>
           </div>
@@ -445,16 +447,16 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
           <div className="mt-4 flex items-end justify-between">
             <span className="text-sm text-muted-foreground">
               Monto
-              <small className="block text-[0.68rem]">{formatCurrency(offer.term.ratePerCredit)} por UC</small>
+              <small className="block text-[0.68rem] tabular-nums">{formatCurrency(offer.term.ratePerCredit)} por UC</small>
             </span>
-            <strong className="font-display text-3xl font-extrabold">{formatCurrency(offer.enrollment?.amount ?? 0)}</strong>
+            <strong className="font-display text-3xl font-extrabold tabular-nums">{formatCurrency(offer.enrollment?.amount ?? 0)}</strong>
           </div>
         </div>
 
-        <button type="button" className="primary-button mt-5 w-full" disabled title="Disponible próximamente">
-          <CreditCard /> Continuar al pago
-        </button>
-        <p className="mt-2 text-center text-[0.68rem] text-muted-foreground">El pago simulado estará disponible próximamente.</p>
+        <Link href={ROUTES.studentPreEnrollmentSummary} className="primary-button mt-5 w-full">
+          <ClipboardList /> Ver resumen
+        </Link>
+        <p className="mt-2 text-center text-[0.68rem] text-muted-foreground">Revisa el monto y paga desde el resumen.</p>
       </aside>
 
       {detail && <SubjectDrawer subject={detail} onClose={() => setDetail(null)} showEnrollLink={false} />}
