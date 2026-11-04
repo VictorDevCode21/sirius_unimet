@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Roboto_Condensed, Roboto_Flex } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { UI_ZOOM_OPTIONS, UI_ZOOM_STORAGE_KEY } from '@/presentation/lib/ui-zoom'
 import './globals.css'
 
 const robotoFlex = Roboto_Flex({ subsets: ['latin'], variable: '--font-roboto-flex', display: 'swap' })
@@ -32,8 +33,9 @@ export const viewport: Viewport = {
   ],
 }
 
-// Applies the stored theme before first paint to avoid a flash of the wrong theme.
-const themeScript = `try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}`
+// Applies the stored theme and interface zoom before first paint to avoid a flash of the wrong look.
+const themeScript = `try{var t=localStorage.getItem('theme');if(t==='dark'||(!t&&matchMedia('(prefers-color-scheme: dark)').matches))document.documentElement.classList.add('dark')}catch(e){}
+try{var z=Number(localStorage.getItem('${UI_ZOOM_STORAGE_KEY}'));if([${UI_ZOOM_OPTIONS.join(',')}].indexOf(z)>-1)document.documentElement.style.setProperty('--ui-zoom',String(z/100))}catch(e){}`
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
