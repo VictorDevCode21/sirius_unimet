@@ -15,7 +15,7 @@ export function ProfileSection({ profile }: { profile: SettingsProfile }) {
   ]
 
   return (
-    <section className="surface reveal reveal-1 p-5 sm:p-6" aria-labelledby="profile-title">
+    <section className="surface card-pad reveal reveal-1" aria-labelledby="profile-title">
       <h2 id="profile-title" className="text-lg font-bold">
         Perfil
       </h2>

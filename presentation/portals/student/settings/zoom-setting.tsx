@@ -36,7 +36,7 @@ export function ZoomSetting() {
   }
 
   return (
-    <section className="surface reveal reveal-2 p-5 sm:p-6" aria-labelledby="accessibility-title">
+    <section className="surface card-pad reveal reveal-2" aria-labelledby="accessibility-title">
       <h2 id="accessibility-title" className="text-lg font-bold">
         Accesibilidad
       </h2>

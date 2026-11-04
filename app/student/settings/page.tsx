@@ -9,7 +9,7 @@ export default async function SettingsPage() {
   return (
     <div className="content-container">
       <PageHeading eyebrow="Tu cuenta" title="Ajustes" description="Consulta tus datos y ajusta cómo se ve el portal." />
-      <div className="flex flex-col gap-6">
+      <div className="section-grid flex flex-col">
         <ProfileSection profile={profile} />
         <ZoomSetting />
       </div>

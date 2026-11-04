@@ -16,7 +16,7 @@ export default async function SummaryPage() {
 
   return (
     <div className="content-container">
-      <section className="hero-card reveal !py-6 sm:!py-7">
+      <section className="hero-card reveal !py-[var(--card-padding)] sm:!py-[var(--card-padding-lg)]">
         <div className="login-orb login-orb-orange !h-64 !w-64 opacity-60" />
         <div className="login-bars" aria-hidden="true">
           <span />
@@ -49,7 +49,7 @@ export default async function SummaryPage() {
             </div>
           </div>
 
-          <div className="glass-card flex shrink-0 items-center gap-4 self-start p-4 sm:self-auto">
+          <div className="glass-card flex shrink-0 items-center gap-3 self-start p-[var(--card-padding-sm)] sm:self-auto">
             <div className="relative h-24 w-24 shrink-0">
               <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90" aria-hidden="true">
                 <circle cx="50" cy="50" r="42" fill="none" stroke="rgb(255 255 255 / 15%)" strokeWidth="10" />
@@ -90,7 +90,7 @@ export default async function SummaryPage() {
         </span>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="card-grid grid sm:grid-cols-2 xl:grid-cols-4">
         <div className="stat-card reveal reveal-1">
           <div className="stat-icon bg-[#003087]/10 text-[#003087] dark:bg-[#1859a9]/25 dark:text-[#8fb8ff]">
             <GraduationCap />
@@ -132,8 +132,8 @@ export default async function SummaryPage() {
         </div>
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
-        <section className="surface reveal reveal-3 p-5 sm:p-7">
+      <div className="section-grid mt-5 grid xl:grid-cols-[1.35fr_0.65fr]">
+        <section className="surface card-pad reveal reveal-3">
           <div className="mb-5 flex items-start justify-between gap-4">
             <div>
               <p className="eyebrow">{currentTerm?.name ?? 'Período actual'}</p>
@@ -160,7 +160,7 @@ export default async function SummaryPage() {
           )}
         </section>
 
-        <section className="surface reveal reveal-4 flex flex-col p-5 sm:p-7">
+        <section className="surface card-pad reveal reveal-4 flex flex-col">
           <p className="eyebrow">Pre-inscripción</p>
           <h3 className="mt-1 text-xl font-bold">{offer ? `Período ${offer.term.name}` : 'Sin período abierto'}</h3>
           <div className="mt-5 grid grid-cols-2 gap-3">
