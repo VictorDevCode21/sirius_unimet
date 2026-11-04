@@ -7,6 +7,9 @@ const PRE_ENROLLMENT = '/student/pre-enrollment'
 const subjectCard = (page: Page, code: string) =>
   page.locator('article', { has: page.locator(`span.font-mono:text-is("${code}")`) })
 
+const sectionRow = (page: Page, code: string, number: number) =>
+  subjectCard(page, code).locator('li', { has: page.locator(`p:text-is("Sección ${number}")`) })
+
 test.beforeEach(async ({ page }) => {
   e2eData('reset-selection')
   await loginAsE2EStudent(page)
@@ -34,7 +37,7 @@ test.describe('HU-14 section offer', () => {
     e2eData('fill-section', 'FPTSP27', '2')
     try {
       await page.goto(PRE_ENROLLMENT)
-      const fullSection = subjectCard(page, 'FPTSP27').locator('li', { hasText: 'Sección 2' })
+      const fullSection = sectionRow(page, 'FPTSP27', 2)
       await expect(fullSection).toContainText('Llena')
       await expect(fullSection.getByRole('button', { name: 'Llena' })).toBeDisabled()
       await expect(fullSection).toContainText('Sección llena: no quedan cupos.')
@@ -60,7 +63,7 @@ const weeklySchedule = (page: Page) => page.locator('section[aria-label="Horario
 const toast = (page: Page) => page.locator('[role=status]').filter({ hasText: /\S/ }).last()
 
 async function addSection(page: Page, code: string, number: number) {
-  await subjectCard(page, code).locator('li', { hasText: `Sección ${number}` }).getByRole('button', { name: 'Agregar' }).click()
+  await sectionRow(page, code, number).getByRole('button', { name: 'Agregar' }).click()
   await expect(toast(page)).toContainText('se agregó a tu pre-inscripción')
 }
 
@@ -75,7 +78,7 @@ test.describe('HU-15A add sections', () => {
   test('replaces the selected section of the same subject in one action', async ({ page }) => {
     await page.goto(PRE_ENROLLMENT)
     await addSection(page, 'FPTEN23', 1)
-    const otherSection = subjectCard(page, 'FPTEN23').locator('li', { hasText: 'Sección 2' })
+    const otherSection = sectionRow(page, 'FPTEN23', 2)
     await expect(otherSection).toContainText('Ya tienes la sección 1 de esta materia.')
     await otherSection.getByRole('button', { name: 'Reemplazar' }).click()
     const notice = otherSection.getByRole('group', { name: 'Confirmar reemplazo' })
@@ -84,5 +87,43 @@ test.describe('HU-15A add sections', () => {
     await expect(toast(page)).toContainText('Reemplazaste la sección 1 de Sistemas de Redes por la sección 2.')
     await expect(selectionPanel(page).locator('li', { hasText: 'Sistemas de Redes' })).toHaveCount(1)
     await expect(selectionPanel(page).locator('li', { hasText: 'Sistemas de Redes' })).toContainText('Secc. 2')
+  })
+})
+
+const seatsOf = async (page: Page, code: string, number: number) => {
+  const text = await sectionRow(page, code, number).innerText()
+  return Number(text.match(/(\d+) cupos/)?.[1])
+}
+
+test.describe('HU-15B remove sections and keep the pre-enrollment', () => {
+  test('a removed section leaves the selection and the schedule and is offered again with its seat', async ({ page }) => {
+    await page.goto(PRE_ENROLLMENT)
+    const seatsBefore = await seatsOf(page, 'FPTSP27', 1)
+    await addSection(page, 'FPTSP27', 1)
+    await expect.poll(() => seatsOf(page, 'FPTSP27', 1)).toBe(seatsBefore - 1)
+
+    await selectionPanel(page).getByRole('button', { name: 'Quitar Análisis de Datos' }).click()
+    await expect(toast(page)).toContainText('se retiró de tu pre-inscripción')
+    await expect(selectionPanel(page).locator('li', { hasText: 'Análisis de Datos' })).toHaveCount(0)
+    await expect(weeklySchedule(page)).toHaveCount(0)
+    const section = sectionRow(page, 'FPTSP27', 1)
+    await expect(section.getByRole('button', { name: 'Agregar' })).toBeEnabled()
+    await expect.poll(() => seatsOf(page, 'FPTSP27', 1)).toBe(seatsBefore)
+  })
+
+  test('the selection is stored on the server and survives logging out', async ({ page, browser }) => {
+    await page.goto(PRE_ENROLLMENT)
+    await addSection(page, 'FPTSP23', 1)
+    await page.click('button[aria-haspopup="menu"]')
+    await page.getByRole('menuitem', { name: 'Cerrar sesión' }).click()
+    await page.waitForURL('**/login')
+
+    const freshContext = await browser.newContext()
+    const freshPage = await freshContext.newPage()
+    await loginAsE2EStudent(freshPage)
+    await freshPage.goto(PRE_ENROLLMENT)
+    await expect(selectionPanel(freshPage).locator('li', { hasText: 'Sistemas de Apoyo' })).toContainText('Secc. 1')
+    await expect(selectionPanel(freshPage)).toContainText('Pre-inscrita')
+    await freshContext.close()
   })
 })
