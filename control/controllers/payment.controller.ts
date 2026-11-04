@@ -46,7 +46,12 @@ export async function simulatePayment(input: SimulatePaymentInput): Promise<Paym
     if (payment.status === 'APPROVED') {
       return { ok: true, status: 'APPROVED', reference: payment.reference, message: `Pago aprobado. Tu inscripción del período ${term!.name} quedó confirmada.` }
     }
-    return { ok: false, status: 'REJECTED', reference: payment.reference, message: 'Pago rechazado. No se realizó ningún cobro.' }
+    return {
+      ok: false,
+      status: 'REJECTED',
+      reference: payment.reference,
+      message: 'Pago rechazado: no se realizó ningún cobro. Tu inscripción quedó pendiente; puedes reintentar el pago.',
+    }
   } catch (error) {
     if (error instanceof DomainError) return { ok: false, message: error.message }
     throw error
