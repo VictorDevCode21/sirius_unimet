@@ -74,7 +74,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
   const [toast, setToast] = useState<Toast | null>(null)
   const [pendingId, setPendingId] = useState<string | null>(null)
 
-  const selected = offer.enrollment?.sections ?? []
+  const selected = useMemo(() => offer.enrollment?.sections ?? [], [offer.enrollment])
   const isLocked = Boolean(offer.enrollment && offer.enrollment.status !== 'PRE_ENROLLED')
   const selectedBySubject = useMemo(() => new Map(selected.map((section) => [section.subject.id, section])), [selected])
   const totalCredits = selected.reduce((sum, section) => sum + section.subject.credits, 0)

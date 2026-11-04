@@ -92,9 +92,9 @@ export async function listOffer() {
 
 export type Offer = NonNullable<Awaited<ReturnType<typeof listOffer>>>
 
-async function runUseCase(useCase: () => Promise<string>): Promise<ActionResult> {
+async function runUseCase(execute: () => Promise<string>): Promise<ActionResult> {
   try {
-    const message = await useCase()
+    const message = await execute()
     revalidatePath('/student', 'layout')
     return { ok: true, message }
   } catch (error) {
