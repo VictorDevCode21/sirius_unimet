@@ -54,3 +54,35 @@ test.describe('HU-14 section offer', () => {
     }
   })
 })
+
+const selectionPanel = (page: Page) => page.locator('aside.surface')
+const weeklySchedule = (page: Page) => page.locator('section[aria-label="Horario semanal de tu selección"]')
+const toast = (page: Page) => page.locator('[role=status]').filter({ hasText: /\S/ }).last()
+
+async function addSection(page: Page, code: string, number: number) {
+  await subjectCard(page, code).locator('li', { hasText: `Sección ${number}` }).getByRole('button', { name: 'Agregar' }).click()
+  await expect(toast(page)).toContainText('se agregó a tu pre-inscripción')
+}
+
+test.describe('HU-15A add sections', () => {
+  test('an added section appears in the selection and in the weekly schedule', async ({ page }) => {
+    await page.goto(PRE_ENROLLMENT)
+    await addSection(page, 'FPTEN23', 1)
+    await expect(selectionPanel(page).locator('li', { hasText: 'Sistemas de Redes' })).toContainText('Secc. 1')
+    await expect(weeklySchedule(page).locator('[title^="Sistemas de Redes"]')).toHaveCount(2)
+  })
+
+  test('replaces the selected section of the same subject in one action', async ({ page }) => {
+    await page.goto(PRE_ENROLLMENT)
+    await addSection(page, 'FPTEN23', 1)
+    const otherSection = subjectCard(page, 'FPTEN23').locator('li', { hasText: 'Sección 2' })
+    await expect(otherSection).toContainText('Ya tienes la sección 1 de esta materia.')
+    await otherSection.getByRole('button', { name: 'Reemplazar' }).click()
+    const notice = otherSection.getByRole('group', { name: 'Confirmar reemplazo' })
+    await expect(notice).toContainText('¿Quieres reemplazarla por la sección 2?')
+    await notice.getByRole('button', { name: 'Reemplazar' }).click()
+    await expect(toast(page)).toContainText('Reemplazaste la sección 1 de Sistemas de Redes por la sección 2.')
+    await expect(selectionPanel(page).locator('li', { hasText: 'Sistemas de Redes' })).toHaveCount(1)
+    await expect(selectionPanel(page).locator('li', { hasText: 'Sistemas de Redes' })).toContainText('Secc. 2')
+  })
+})

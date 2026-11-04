@@ -2,11 +2,12 @@
 
 import { revalidatePath } from 'next/cache'
 import { getStudentContext } from '@/control/controllers/student-context'
-import { sectionIdSchema } from '@/control/validation/enrollment.schema'
+import { replaceSectionSchema, sectionIdSchema, type ReplaceSectionInput } from '@/control/validation/enrollment.schema'
 import {
   addSectionWithSeatLock,
   findEnrollment,
   removeSection as removeEnrollmentSection,
+  replaceSectionWithSeatLock,
 } from '@/data-access/repositories/enrollment.repository'
 import { findOfferByTerm, findSectionById } from '@/data-access/repositories/section.repository'
 import { findNextTerm, findOpenTerm } from '@/data-access/repositories/term.repository'
@@ -15,6 +16,7 @@ import {
   validateCapacity,
   validateMaxCredits,
   validatePrerequisites,
+  validateReplacement,
   validateScheduleClash,
   validateSingleSectionPerSubject,
   validateTermOpen,
@@ -35,6 +37,7 @@ const toMinutes = (time: Date) => time.getUTCHours() * 60 + time.getUTCMinutes()
 function toCandidate(section: SectionRecord): SectionCandidate {
   return {
     id: section.id,
+    number: section.number,
     subjectId: section.subjectId,
     subjectName: section.subject.name,
     credits: section.subject.credits,
@@ -143,6 +146,47 @@ export async function addSection(rawSectionId: string): Promise<ActionResult> {
       computeAmount: (credits) => calculateAmount(credits, Number(term!.ratePerCredit)),
     })
     return `${section.subject.name} (sección ${section.number}) se agregó a tu pre-inscripción.`
+  })
+}
+
+// Replaces a selected section with another section of the same subject in one server action, validating the new
+// section against the rest of the selection.
+export async function replaceSection(input: ReplaceSectionInput): Promise<ActionResult> {
+  const parsed = replaceSectionSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0].message }
+
+  return runUseCase(async () => {
+    const { profile, subjects } = await getStudentContext()
+    const term = await findOpenTerm()
+    validateTermOpen(term)
+
+    const section = await findSectionById(parsed.data.sectionId)
+    if (!section || section.termId !== term!.id) {
+      throw new DomainError('La sección no pertenece al período abierto. Recarga la página para ver la oferta vigente.')
+    }
+
+    const enrollment = await findEnrollment(profile.id, term!.id)
+    if (!enrollment) throw new DomainError('No tienes una pre-inscripción que modificar. Recarga la página.')
+    if (enrollment.status !== 'PRE_ENROLLED') {
+      throw new DomainError('Tu inscripción ya no admite cambios porque está en proceso de pago o confirmada.')
+    }
+
+    const selected = enrollment.details.map((detail) => toCandidate(detail.section))
+    const candidate = toCandidate(section)
+    const remaining = validateReplacement(selected, parsed.data.replacedSectionId, candidate)
+    const replaced = selected.find((item) => item.id === parsed.data.replacedSectionId)!
+    validatePrerequisites(subjects.find((subject) => subject.id === section.subjectId))
+    validateScheduleClash(remaining, candidate)
+    validateMaxCredits(remaining, candidate, term!.maxCredits)
+
+    await replaceSectionWithSeatLock({
+      enrollmentId: enrollment.id,
+      replacedSectionId: parsed.data.replacedSectionId,
+      sectionId: section.id,
+      assertSeatAvailable: validateCapacity,
+      computeAmount: (credits) => calculateAmount(credits, Number(term!.ratePerCredit)),
+    })
+    return `Reemplazaste la sección ${replaced.number} de ${section.subject.name} por la sección ${section.number}.`
   })
 }
 
