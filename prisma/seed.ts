@@ -12,6 +12,8 @@ import { resolveGradeStatus } from '../domain/grades/academic-progress'
 
 const STUDENT_EMAIL = 'r.victor@correo.unimet.edu.ve'
 const STUDENT_PASSWORD = 'Test123**'
+const DEPARTMENT_HEAD_EMAIL = 'jefe.ingenieria@unimet.edu.ve'
+const DEPARTMENT_HEAD_PASSWORD = 'Test123**'
 const RATE_PER_CREDIT = 45
 const MAX_CREDITS = 21
 
@@ -164,6 +166,17 @@ async function seedUsers(careerId: string) {
   return { professorIds, studentId: student.id }
 }
 
+// Sample head of the Ingeniería department, used by the section management portal.
+async function seedDepartmentHead() {
+  const passwordHash = await bcrypt.hash(DEPARTMENT_HEAD_PASSWORD, 12)
+  const head = await prisma.user.upsert({
+    where: { email: DEPARTMENT_HEAD_EMAIL },
+    update: { passwordHash, role: 'DEPARTMENT_HEAD', active: true },
+    create: { email: DEPARTMENT_HEAD_EMAIL, name: 'Laura Mendoza', passwordHash, role: 'DEPARTMENT_HEAD' },
+  })
+  await prisma.department.update({ where: { name: 'Ingeniería' }, data: { headId: head.id } })
+}
+
 async function createSection(params: { subjectId: string; termId: string; number: number; index: number; professorIds: string[]; capacity?: number }) {
   const schedule = scheduleFor(params.index)
   return prisma.section.create({
@@ -235,6 +248,7 @@ async function main() {
   await seedAcademicStructure()
   const career = await seedSystemsCurriculum()
   const { professorIds, studentId } = await seedUsers(career.id)
+  await seedDepartmentHead()
   await seedStudentHistory(career.id, studentId, professorIds)
   await seedOpenTermOffer(career.id, professorIds)
   console.log('Seed completed')
