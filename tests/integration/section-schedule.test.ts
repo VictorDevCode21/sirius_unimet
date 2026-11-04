@@ -16,8 +16,16 @@ let studentIds: string[] = []
 let fixtures: Awaited<ReturnType<typeof findSeedFixtures>>
 let subjectId: string
 let professorId: string
+let otherProfessorId: string
 
-// A professor with no blocks on Saturdays in the open term, so the tests own that day.
+// Throwaway professors without other sections, so the tests own their whole week.
+async function temporaryProfessor(label: string) {
+  const professor = await prisma.user.create({
+    data: { name: `Profesor ${label}`, email: `prof-${label}-${Date.now()}@test.local`, passwordHash: 'x', role: 'PROFESSOR' },
+  })
+  return professor.id
+}
+
 const saturday = (start: number, end: number) => ({ weekday: 'SAT' as const, startMinutes: start * 60, endMinutes: end * 60 })
 
 const assertFor = (block: ReturnType<typeof saturday>) => (state: { occupied: number; ownBlocks: never[] | { weekday: string; startMinutes: number; endMinutes: number }[]; professorBlocks: Parameters<typeof validateProfessorAvailability>[1] }) => {
@@ -36,12 +44,14 @@ before(async () => {
   fixtures = await findSeedFixtures()
   const career = await prisma.career.findUniqueOrThrow({ where: { name: 'Ingeniería en Sistemas' } })
   subjectId = (await prisma.subject.findFirstOrThrow({ where: { careerId: career.id, term: 1 }, orderBy: { code: 'asc' } })).id
-  professorId = (await prisma.user.findFirstOrThrow({ where: { role: 'PROFESSOR' }, orderBy: { email: 'desc' } })).id
+  professorId = await temporaryProfessor('a')
+  otherProfessorId = await temporaryProfessor('b')
 })
 
 after(async () => {
   await removeTemporaryStudents(studentIds)
   await prisma.section.deleteMany({ where: { id: { in: sectionIds } } })
+  await prisma.user.deleteMany({ where: { id: { in: [professorId, otherProfessorId] } } })
   await prisma.$disconnect()
 })
 
@@ -77,7 +87,7 @@ describe('HU-11 schedule blocks (database)', () => {
   })
 
   it('rejects moving a section to a professor who is busy at that time', async () => {
-    const otherProfessor = (await prisma.user.findFirstOrThrow({ where: { role: 'PROFESSOR', id: { not: professorId } }, orderBy: { email: 'asc' } })).id
+    const otherProfessor = otherProfessorId
     const theirs = await newSection(otherProfessor)
     const block = saturday(19, 21)
     await addScheduleBlockWithLock({ sectionId: theirs.id, block, assertAllowed: assertFor(block) })

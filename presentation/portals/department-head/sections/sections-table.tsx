@@ -2,21 +2,32 @@ import Link from 'next/link'
 import { CalendarX2, ChevronRight } from 'lucide-react'
 import type { ManagedSectionView } from '@/control/controllers/section-management.queries'
 import { formatSchedule } from '@/presentation/lib/format'
+import { OccupancyBar } from '@/presentation/portals/department-head/sections/occupancy-cell'
 
 // Sections of a term with subject, number, professor and capacity.
-export function SectionsTable({ sections, termName, highlightId }: { sections: ManagedSectionView[]; termName: string; highlightId?: string }) {
+export function SectionsTable({
+  sections,
+  termName,
+  highlightId,
+  filtered = false,
+}: {
+  sections: ManagedSectionView[]
+  termName: string
+  highlightId?: string
+  filtered?: boolean
+}) {
   if (!sections.length) {
     return (
       <div className="surface reveal reveal-2 p-10 text-center">
-        <p className="font-bold">No hay secciones en el período {termName}.</p>
-        <p className="mt-1 text-sm text-muted-foreground">Usa «Nueva sección» para crear la primera.</p>
+        <p className="font-bold">{filtered ? 'Ninguna sección coincide con la búsqueda.' : `No hay secciones en el período ${termName}.`}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{filtered ? 'Prueba con otro nombre o código de materia.' : 'Usa «Nueva sección» para crear la primera.'}</p>
       </div>
     )
   }
 
   return (
     <div className="surface reveal reveal-2 overflow-x-auto">
-      <table className="w-full min-w-[52rem] border-collapse text-left text-sm">
+      <table className="w-full min-w-[66rem] border-collapse text-left text-sm">
         <caption className="sr-only">Secciones del período {termName}</caption>
         <thead>
           <tr className="border-b border-border text-[0.68rem] font-bold uppercase tracking-[0.12em] text-muted-foreground">
@@ -25,6 +36,11 @@ export function SectionsTable({ sections, termName, highlightId }: { sections: M
             <th scope="col" className="px-3 py-4">Profesor</th>
             <th scope="col" className="px-3 py-4">Horario</th>
             <th scope="col" className="px-3 py-4 text-right">Cupo</th>
+            <th scope="col" className="px-3 py-4 text-right">Inscritos</th>
+            <th scope="col" className="px-3 py-4 text-right">Disponibles</th>
+            <th scope="col" className="px-3 py-4">
+              <span className="sr-only">Ocupación</span>
+            </th>
             <th scope="col" className="px-5 py-4 text-right">
               <span className="sr-only">Acciones</span>
             </th>
@@ -51,6 +67,11 @@ export function SectionsTable({ sections, termName, highlightId }: { sections: M
                 )}
               </td>
               <td className="px-3 py-3.5 text-right font-display text-lg font-extrabold">{section.capacity}</td>
+              <td className="px-3 py-3.5 text-right font-display text-lg font-extrabold">{section.occupancy.enrolled}</td>
+              <td className="px-3 py-3.5 text-right font-display text-lg font-extrabold">{section.occupancy.available}</td>
+              <td className="px-3 py-3.5">
+                <OccupancyBar occupancy={section.occupancy} />
+              </td>
               <td className="px-5 py-3.5 text-right">
                 <Link
                   href={`/department-head/sections/${section.id}`}

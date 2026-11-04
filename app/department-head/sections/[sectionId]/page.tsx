@@ -5,6 +5,7 @@ import { getManagedSection } from '@/control/controllers/section-management.quer
 import { PageHeading } from '@/presentation/components/shared/page-heading'
 import { ScheduleEditor } from '@/presentation/portals/department-head/sections/schedule-editor'
 import { SectionEditor } from '@/presentation/portals/department-head/sections/section-editor'
+import { SectionStudents } from '@/presentation/portals/department-head/sections/section-students'
 
 interface SectionDetailPageProps {
   params: Promise<{ sectionId: string }>
@@ -36,6 +37,7 @@ export default async function SectionDetailPage({ params }: SectionDetailPagePro
       )}
 
       <SectionEditor detail={detail} backHref={backHref} />
+      <SectionStudents detail={detail} />
       <ScheduleEditor section={section} />
     </div>
   )
