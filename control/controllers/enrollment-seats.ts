@@ -1,7 +1,6 @@
 import 'server-only'
 import type { Prisma } from '@/data-access/generated/prisma/client'
-import { prisma } from '@/data-access/prisma'
-import { loadAlternativeSections, loadSelectedSeats, type DbClient } from '@/data-access/repositories/seat.repository'
+import { inTransaction, loadAlternativeSections, loadSelectedSeats, type DbClient } from '@/data-access/repositories/seat.repository'
 import { assertSeatsAvailable, evaluateSeats, type FullSection } from '@/domain/enrollment/seat-rules'
 
 // Full sections of an enrollment with a suggested alternative each. With `lock`, the sections stay locked until the
@@ -31,5 +30,5 @@ export async function checkEnrollmentSeats(client: DbClient, enrollmentId: strin
 export async function confirmEnrollmentSeats(enrollmentId: string, tx?: Prisma.TransactionClient): Promise<void> {
   const take = async (client: DbClient) => assertSeatsAvailable(await checkEnrollmentSeats(client, enrollmentId, { lock: true }))
   if (tx) return take(tx)
-  await prisma.$transaction(take)
+  await inTransaction(take)
 }

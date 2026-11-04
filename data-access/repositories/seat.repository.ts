@@ -1,10 +1,18 @@
 import type { Prisma, PrismaClient } from '@/data-access/generated/prisma/client'
+import { prisma } from '@/data-access/prisma'
 import type { AlternativeSection, SelectedSeat } from '@/domain/enrollment/seat-rules'
 
 // Enrollment status whose sections hold a seat; pre-enrolled and pending enrollments do not.
 export const SEAT_HOLDING_STATUS = 'CONFIRMED' as const
 
 export type DbClient = PrismaClient | Prisma.TransactionClient
+
+export const defaultClient: DbClient = prisma
+
+// Runs work inside a database transaction; row locks taken inside it last until it commits.
+export function inTransaction<T>(work: (tx: Prisma.TransactionClient) => Promise<T>) {
+  return prisma.$transaction(work)
+}
 
 const toMinutes = (time: Date) => time.getUTCHours() * 60 + time.getUTCMinutes()
 

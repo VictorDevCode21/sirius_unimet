@@ -4,6 +4,7 @@ import { after, before, describe, it } from 'node:test'
 import { checkEnrollmentSeats, confirmEnrollmentSeats } from '@/control/controllers/enrollment-seats'
 import { prisma } from '@/data-access/prisma'
 import { addSectionWithSeatLock } from '@/data-access/repositories/enrollment.repository'
+import { defaultClient } from '@/data-access/repositories/seat.repository'
 import { validateCapacity } from '@/domain/enrollment/enrollment-validator'
 import { DomainError } from '@/domain/shared/domain-error'
 
@@ -94,7 +95,7 @@ describe('seat lock', () => {
   it('reports a full section with an alternative before payment without taking seats', async () => {
     const student = await createStudent(3)
     const enrollment = await preEnroll(student.id, lastSeatSectionId)
-    const fullSections = await checkEnrollmentSeats(prisma, enrollment.id, { lock: false })
+    const fullSections = await checkEnrollmentSeats(defaultClient, enrollment.id, { lock: false })
     assert.equal(fullSections.length, 1)
     assert.notEqual(fullSections[0].alternative, null)
     assert.notEqual(fullSections[0].alternative?.number, 90)

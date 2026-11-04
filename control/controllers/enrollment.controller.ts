@@ -10,7 +10,7 @@ import {
   removeSection as removeEnrollmentSection,
   replaceSectionWithSeatLock,
 } from '@/data-access/repositories/enrollment.repository'
-import { prisma } from '@/data-access/prisma'
+import { defaultClient } from '@/data-access/repositories/seat.repository'
 import { findOfferByTerm, findSectionById } from '@/data-access/repositories/section.repository'
 import { findNextTerm, findOpenTerm } from '@/data-access/repositories/term.repository'
 import { calculateAmount } from '@/domain/billing/amount-calculator'
@@ -231,7 +231,7 @@ export async function validateSeats(): Promise<SeatValidationResult> {
     if (!enrollment?.details.length) {
       return { ok: false, message: 'Tu pre-inscripción está vacía. Agrega al menos una sección antes de pagar.', fullSections: [] }
     }
-    const fullSections = await checkEnrollmentSeats(prisma, enrollment.id, { lock: false })
+    const fullSections = await checkEnrollmentSeats(defaultClient, enrollment.id, { lock: false })
     if (fullSections.length) {
       return { ok: false, message: fullSections.map(fullSectionMessage).join(' '), fullSections }
     }
