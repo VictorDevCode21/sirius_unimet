@@ -28,8 +28,9 @@
 /* Brand palette from the UNIMET 2025 brand manual. */
 :root {
   color-scheme: light;
-  /* Interface scale: root font size factor; viewport-based sizes multiply by it so they follow the zoom too. */
-  --ui-scale: var(--ui-zoom, 1);
+  /* Interface scale: root font size factor; viewport-based sizes multiply by it so they follow the zoom too.
+     The default zoom (100%) renders at 80% of the base design size, so the 125% zoom matches the base design. */
+  --ui-scale: calc(0.8 * var(--ui-zoom, 1));
   --brand-blue: #003087;
   --brand-sky: #1859a9;
   --brand-orange: #f68629;
