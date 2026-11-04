@@ -94,7 +94,9 @@
   * {
     @apply border-border outline-ring/50;
   }
+  /* Root size scaled by the interface zoom preference; a percentage keeps the browser's own font size setting. */
   html {
+    font-size: calc(100% * var(--ui-zoom, 1));
     -webkit-tap-highlight-color: transparent;
   }
   body {
