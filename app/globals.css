@@ -661,6 +661,17 @@
   }
 }
 
+/* Single shrinkable column by default so cards never force horizontal scrolling at large zoom levels. */
+.card-grid,
+.section-grid {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.card-grid > *,
+.section-grid > * {
+  min-width: 0;
+}
+
 .card-grid {
   gap: var(--card-gap);
 }

@@ -22,7 +22,7 @@ export function ProfileSection({ profile }: { profile: SettingsProfile }) {
       <p className="mt-1 text-sm text-muted-foreground">
         Estos datos vienen de tu registro académico. Para corregirlos, comunícate con Control de Estudios.
       </p>
-      <dl className="mt-5 grid gap-3 sm:grid-cols-2">
+      <dl className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2">
         {rows.map(({ label, value, icon: Icon }) => (
           <div key={label} className="flex items-start gap-3 rounded-[1.1rem] bg-muted p-4">
             <span className="stat-icon bg-[#003087]/10 text-[#003087] dark:bg-[#1859a9]/25 dark:text-[#8fb8ff]">
@@ -30,7 +30,7 @@ export function ProfileSection({ profile }: { profile: SettingsProfile }) {
             </span>
             <div className="min-w-0">
               <dt className="text-xs font-semibold text-muted-foreground">{label}</dt>
-              <dd className="mt-0.5 break-words text-sm font-bold">{value}</dd>
+              <dd className="mt-0.5 text-sm font-bold [overflow-wrap:anywhere]">{value}</dd>
             </div>
           </div>
         ))}
