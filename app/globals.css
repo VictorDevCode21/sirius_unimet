@@ -28,6 +28,8 @@
 /* Brand palette from the UNIMET 2025 brand manual. */
 :root {
   color-scheme: light;
+  /* Interface scale: root font size factor; viewport-based sizes multiply by it so they follow the zoom too. */
+  --ui-scale: var(--ui-zoom, 1);
   --brand-blue: #003087;
   --brand-sky: #1859a9;
   --brand-orange: #f68629;
@@ -96,7 +98,7 @@
   }
   /* Root size scaled by the interface zoom preference; a percentage keeps the browser's own font size setting. */
   html {
-    font-size: calc(100% * var(--ui-zoom, 1));
+    font-size: calc(100% * var(--ui-scale));
     -webkit-tap-highlight-color: transparent;
   }
   body {
@@ -111,6 +113,11 @@
   }
   button {
     cursor: pointer;
+  }
+  /* Default icon size in rem so icons without a size class follow the interface zoom. */
+  svg.lucide {
+    width: 1.5rem;
+    height: 1.5rem;
   }
   :focus-visible {
     outline: 2px solid var(--ring);
@@ -135,7 +142,7 @@
 
 .page-title {
   font-family: var(--font-display);
-  font-size: clamp(2rem, 3.4vw, 3rem);
+  font-size: clamp(2rem, calc(3.4vw * var(--ui-scale)), 3rem);
   font-weight: 800;
   letter-spacing: -0.02em;
   line-height: 1;
@@ -162,7 +169,7 @@
   overflow: hidden;
   border-radius: 2.25rem;
   background: linear-gradient(150deg, #002266 0%, var(--brand-blue) 42%, var(--brand-sky) 100%);
-  padding: clamp(1.75rem, 3.5vw, 3.25rem);
+  padding: clamp(1.75rem, calc(3.5vw * var(--ui-scale)), 3.25rem);
   color: white;
 }
 
@@ -205,7 +212,7 @@
 /* Oversized isotype bars used as a decorative brand motif. */
 .login-bars {
   position: absolute;
-  right: clamp(-6rem, -4vw, -2rem);
+  right: clamp(-6rem, calc(-4vw * var(--ui-scale)), -2rem);
   top: 50%;
   z-index: -1;
   display: flex;
@@ -236,7 +243,7 @@
 .login-headline .line-small {
   display: block;
   color: rgb(255 255 255 / 72%);
-  font-size: clamp(1.4rem, 2.6vw, 2.25rem);
+  font-size: clamp(1.4rem, calc(2.6vw * var(--ui-scale)), 2.25rem);
   font-weight: 500;
 }
 
@@ -246,20 +253,20 @@
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
-  font-size: clamp(3.4rem, 7.4vw, 7rem);
+  font-size: clamp(3.4rem, calc(7.4vw * var(--ui-scale)), 7rem);
 }
 
 .login-headline .line-accent {
   display: inline-flex;
   align-items: center;
   gap: 1rem;
-  font-size: clamp(2.6rem, 5.2vw, 5rem);
+  font-size: clamp(2.6rem, calc(5.2vw * var(--ui-scale)), 5rem);
 }
 
 .login-headline .line-accent::before {
   display: block;
   height: 0.6rem;
-  width: clamp(3rem, 6vw, 6rem);
+  width: clamp(3rem, calc(6vw * var(--ui-scale)), 6rem);
   border-radius: 999px;
   background: var(--brand-orange);
   content: '';
@@ -275,7 +282,7 @@
 
 .login-float {
   position: absolute;
-  right: clamp(1.75rem, 3.5vw, 3.25rem);
+  right: clamp(1.75rem, calc(3.5vw * var(--ui-scale)), 3.25rem);
   z-index: 1;
   display: none;
   width: 16.5rem;
@@ -300,7 +307,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  padding: clamp(1.5rem, 4vw, 3rem) clamp(0.5rem, 3vw, 3rem);
+  padding: clamp(1.5rem, calc(4vw * var(--ui-scale)), 3rem) clamp(0.5rem, calc(3vw * var(--ui-scale)), 3rem);
 }
 
 .login-card {
@@ -526,14 +533,14 @@
   justify-content: space-between;
   gap: 1rem;
   background: color-mix(in srgb, var(--background) 82%, transparent);
-  padding: 0 clamp(0.75rem, 3vw, 2.5rem);
+  padding: 0 clamp(0.75rem, calc(3vw * var(--ui-scale)), 2.5rem);
   backdrop-filter: blur(16px) saturate(1.4);
 }
 
 .content-container {
   width: min(100%, 92rem);
   margin: 0 auto;
-  padding: clamp(0.5rem, 2vw, 1.5rem) clamp(1rem, 3vw, 2.5rem) 5rem;
+  padding: clamp(0.5rem, calc(2vw * var(--ui-scale)), 1.5rem) clamp(1rem, calc(3vw * var(--ui-scale)), 2.5rem) 5rem;
 }
 
 .icon-button {
@@ -660,7 +667,7 @@
   overflow: hidden;
   border-radius: 2.25rem;
   background: linear-gradient(120deg, #002266, var(--brand-blue) 40%, var(--brand-sky) 80%, #2a6fc4);
-  padding: clamp(1.75rem, 4vw, 3.5rem);
+  padding: clamp(1.75rem, calc(4vw * var(--ui-scale)), 3.5rem);
   color: white;
 }
 
@@ -1105,7 +1112,7 @@
   border: 1px solid #e7d8bd;
   border-radius: 2rem;
   background: linear-gradient(135deg, #fffdf8, #f8f0df);
-  padding: clamp(1.25rem, 4vw, 3rem);
+  padding: clamp(1.25rem, calc(4vw * var(--ui-scale)), 3rem);
   color: #17315a;
   box-shadow: var(--shadow-soft);
 }
@@ -1121,7 +1128,7 @@
 /* ---------- Microsoft 365 ---------- */
 
 .office-page { min-height: 100dvh; background: radial-gradient(circle at 80% 15%, rgb(246 134 41 / 13%), transparent 30%), var(--background); }
-.office-shell { width: min(100%, 72rem); margin: 0 auto; padding: 2rem clamp(1rem, 4vw, 3rem) 4rem; }
+.office-shell { width: min(100%, 72rem); margin: 0 auto; padding: 2rem clamp(1rem, calc(4vw * var(--ui-scale)), 3rem) 4rem; }
 .office-back { display: inline-flex; align-items: center; gap: 0.5rem; color: var(--muted-foreground); font-size: 0.8rem; font-weight: 700; }
 .office-back svg { height: 1rem; width: 1rem; }
 .office-brand { display: flex; align-items: center; gap: 0.75rem; margin-top: 3rem; }
@@ -1135,8 +1142,8 @@
 .office-mark span:nth-child(2) { left: 0.8rem; top: 0; height: 1rem; }
 .office-mark span:nth-child(3) { left: 0; bottom: 0; height: 0.8rem; }
 .office-mark span:nth-child(4) { left: 0.8rem; bottom: 0; height: 1.2rem; }
-.office-hero { position: relative; display: grid; grid-template-columns: 1fr 0.8fr; gap: 2rem; overflow: hidden; margin-top: 2.5rem; border-radius: 2.25rem; background: linear-gradient(118deg, var(--brand-blue), var(--brand-sky) 65%, var(--brand-orange)); padding: clamp(1.75rem, 5vw, 4rem); color: white; }
-.office-hero h1 { margin-top: 0.7rem; font-family: var(--font-display); font-size: clamp(2.5rem, 6vw, 5rem); font-weight: 800; letter-spacing: -0.03em; line-height: 0.92; text-transform: uppercase; }
+.office-hero { position: relative; display: grid; grid-template-columns: 1fr 0.8fr; gap: 2rem; overflow: hidden; margin-top: 2.5rem; border-radius: 2.25rem; background: linear-gradient(118deg, var(--brand-blue), var(--brand-sky) 65%, var(--brand-orange)); padding: clamp(1.75rem, calc(5vw * var(--ui-scale)), 4rem); color: white; }
+.office-hero h1 { margin-top: 0.7rem; font-family: var(--font-display); font-size: clamp(2.5rem, calc(6vw * var(--ui-scale)), 5rem); font-weight: 800; letter-spacing: -0.03em; line-height: 0.92; text-transform: uppercase; }
 .office-hero h1 span { color: #ffb56a; }
 .office-hero p:not(.eyebrow) { max-width: 30rem; margin-top: 1.3rem; color: rgb(255 255 255 / 72%); font-size: 0.95rem; line-height: 1.7; }
 .office-cta { display: inline-flex; align-items: center; gap: 0.5rem; margin-top: 1.6rem; border-radius: 999px; background: var(--brand-orange); padding: 0.85rem 1.2rem; color: var(--on-orange); font-size: 0.8rem; font-weight: 800; }

@@ -83,7 +83,7 @@ export default async function SummaryPage() {
       <div className="reveal reveal-1 mb-5 mt-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="eyebrow">Panel del estudiante</p>
-          <h2 className="page-title mt-2 !text-[clamp(1.6rem,2.6vw,2.2rem)]">Tu resumen académico</h2>
+          <h2 className="page-title mt-2 !text-[clamp(1.6rem,calc(2.6vw*var(--ui-scale)),2.2rem)]">Tu resumen académico</h2>
         </div>
         <span className="pill self-start text-muted-foreground">
           <span className="pulse-dot" /> Estudiante activo

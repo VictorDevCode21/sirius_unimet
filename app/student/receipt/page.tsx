@@ -36,7 +36,7 @@ export default async function ReceiptPage() {
             </span>
           </div>
           <p className="mt-14 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#b34700]">Universidad Metropolitana</p>
-          <h2 className="mt-2 font-display text-[clamp(1.8rem,3vw,2.6rem)] font-extrabold uppercase leading-none text-[#003087]">
+          <h2 className="mt-2 font-display text-[clamp(1.8rem,calc(3vw*var(--ui-scale)),2.6rem)] font-extrabold uppercase leading-none text-[#003087]">
             Comprobante de inscripción
           </h2>
           <p className="mt-4 max-w-2xl text-[0.92rem] leading-relaxed text-[#48617e]">
