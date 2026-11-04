@@ -9,7 +9,7 @@ import {
   removeSection as removeEnrollmentSection,
 } from '@/data-access/repositories/enrollment.repository'
 import { findOfferByTerm, findSectionById } from '@/data-access/repositories/section.repository'
-import { findOpenTerm } from '@/data-access/repositories/term.repository'
+import { findNextTerm, findOpenTerm } from '@/data-access/repositories/term.repository'
 import { calculateAmount } from '@/domain/billing/amount-calculator'
 import {
   validateCapacity,
@@ -20,6 +20,7 @@ import {
   validateTermOpen,
   type SectionCandidate,
 } from '@/domain/enrollment/enrollment-validator'
+import { isOfferable, isSectionFull, seatsLeft } from '@/domain/enrollment/offer-rules'
 import { DomainError } from '@/domain/shared/domain-error'
 
 export interface ActionResult {
@@ -46,12 +47,15 @@ function toCandidate(section: SectionRecord): SectionCandidate {
 }
 
 function toSectionView(section: SectionRecord) {
+  const occupied = section._count.enrollmentDetails
   return {
     id: section.id,
     number: section.number,
     professor: section.professor.name,
     capacity: section.capacity,
-    occupied: section._count.enrollmentDetails,
+    occupied,
+    seatsLeft: seatsLeft(section.capacity, occupied),
+    isFull: isSectionFull(section.capacity, occupied),
     blocks: section.scheduleBlocks.map((block) => ({
       weekday: block.weekday,
       startMinutes: toMinutes(block.startTime),
@@ -64,6 +68,7 @@ function toSectionView(section: SectionRecord) {
 export type SectionView = ReturnType<typeof toSectionView>
 
 // Lists the open term offer for the student's career, grouped by subject, with the current selection.
+// Only subjects the student can take carry their sections; the rest are listed with the reason they are not offered.
 export async function listOffer() {
   const { profile, subjects } = await getStudentContext()
   const term = await findOpenTerm()
@@ -79,7 +84,7 @@ export async function listOffer() {
     term: { id: term.id, name: term.name, maxCredits: term.maxCredits, ratePerCredit: Number(term.ratePerCredit) },
     subjects: subjects
       .filter((subject) => subject.status !== 'PASSED' && subject.status !== 'IN_PROGRESS')
-      .map((subject) => ({ ...subject, sections: sectionsBySubject.get(subject.id) ?? [] })),
+      .map((subject) => ({ ...subject, sections: isOfferable(subject.status) ? (sectionsBySubject.get(subject.id) ?? []) : [] })),
     enrollment: enrollment
       ? {
           status: enrollment.status,
@@ -162,6 +167,13 @@ export async function removeSection(rawSectionId: string): Promise<ActionResult>
     await removeEnrollmentSection(enrollment.id, parsed.data, (credits) => calculateAmount(credits, Number(term!.ratePerCredit)))
     return `${detail.section.subject.name} se retiró de tu pre-inscripción.`
   })
+}
+
+// Next term that has not started yet, shown when no term is open for pre-enrollment.
+export async function getUpcomingTerm() {
+  await getStudentContext()
+  const term = await findNextTerm(new Date())
+  return term ? { name: term.name, startsAt: term.startsAt, endsAt: term.endsAt } : null
 }
 
 // Confirmed enrollment of the current term, used by the enrollment receipt.

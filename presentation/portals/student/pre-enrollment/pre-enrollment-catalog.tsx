@@ -44,7 +44,7 @@ const sortOptions: { value: SortKey; label: string }[] = [
 
 // Highest number of free seats among the subject's sections.
 const freeSeats = (subject: OfferSubject) =>
-  Math.max(0, ...subject.sections.map((section) => section.capacity - section.occupied))
+  Math.max(0, ...subject.sections.map((section) => section.seatsLeft))
 
 const comparators: Record<SortKey, (a: OfferSubject, b: OfferSubject) => number> = {
   TERM: (a, b) => a.term - b.term || a.branch - b.branch,
@@ -143,7 +143,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
   const renderSection = (section: SectionView, subject: OfferSubject) => {
     const isSelected = selectedBySubject.get(subject.id)?.id === section.id
     const otherSection = isSelected ? undefined : selectedBySubject.get(subject.id)
-    const isFull = section.occupied >= section.capacity
+    const isFull = section.isFull
     const clash = isSelected ? null : findClash(section)
     const disabledReason = isSelected
       ? null
@@ -152,7 +152,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
         : otherSection
           ? `Ya tienes la sección ${otherSection.number} de esta materia. Quítala para elegir esta.`
           : isFull
-            ? 'Sin cupos disponibles en esta sección.'
+            ? 'Sección llena: no quedan cupos.'
             : clash
               ? `Choca con ${clash.subjectName} (${clash.schedule}).`
               : null
@@ -175,7 +175,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
                 <Clock3 className="h-3.5 w-3.5" /> {formatSchedule(section.blocks)}
               </span>
               <span className={cn('inline-flex items-center gap-1', isFull && 'font-bold text-red-500')}>
-                <UsersRound className="h-3.5 w-3.5" /> {section.capacity - section.occupied} cupos
+                <UsersRound className="h-3.5 w-3.5" /> {isFull ? 'Llena' : `${section.seatsLeft} cupos`}
               </span>
             </div>
           </div>
@@ -209,7 +209,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
               aria-describedby={disabledReason ? `reason-${section.id}` : undefined}
             >
               {pendingId === section.id ? <LoaderCircle className="animate-spin" /> : <Plus />}
-              {isFull ? 'Sin cupos' : 'Agregar'}
+              {isFull ? 'Llena' : 'Agregar'}
             </button>
           )}
         </div>
