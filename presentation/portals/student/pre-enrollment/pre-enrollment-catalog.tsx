@@ -229,7 +229,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
   }
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_23rem]">
+    <div className="section-grid grid xl:grid-cols-[minmax(0,1fr)_23rem]">
       <div className="min-w-0">
         <div className="reveal reveal-1 mb-6 flex flex-wrap items-center gap-3">
           <div className="search-box basis-full">
@@ -251,7 +251,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
             <select
               value={sortKey}
               onChange={(event) => setSortKey(event.target.value as SortKey)}
-              className="cursor-pointer bg-transparent font-bold text-foreground outline-none"
+              className="min-h-[max(1.5rem,var(--tap-min))] cursor-pointer bg-transparent font-bold text-foreground outline-none"
             >
               {sortOptions.map((option) => (
                 <option key={option.value} value={option.value}>
@@ -271,7 +271,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
         </div>
 
         {visible.length ? (
-          <div className="grid gap-4 2xl:grid-cols-2">
+          <div className="card-grid grid 2xl:grid-cols-2">
             {visible.map((subject, index) => {
               const missing = subject.requirements
                 .filter((requirement) => !requirement.met && !requirement.isAlternative)
@@ -280,7 +280,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
               return (
                 <article
                   key={subject.id}
-                  className={cn('stat-card reveal flex flex-col !p-5', selectedBySubject.has(subject.id) && 'ring-2 ring-[var(--brand-orange)]')}
+                  className={cn('stat-card reveal flex flex-col', selectedBySubject.has(subject.id) && 'ring-2 ring-[var(--brand-orange)]')}
                   style={{ animationDelay: `${Math.min(index, 8) * 0.04}s` }}
                 >
                   <div className="flex items-center justify-between gap-2">
@@ -293,7 +293,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
                     <h3 className="font-display text-xl font-bold uppercase leading-tight">{subject.name}</h3>
                     <button
                       type="button"
-                      className="inline-flex shrink-0 items-center gap-0.5 pt-1 text-xs font-bold text-[#003087] dark:text-[#8fb8ff]"
+                      className="inline-flex min-h-[max(1.5rem,var(--tap-min))] shrink-0 items-center gap-0.5 text-xs font-bold text-[#003087] dark:text-[#8fb8ff]"
                       onClick={() => setDetail(subject)}
                     >
                       Prelaciones <ChevronRight className="h-3.5 w-3.5" />
@@ -325,7 +325,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
         )}
       </div>
 
-      <aside className="surface reveal reveal-2 h-fit p-5 xl:sticky xl:top-24">
+      <aside className="surface card-pad reveal reveal-2 h-fit xl:sticky xl:top-24">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <span className="stat-icon bg-[#f68629]/15 text-[var(--orange-text)]">
@@ -352,7 +352,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
                 {!isLocked && (
                   <button
                     type="button"
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-muted-foreground transition hover:bg-red-500/10 hover:text-red-500"
+                    className="flex h-[max(2rem,var(--tap-min))] w-[max(2rem,var(--tap-min))] shrink-0 items-center justify-center rounded-full text-muted-foreground transition hover:bg-red-500/10 hover:text-red-500"
                     onClick={() => removeWithUndo(section.id)}
                     disabled={pendingId === section.id}
                     aria-label={`Quitar ${section.subject.name}`}

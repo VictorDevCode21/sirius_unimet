@@ -17,6 +17,7 @@ import {
   Moon,
   PanelLeftClose,
   PanelLeftOpen,
+  Settings,
   Sun,
   X,
 } from 'lucide-react'
@@ -127,6 +128,9 @@ function ProfileMenu({ user, roleLabel }: { user: PortalShellProps['user']; role
             <Link href="/microsoft-365" className="menu-item" role="menuitem" onClick={() => setOpen(false)}>
               <ExternalLink /> Microsoft 365
             </Link>
+            <Link href="/student/settings" className="menu-item" role="menuitem" onClick={() => setOpen(false)}>
+              <Settings /> Ajustes
+            </Link>
             <form action={logout}>
               <button type="submit" className="menu-item" role="menuitem">
                 <LogOut /> Cerrar sesión
@@ -219,7 +223,7 @@ export function PortalShell({ portal = 'student', user, currentTermCode, preEnro
               <p className="relative mt-1.5 font-display text-xl font-extrabold uppercase leading-none">Pre-inscripciones abiertas</p>
               <Link
                 href="/student/pre-enrollment"
-                className="relative mt-4 inline-flex items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-bold text-[#003087] transition hover:bg-[#ffb36b]"
+                className="relative mt-4 inline-flex min-h-[max(1.5rem,var(--tap-min))] items-center gap-1.5 rounded-full bg-white px-3.5 py-2 text-xs font-bold text-[#003087] transition hover:bg-[#ffb36b]"
               >
                 Pre-inscribir materias →
               </Link>
