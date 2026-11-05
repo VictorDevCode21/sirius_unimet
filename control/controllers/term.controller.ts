@@ -2,11 +2,12 @@
 
 import { requireRole } from '@/control/auth/session'
 import { runAction, type ActionResult } from '@/control/controllers/action-result'
-import { createTermSchema, ratePerCreditSchema, termIdSchema } from '@/control/validation/term.schema'
+import { createTermSchema, maxCreditsSchema, ratePerCreditSchema, termIdSchema } from '@/control/validation/term.schema'
 import {
   closeTerm as markTermClosed,
   createTerm as insertTerm,
   openTerm as markTermOpen,
+  updateMaxCredits,
   updateRatePerCredit,
 } from '@/data-access/repositories/term-management.repository'
 import { repriceEnrollment } from '@/domain/billing/repricing'
@@ -68,5 +69,18 @@ export async function saveRatePerCredit(input: { termId: string; ratePerCredit: 
     const term = await updateRatePerCredit(termId, ratePerCredit, (enrollment) => repriceEnrollment(enrollment, ratePerCredit))
     if (!term) throw new DomainError(TERM_NOT_FOUND)
     return `El monto por UC del periodo ${term.name} se guardó.`
+  }, ['/admin', '/student'])
+}
+
+// Saves the max credits per trimester of a period; enrollment validation reads this value from the term.
+export async function saveMaxCredits(input: { termId: string; maxCredits: string }): Promise<ActionResult> {
+  await requireRole('ADMIN')
+  const parsed = maxCreditsSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0].message }
+
+  return runAction(async () => {
+    const term = await updateMaxCredits(parsed.data.termId, parsed.data.maxCredits)
+    if (!term) throw new DomainError(TERM_NOT_FOUND)
+    return `El máximo de UC del periodo ${term.name} se guardó.`
   }, ['/admin', '/student'])
 }

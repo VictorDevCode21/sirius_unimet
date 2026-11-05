@@ -69,3 +69,9 @@ export async function updateRatePerCredit(termId: string, ratePerCredit: number,
     { timeout: 30_000 },
   )
 }
+
+// Saves the max credits of a term; returns null when the term does not exist.
+export async function updateMaxCredits(termId: string, maxCredits: number) {
+  const { count } = await prisma.term.updateMany({ where: { id: termId }, data: { maxCredits } })
+  return count ? findTermById(termId) : null
+}
