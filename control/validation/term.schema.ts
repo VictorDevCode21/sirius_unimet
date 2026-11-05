@@ -24,3 +24,17 @@ export const createTermSchema = z.object({
 })
 
 export const termIdSchema = z.string().uuid('Periodo inválido.')
+
+const MAX_RATE_PER_CREDIT = 99_999_999.99
+const INVALID_RATE = 'Ingresa un monto numérico mayor que cero, con hasta dos decimales.'
+
+export const ratePerCreditSchema = z.object({
+  termId: termIdSchema,
+  ratePerCredit: z
+    .string({ error: 'Ingresa el monto por UC.' })
+    .trim()
+    .min(1, 'Ingresa el monto por UC.')
+    .regex(/^\d+(\.\d{1,2})?$/, INVALID_RATE)
+    .transform(Number)
+    .refine((value) => value > 0 && value <= MAX_RATE_PER_CREDIT, INVALID_RATE),
+})
