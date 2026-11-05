@@ -28,7 +28,7 @@ import { HelpPanel } from '@/presentation/components/shared/help-panel'
 import { logout } from '@/control/controllers/authentication.controller'
 import { cn } from '@/presentation/lib/utils'
 
-export type Portal = 'student' | 'admin'
+export type Portal = 'student' | 'admin' | 'professor'
 
 const portals: Record<Portal, { home: string; roleLabel: string; navItems: { label: string; href: string; icon: typeof FileText }[] }> = {
   student: {
@@ -51,6 +51,11 @@ const portals: Record<Portal, { home: string; roleLabel: string; navItems: { lab
       { label: 'Departamentos', href: '/admin/departments', icon: Building2 },
       { label: 'Carreras', href: '/admin/careers', icon: GraduationCap },
     ],
+  },
+  professor: {
+    home: '/professor',
+    roleLabel: 'Profesor',
+    navItems: [{ label: 'Mis secciones', href: '/professor/sections', icon: BookOpen }],
   },
 }
 
