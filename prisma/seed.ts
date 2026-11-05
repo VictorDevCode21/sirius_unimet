@@ -20,6 +20,8 @@ const SAMPLE_PASSWORD = 'Test123**'
 const SAMPLE_PROFESSOR_EMAIL = 'profesor1@unimet.edu.ve'
 const PROFESSOR_WITHOUT_SECTIONS_EMAIL = 'sin.secciones@unimet.edu.ve'
 const sampleClassmates = ['Andrea Blanco', 'Diego Fuentes', 'Sofía Navarro']
+const FINISHED_TERM = '2526-2'
+const samplePublishedGrades = [15, 8]
 const RATE_PER_CREDIT = 45
 const MAX_CREDITS = 21
 
@@ -297,6 +299,28 @@ async function seedProfessorSections() {
   }
 }
 
+// Published passing and failing grades in a finished term, to show Aprobada and Reprobada and the admin correction.
+async function seedPublishedGrades() {
+  const term = await prisma.term.findUniqueOrThrow({ where: { name: FINISHED_TERM } })
+  const professor = await prisma.user.findUniqueOrThrow({ where: { email: SAMPLE_PROFESSOR_EMAIL } })
+  const section = await prisma.section.findFirstOrThrow({
+    where: { termId: term.id, professorId: professor.id },
+    include: { subject: true },
+    orderBy: { subject: { code: 'asc' } },
+  })
+  const amount = calculateAmount(section.subject.credits, Number(term.ratePerCredit))
+
+  for (const [index, value] of samplePublishedGrades.entries()) {
+    const student = await prisma.user.findUniqueOrThrow({ where: { email: `estudiante${index + 1}@correo.unimet.edu.ve` } })
+    await prisma.enrollment.create({
+      data: { studentId: student.id, termId: term.id, status: 'CONFIRMED', amount, details: { create: { sectionId: section.id } } },
+    })
+    await prisma.grade.create({
+      data: { sectionId: section.id, studentId: student.id, value, status: resolveGradeStatus(value), published: true },
+    })
+  }
+}
+
 async function main() {
   await reset()
   await seedAcademicStructure()
@@ -306,6 +330,7 @@ async function main() {
   await seedOpenTermOffer(career.id, professorIds)
   await seedAdminConfig()
   await seedProfessorSections()
+  await seedPublishedGrades()
   console.log('Seed completed')
 }
 
