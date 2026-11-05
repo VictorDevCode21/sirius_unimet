@@ -86,7 +86,7 @@ function ThemeToggle() {
   )
 }
 
-function ProfileMenu({ user, roleLabel }: { user: PortalShellProps['user']; roleLabel: string }) {
+function ProfileMenu({ user, roleLabel, showSettings }: { user: PortalShellProps['user']; roleLabel: string; showSettings: boolean }) {
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -128,9 +128,11 @@ function ProfileMenu({ user, roleLabel }: { user: PortalShellProps['user']; role
             <Link href="/microsoft-365" className="menu-item" role="menuitem" onClick={() => setOpen(false)}>
               <ExternalLink /> Microsoft 365
             </Link>
-            <Link href="/student/settings" className="menu-item" role="menuitem" onClick={() => setOpen(false)}>
-              <Settings /> Ajustes
-            </Link>
+            {showSettings && (
+              <Link href="/student/settings" className="menu-item" role="menuitem" onClick={() => setOpen(false)}>
+                <Settings /> Ajustes
+              </Link>
+            )}
             <form action={logout}>
               <button type="submit" className="menu-item" role="menuitem">
                 <LogOut /> Cerrar sesión
@@ -253,9 +255,9 @@ export function PortalShell({ portal = 'student', user, currentTermCode, preEnro
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
-            <HelpPanel />
+            {portal === 'student' && <HelpPanel />}
             <ThemeToggle />
-            <ProfileMenu user={user} roleLabel={roleLabel} />
+            <ProfileMenu user={user} roleLabel={roleLabel} showSettings={portal === 'student'} />
           </div>
         </header>
         {children}
