@@ -172,23 +172,24 @@ export function deleteSectionWithLock(sectionId: string, assertDeletable: (occup
   })
 }
 
-// Adds a weekly block to a section after the caller validates it against the locked state.
-export function addScheduleBlockWithLock(params: {
+// Adds weekly blocks to a section after the caller validates them against the locked state; either every block is
+// stored or none is.
+export function addScheduleBlocksWithLock(params: {
   sectionId: string
-  block: { weekday: Weekday; startMinutes: number; endMinutes: number }
+  blocks: { weekday: Weekday; startMinutes: number; endMinutes: number }[]
   assertAllowed: (state: { occupied: number; ownBlocks: LockedBlock[]; professorBlocks: LockedProfessorBlock[] }) => void
 }) {
   return prisma.$transaction(async (tx) => {
     const locked = await lockSection(tx, params.sectionId)
     if (!locked) return null
     params.assertAllowed(locked)
-    return tx.scheduleBlock.create({
-      data: {
+    return tx.scheduleBlock.createManyAndReturn({
+      data: params.blocks.map((block) => ({
         sectionId: params.sectionId,
-        weekday: params.block.weekday,
-        startTime: timeOf(params.block.startMinutes),
-        endTime: timeOf(params.block.endMinutes),
-      },
+        weekday: block.weekday,
+        startTime: timeOf(block.startMinutes),
+        endTime: timeOf(block.endMinutes),
+      })),
       select: { id: true },
     })
   })

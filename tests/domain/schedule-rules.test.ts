@@ -1,7 +1,8 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { addScheduleBlockSchema } from '@/control/validation/section.schema'
+import { addScheduleBlocksSchema } from '@/control/validation/section.schema'
 import {
+  buildWeeklyBlocks,
   parseClock,
   validateBlockRange,
   validateNoOverlapInSection,
@@ -53,8 +54,26 @@ describe('HU-11 schedule rules', () => {
 
   it('validates the add block input', () => {
     const sectionId = '00000000-0000-4000-8000-000000000000'
-    assert.equal(addScheduleBlockSchema.safeParse({ sectionId, weekday: 'FRI', start: '07:00', end: '10:00' }).success, true)
-    assert.equal(addScheduleBlockSchema.safeParse({ sectionId, weekday: 'SUN', start: '07:00', end: '10:00' }).success, false)
-    assert.equal(addScheduleBlockSchema.safeParse({ sectionId, weekday: 'FRI', start: '7am', end: '10:00' }).success, false)
+    assert.equal(addScheduleBlocksSchema.safeParse({ sectionId, weekdays: ['FRI'], start: '07:00', end: '10:00' }).success, true)
+    assert.equal(addScheduleBlocksSchema.safeParse({ sectionId, weekdays: ['MON', 'WED'], start: '14:00', end: '15:30' }).success, true)
+    assert.equal(addScheduleBlocksSchema.safeParse({ sectionId, weekdays: ['SUN'], start: '07:00', end: '10:00' }).success, false)
+    assert.equal(addScheduleBlocksSchema.safeParse({ sectionId, weekdays: ['FRI'], start: '7am', end: '10:00' }).success, false)
+    assert.equal(addScheduleBlocksSchema.safeParse({ sectionId, weekdays: [], start: '07:00', end: '10:00' }).success, false)
+    assert.equal(addScheduleBlocksSchema.safeParse({ sectionId, weekdays: ['MON', 'MON'], start: '07:00', end: '10:00' }).success, false)
+  })
+
+  it('builds one block per chosen day with the same time range', () => {
+    const blocks = buildWeeklyBlocks(['MON', 'WED'], parseClock('14:00')!, parseClock('15:30')!)
+    assert.deepEqual(blocks, [
+      { weekday: 'MON', startMinutes: 840, endMinutes: 930 },
+      { weekday: 'WED', startMinutes: 840, endMinutes: 930 },
+    ])
+  })
+
+  it('rejects an empty or repeated day list and invalid ranges on any day', () => {
+    assert.throws(() => buildWeeklyBlocks([], 420, 510), /al menos un día/)
+    assert.throws(() => buildWeeklyBlocks(['MON', 'MON'], 420, 510), /una sola vez/)
+    assert.throws(() => buildWeeklyBlocks(['MON', 'TUE'], 600, 540), /posterior/)
+    assert.throws(() => buildWeeklyBlocks(['MON', 'SUN'], 420, 510), /lunes y sábado/)
   })
 })

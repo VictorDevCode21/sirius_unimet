@@ -3,17 +3,17 @@
 import { revalidatePath } from 'next/cache'
 import { getDepartmentHeadContext } from '@/control/controllers/department-head-context'
 import {
-  addScheduleBlockSchema,
+  addScheduleBlocksSchema,
   createSectionSchema,
   removeScheduleBlockSchema,
   sectionIdSchema,
   updateSectionSchema,
-  type AddScheduleBlockInput,
+  type AddScheduleBlocksInput,
   type CreateSectionInput,
   type UpdateSectionInput,
 } from '@/control/validation/section.schema'
 import {
-  addScheduleBlockWithLock,
+  addScheduleBlocksWithLock,
   createSection as insertSection,
   deleteSectionWithLock,
   findDepartmentSection,
@@ -34,9 +34,9 @@ import {
   validateTermEditable,
 } from '@/domain/sections/section-rules'
 import {
+  buildWeeklyBlocks,
   describeBlock,
   parseClock,
-  validateBlockRange,
   validateNoOverlapInSection,
   validateProfessorAvailability,
   validateScheduleChangeAllowed,
@@ -156,26 +156,32 @@ export async function deleteSection(rawSectionId: string): Promise<SectionAction
   })
 }
 
-// Adds a weekly block to a section without enrolled students, checking range, overlaps and professor availability.
-export async function addScheduleBlock(input: AddScheduleBlockInput): Promise<SectionActionResult> {
-  const parsed = addScheduleBlockSchema.safeParse(input)
+// Adds the same time range on one or more weekdays to a section without enrolled students, checking range, overlaps
+// and professor availability for every block; either all blocks are stored or none.
+export async function addScheduleBlocks(input: AddScheduleBlocksInput): Promise<SectionActionResult> {
+  const parsed = addScheduleBlocksSchema.safeParse(input)
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0].message }
-  const block = { weekday: parsed.data.weekday, startMinutes: parseClock(parsed.data.start)!, endMinutes: parseClock(parsed.data.end)! }
+  const { sectionId, weekdays, start, end } = parsed.data
 
   return runSectionUseCase(async () => {
-    validateBlockRange(block)
-    const section = await requireEditableSection(parsed.data.sectionId)
-    const created = await addScheduleBlockWithLock({
+    const blocks = buildWeeklyBlocks(weekdays, parseClock(start)!, parseClock(end)!)
+    const section = await requireEditableSection(sectionId)
+    const created = await addScheduleBlocksWithLock({
       sectionId: section.id,
-      block,
+      blocks,
       assertAllowed: ({ occupied, ownBlocks, professorBlocks }) => {
         validateScheduleChangeAllowed(occupied)
-        validateNoOverlapInSection(ownBlocks, block)
-        validateProfessorAvailability(section.professor.name, professorBlocks, [block])
+        blocks.forEach((block) => validateNoOverlapInSection(ownBlocks, block))
+        validateProfessorAvailability(section.professor.name, professorBlocks, blocks)
       },
     })
     validateSectionFound(created)
-    return { ok: true, sectionId: section.id, message: `Se agregó el bloque ${describeBlock(block)} a la sección ${section.number}.` }
+    const added = blocks.map(describeBlock).join(', ')
+    return {
+      ok: true,
+      sectionId: section.id,
+      message: `Se ${blocks.length === 1 ? 'agregó el bloque' : 'agregaron los bloques'} ${added} a la sección ${section.number}.`,
+    }
   })
 }
 
