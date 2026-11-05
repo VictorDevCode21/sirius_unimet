@@ -65,7 +65,7 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
           { label: 'Inscritos', value: totals.enrolled },
           { label: 'Disponibles', value: totals.available },
         ].map((figure) => (
-          <div key={figure.label} className="stat-card !p-4">
+          <div key={figure.label} className="stat-card">
             <dt className="text-xs font-semibold text-muted-foreground">{figure.label}</dt>
             <dd className="mt-1 font-display text-3xl font-extrabold">{figure.value}</dd>
           </div>

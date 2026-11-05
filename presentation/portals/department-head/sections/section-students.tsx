@@ -19,7 +19,7 @@ export function SectionStudents({ detail }: { detail: ManagedSectionDetail }) {
   ]
 
   return (
-    <section className="surface reveal reveal-3 mt-5 p-5 sm:p-7" aria-labelledby="students-title">
+    <section className="surface card-pad reveal reveal-3 mt-5" aria-labelledby="students-title">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <span className="stat-icon bg-[#f68629]/15 text-[var(--orange-text)]">
