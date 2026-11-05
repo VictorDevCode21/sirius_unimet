@@ -52,8 +52,8 @@ export function PaymentSimulator({ summary }: { summary: PaymentSummary }) {
   }
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1.3fr)_minmax(18rem,0.7fr)]">
-      <section className="surface reveal reveal-1 p-5 sm:p-7" aria-labelledby="payment-summary-title">
+    <div className="section-grid grid xl:grid-cols-[minmax(0,1.3fr)_minmax(18rem,0.7fr)]">
+      <section className="surface card-pad reveal reveal-1" aria-labelledby="payment-summary-title">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <h2 id="payment-summary-title" className="text-lg font-bold">
             Resumen de tu pre-inscripción
@@ -117,7 +117,7 @@ export function PaymentSimulator({ summary }: { summary: PaymentSummary }) {
         )}
       </section>
 
-      <aside className="surface reveal reveal-2 h-fit p-5 sm:p-6" aria-labelledby="simulator-title">
+      <aside className="surface card-pad reveal reveal-2 h-fit" aria-labelledby="simulator-title">
         <span className="stat-icon bg-[#f68629]/15 text-[var(--orange-text)]">
           <CreditCard aria-hidden="true" />
         </span>
