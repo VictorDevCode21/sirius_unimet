@@ -64,8 +64,8 @@ export function SectionEditor({ detail, backHref }: { detail: ManagedSectionDeta
   }
 
   return (
-    <div className="grid gap-5 xl:grid-cols-[minmax(0,1fr)_20rem]">
-      <form className="surface reveal reveal-1 grid h-fit gap-5 p-5 sm:p-7" onSubmit={save} noValidate>
+    <div className="section-grid grid xl:grid-cols-[minmax(0,1fr)_20rem]">
+      <form className="surface card-pad reveal reveal-1 grid h-fit gap-5" onSubmit={save} noValidate>
         <h2 className="text-lg font-bold">Datos de la sección</h2>
         <label className="flex flex-col gap-1.5 text-sm font-bold">
           Profesor
@@ -132,7 +132,7 @@ export function SectionEditor({ detail, backHref }: { detail: ManagedSectionDeta
         )}
       </form>
 
-      <aside className="surface reveal reveal-2 h-fit p-5 sm:p-6">
+      <aside className="surface card-pad reveal reveal-2 h-fit">
         <h2 className="text-lg font-bold">Eliminar sección</h2>
         {section.occupied > 0 || section.grades > 0 ? (
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
