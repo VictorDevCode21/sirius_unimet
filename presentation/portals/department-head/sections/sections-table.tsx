@@ -4,7 +4,7 @@ import type { ManagedSectionView } from '@/control/controllers/section-managemen
 export function SectionsTable({ sections, termName, highlightId }: { sections: ManagedSectionView[]; termName: string; highlightId?: string }) {
   if (!sections.length) {
     return (
-      <div className="surface reveal reveal-2 p-10 text-center">
+      <div className="surface card-pad reveal reveal-2 text-center">
         <p className="font-bold">No hay secciones en el período {termName}.</p>
         <p className="mt-1 text-sm text-muted-foreground">Usa «Nueva sección» para crear la primera.</p>
       </div>

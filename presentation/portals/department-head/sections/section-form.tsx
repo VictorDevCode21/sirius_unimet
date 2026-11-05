@@ -43,7 +43,7 @@ export function SectionForm({ options, defaultTermName }: { options: SectionForm
   }
 
   return (
-    <form className="surface reveal reveal-1 grid max-w-3xl gap-5 p-5 sm:p-7" onSubmit={submit} noValidate>
+    <form className="surface card-pad reveal reveal-1 grid max-w-3xl gap-5" onSubmit={submit} noValidate>
       <div className="grid gap-5 sm:grid-cols-2">
         <label className="flex flex-col gap-1.5 text-sm font-bold">
           Período
