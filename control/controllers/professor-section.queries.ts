@@ -48,12 +48,14 @@ export async function getMySectionRoster(rawSectionId: string) {
     subject: section.subject,
     termName: section.term.name,
     blocks: toBlocks(section.scheduleBlocks),
+    published: section.grades.some((grade) => grade.published),
     students: section.enrollmentDetails.map(({ enrollment: { student } }) => ({
       id: student.id,
       name: student.name,
       email: student.email,
       career: student.career?.name ?? null,
       grade: gradeByStudent.get(student.id)?.value ?? null,
+      outcome: gradeByStudent.get(student.id)?.status ?? null,
       published: gradeByStudent.get(student.id)?.published ?? false,
     })),
   }

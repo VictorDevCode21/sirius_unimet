@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { LoaderCircle, Save } from 'lucide-react'
-import { saveGrade } from '@/control/controllers/grade.controller'
+import { correctGrade, saveGrade } from '@/control/controllers/grade.controller'
 import { FormMessage } from '@/presentation/components/shared/form-message'
 import { useAction } from '@/presentation/lib/use-action'
 
@@ -11,16 +11,19 @@ interface GradeFormProps {
   studentId: string
   studentName: string
   grade: number | null
+  mode?: 'professor' | 'admin'
 }
 
-// Final grade input of a student. The value travels as text so the server validates it.
-export function GradeForm({ sectionId, studentId, studentName, grade }: GradeFormProps) {
+// Final grade input of a student, used by the professor and by the admin correction. The value travels as text so
+// the server validates it.
+export function GradeForm({ sectionId, studentId, studentName, grade, mode = 'professor' }: GradeFormProps) {
   const [value, setValue] = useState(grade === null ? '' : String(grade))
   const { pending, result, run } = useAction()
 
   const submit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    run(() => saveGrade({ sectionId, studentId, value }))
+    const save = mode === 'admin' ? correctGrade : saveGrade
+    run(() => save({ sectionId, studentId, value }))
   }
 
   return (
