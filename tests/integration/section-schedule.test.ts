@@ -2,7 +2,7 @@ import { after, before, describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { enrollTemporaryStudents, findSeedFixtures, prisma, removeTemporaryStudents } from './db'
 import {
-  addScheduleBlockWithLock,
+  addScheduleBlocksWithLock,
   createSection,
   removeScheduleBlockWithLock,
   updateSectionWithLock,
@@ -59,7 +59,7 @@ describe('HU-11 schedule blocks (database)', () => {
   it('stores a valid block and the student offer reads it', async () => {
     const section = await newSection()
     const block = saturday(8, 10)
-    assert.ok(await addScheduleBlockWithLock({ sectionId: section.id, block, assertAllowed: assertFor(block) }))
+    assert.ok(await addScheduleBlocksWithLock({ sectionId: section.id, blocks: [block], assertAllowed: assertFor(block) }))
 
     const offer = await findOfferByTerm(fixtures.openTerm.id, (await prisma.subject.findUniqueOrThrow({ where: { id: subjectId } })).careerId)
     const offered = offer.find((item) => item.id === section.id)
@@ -73,26 +73,26 @@ describe('HU-11 schedule blocks (database)', () => {
   it('rejects an overlapping block in the same section', async () => {
     const section = await newSection()
     const first = saturday(11, 13)
-    await addScheduleBlockWithLock({ sectionId: section.id, block: first, assertAllowed: assertFor(first) })
+    await addScheduleBlocksWithLock({ sectionId: section.id, blocks: [first], assertAllowed: assertFor(first) })
     const overlapping = saturday(12, 14)
-    await assert.rejects(addScheduleBlockWithLock({ sectionId: section.id, block: overlapping, assertAllowed: assertFor(overlapping) }), /solapa/)
+    await assert.rejects(addScheduleBlocksWithLock({ sectionId: section.id, blocks: [overlapping], assertAllowed: assertFor(overlapping) }), /solapa/)
   })
 
   it('rejects a block that clashes with another section of the same professor', async () => {
     const busy = await newSection()
     const block = saturday(15, 17)
-    await addScheduleBlockWithLock({ sectionId: busy.id, block, assertAllowed: assertFor(block) })
+    await addScheduleBlocksWithLock({ sectionId: busy.id, blocks: [block], assertAllowed: assertFor(block) })
     const other = await newSection()
-    await assert.rejects(addScheduleBlockWithLock({ sectionId: other.id, block: saturday(16, 18), assertAllowed: assertFor(saturday(16, 18)) }), /ya dicta/)
+    await assert.rejects(addScheduleBlocksWithLock({ sectionId: other.id, blocks: [saturday(16, 18)], assertAllowed: assertFor(saturday(16, 18)) }), /ya dicta/)
   })
 
   it('rejects moving a section to a professor who is busy at that time', async () => {
     const otherProfessor = otherProfessorId
     const theirs = await newSection(otherProfessor)
     const block = saturday(19, 21)
-    await addScheduleBlockWithLock({ sectionId: theirs.id, block, assertAllowed: assertFor(block) })
+    await addScheduleBlocksWithLock({ sectionId: theirs.id, blocks: [block], assertAllowed: assertFor(block) })
     const mine = await newSection()
-    await addScheduleBlockWithLock({ sectionId: mine.id, block, assertAllowed: assertFor(block) })
+    await addScheduleBlocksWithLock({ sectionId: mine.id, blocks: [block], assertAllowed: assertFor(block) })
     await assert.rejects(
       updateSectionWithLock({
         sectionId: mine.id,
@@ -109,19 +109,19 @@ describe('HU-11 schedule blocks (database)', () => {
   it('does not change the schedule of a section with enrolled students', async () => {
     const section = await newSection()
     const block = saturday(7, 8)
-    const created = await addScheduleBlockWithLock({ sectionId: section.id, block, assertAllowed: assertFor(block) })
+    const created = await addScheduleBlocksWithLock({ sectionId: section.id, blocks: [block], assertAllowed: assertFor(block) })
     studentIds = studentIds.concat(await enrollTemporaryStudents(section.id, fixtures.openTerm.id, 1))
-    await assert.rejects(addScheduleBlockWithLock({ sectionId: section.id, block: saturday(9, 10), assertAllowed: assertFor(saturday(9, 10)) }), /inscrito/)
-    await assert.rejects(removeScheduleBlockWithLock({ sectionId: section.id, blockId: created!.id, assertAllowed: validateScheduleChangeAllowed }), /inscrito/)
+    await assert.rejects(addScheduleBlocksWithLock({ sectionId: section.id, blocks: [saturday(9, 10)], assertAllowed: assertFor(saturday(9, 10)) }), /inscrito/)
+    await assert.rejects(removeScheduleBlockWithLock({ sectionId: section.id, blockId: created![0].id, assertAllowed: validateScheduleChangeAllowed }), /inscrito/)
   })
 
   it('removes a block and ignores blocks of other sections', async () => {
     const section = await newSection()
     const block = saturday(13, 14)
-    const created = await addScheduleBlockWithLock({ sectionId: section.id, block, assertAllowed: assertFor(block) })
+    const created = await addScheduleBlocksWithLock({ sectionId: section.id, blocks: [block], assertAllowed: assertFor(block) })
     const other = await newSection()
-    assert.equal(await removeScheduleBlockWithLock({ sectionId: other.id, blockId: created!.id, assertAllowed: validateScheduleChangeAllowed }), false)
-    assert.equal(await removeScheduleBlockWithLock({ sectionId: section.id, blockId: created!.id, assertAllowed: validateScheduleChangeAllowed }), true)
+    assert.equal(await removeScheduleBlockWithLock({ sectionId: other.id, blockId: created![0].id, assertAllowed: validateScheduleChangeAllowed }), false)
+    assert.equal(await removeScheduleBlockWithLock({ sectionId: section.id, blockId: created![0].id, assertAllowed: validateScheduleChangeAllowed }), true)
     assert.equal(await prisma.scheduleBlock.count({ where: { sectionId: section.id } }), 0)
   })
 })

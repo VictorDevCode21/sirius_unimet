@@ -11,7 +11,7 @@ export default async function HistoryPage() {
     <div className="content-container">
       <PageHeading eyebrow="Tu trayectoria" title="Histórico académico" description="Consulta tus calificaciones publicadas y el avance de cada período." />
 
-      <div className="surface reveal reveal-1 mb-6 flex flex-col gap-6 p-6 sm:flex-row sm:items-center sm:justify-between sm:p-8">
+      <div className="surface card-pad reveal reveal-1 mb-5 flex flex-col gap-5 sm:flex-row sm:items-center sm:justify-between">
         <div>
           <p className="eyebrow">Índice acumulado</p>
           <p className="mt-1 font-display text-6xl font-extrabold leading-none">{formatGrade(average)}</p>

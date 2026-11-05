@@ -34,6 +34,15 @@ export function validateBlockRange(block: TimeBlock) {
   }
 }
 
+// One block per chosen weekday with the same time range, each one checked with the block range rules.
+export function buildWeeklyBlocks<Day extends string>(weekdays: Day[], startMinutes: number, endMinutes: number) {
+  if (!weekdays.length) throw new DomainError('Elige al menos un día de clase.')
+  if (new Set(weekdays).size !== weekdays.length) throw new DomainError('Cada día se puede elegir una sola vez.')
+  const blocks = weekdays.map((weekday) => ({ weekday, startMinutes, endMinutes }))
+  blocks.forEach(validateBlockRange)
+  return blocks
+}
+
 export function validateNoOverlapInSection(existing: TimeBlock[], candidate: TimeBlock) {
   const clash = existing.find((block) => blocksOverlap(block, candidate))
   if (clash) throw new DomainError(`El bloque se solapa con otro bloque de la misma sección (${describeBlock(clash)}).`)

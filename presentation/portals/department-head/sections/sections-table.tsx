@@ -18,7 +18,7 @@ export function SectionsTable({
 }) {
   if (!sections.length) {
     return (
-      <div className="surface reveal reveal-2 p-10 text-center">
+      <div className="surface card-pad reveal reveal-2 text-center">
         <p className="font-bold">{filtered ? 'Ninguna sección coincide con la búsqueda.' : `No hay secciones en el período ${termName}.`}</p>
         <p className="mt-1 text-sm text-muted-foreground">{filtered ? 'Prueba con otro nombre o código de materia.' : 'Usa «Nueva sección» para crear la primera.'}</p>
       </div>

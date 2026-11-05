@@ -25,7 +25,7 @@ export default async function ReceiptPage() {
         description="Constancia de las secciones inscritas y pagadas en el período académico vigente."
       />
 
-      <div className="grid gap-5 xl:grid-cols-[minmax(0,1.45fr)_minmax(16rem,0.55fr)]">
+      <div className="section-grid grid xl:grid-cols-[minmax(0,1.45fr)_minmax(16rem,0.55fr)]">
         <div className="certificate-preview reveal reveal-1">
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="[&_p]:!text-[#17315a]">
@@ -36,7 +36,7 @@ export default async function ReceiptPage() {
             </span>
           </div>
           <p className="mt-14 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#b34700]">Universidad Metropolitana</p>
-          <h2 className="mt-2 font-display text-[clamp(1.8rem,3vw,2.6rem)] font-extrabold uppercase leading-none text-[#003087]">
+          <h2 className="mt-2 font-display text-[clamp(1.8rem,calc(3vw*var(--ui-scale)),2.6rem)] font-extrabold uppercase leading-none text-[#003087]">
             Comprobante de inscripción
           </h2>
           <p className="mt-4 max-w-2xl text-[0.92rem] leading-relaxed text-[#48617e]">
@@ -73,7 +73,7 @@ export default async function ReceiptPage() {
           </div>
         </div>
 
-        <div className="surface reveal reveal-2 h-fit p-6">
+        <div className="surface card-pad reveal reveal-2 h-fit">
           <div className="stat-icon bg-[#f68629]/15 text-[var(--orange-text)]">
             <ShieldCheck />
           </div>

@@ -3,27 +3,29 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { CalendarClock, LoaderCircle, Plus, Trash2 } from 'lucide-react'
-import { addScheduleBlock, removeScheduleBlock, type SectionActionResult } from '@/control/controllers/section-management.controller'
+import { addScheduleBlocks, removeScheduleBlock, type SectionActionResult } from '@/control/controllers/section-management.controller'
 import type { ManagedSectionView } from '@/control/controllers/section-management.queries'
 import { SCHEDULE_DAY_END, SCHEDULE_DAY_START, describeBlock } from '@/domain/sections/schedule-rules'
 import { formatTime } from '@/presentation/lib/format'
 import { ActionMessage } from '@/presentation/portals/department-head/sections/section-editor'
 
 const weekdays = [
-  { value: 'MON', label: 'Lunes' },
-  { value: 'TUE', label: 'Martes' },
-  { value: 'WED', label: 'Miércoles' },
-  { value: 'THU', label: 'Jueves' },
-  { value: 'FRI', label: 'Viernes' },
-  { value: 'SAT', label: 'Sábado' },
+  { value: 'MON', label: 'Lunes', short: 'Lun' },
+  { value: 'TUE', label: 'Martes', short: 'Mar' },
+  { value: 'WED', label: 'Miércoles', short: 'Mié' },
+  { value: 'THU', label: 'Jueves', short: 'Jue' },
+  { value: 'FRI', label: 'Viernes', short: 'Vie' },
+  { value: 'SAT', label: 'Sábado', short: 'Sáb' },
 ] as const
+
+type WeekdayValue = (typeof weekdays)[number]['value']
 
 const controlClass = 'min-w-0 flex-1 border-0 bg-transparent py-3 text-[0.95rem] text-foreground outline-0'
 
-// Weekly blocks of a section with forms to add and remove them.
+// Weekly blocks of a section with a form that adds the same time range on one or more days, and buttons to remove them.
 export function ScheduleEditor({ section }: { section: ManagedSectionView }) {
   const router = useRouter()
-  const [weekday, setWeekday] = useState<(typeof weekdays)[number]['value']>('MON')
+  const [selectedDays, setSelectedDays] = useState<WeekdayValue[]>(['MON'])
   const [start, setStart] = useState('07:00')
   const [end, setEnd] = useState('08:30')
   const [pending, setPending] = useState<string | null>(null)
@@ -43,13 +45,17 @@ export function ScheduleEditor({ section }: { section: ManagedSectionView }) {
     }
   }
 
+  // Toggles a day and keeps the selection in weekday order.
+  const toggleDay = (day: WeekdayValue) =>
+    setSelectedDays((current) => weekdays.map((item) => item.value).filter((value) => (value === day ? !current.includes(day) : current.includes(value))))
+
   const add = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    run('add', () => addScheduleBlock({ sectionId: section.id, weekday, start, end }))
+    run('add', () => addScheduleBlocks({ sectionId: section.id, weekdays: selectedDays, start, end }))
   }
 
   return (
-    <section className="surface reveal reveal-3 mt-5 p-5 sm:p-7" aria-labelledby="schedule-title">
+    <section className="surface card-pad reveal reveal-3 mt-5" aria-labelledby="schedule-title">
       <div className="flex items-center gap-3">
         <span className="stat-icon bg-[#1859a9]/12 text-[var(--accent-text)]">
           <CalendarClock aria-hidden="true" />
@@ -96,19 +102,28 @@ export function ScheduleEditor({ section }: { section: ManagedSectionView }) {
             : 'El período finalizó; el horario es solo de consulta.'}
         </p>
       ) : (
-        <form className="mt-5 grid gap-3 sm:grid-cols-[1.2fr_1fr_1fr_auto] sm:items-end" onSubmit={add} noValidate>
-          <label className="flex flex-col gap-1.5 text-sm font-bold">
-            Día
-            <span className="field">
-              <select className={`${controlClass} cursor-pointer`} value={weekday} onChange={(event) => setWeekday(event.target.value as typeof weekday)}>
-                {weekdays.map((day) => (
-                  <option key={day.value} value={day.value}>
-                    {day.label}
-                  </option>
-                ))}
-              </select>
-            </span>
-          </label>
+        <form className="mt-5 grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end" onSubmit={add} noValidate>
+          <fieldset className="flex flex-col gap-1.5 sm:col-span-3">
+            <legend className="mb-1.5 text-sm font-bold">Días de clase</legend>
+            <div className="flex flex-wrap gap-2">
+              {weekdays.map((day) => {
+                const selected = selectedDays.includes(day.value)
+                return (
+                  <button
+                    key={day.value}
+                    type="button"
+                    className={`pill min-h-[max(2.25rem,var(--tap-min))] ${selected ? '!border-[var(--brand-blue)] !bg-[var(--brand-blue)] !text-white' : 'text-muted-foreground hover:text-foreground'}`}
+                    aria-pressed={selected}
+                    aria-label={day.label}
+                    onClick={() => toggleDay(day.value)}
+                  >
+                    {day.short}
+                  </button>
+                )
+              })}
+            </div>
+            <p className="text-xs text-muted-foreground">Elige uno o varios días: se crea un bloque con el mismo horario en cada día.</p>
+          </fieldset>
           <label className="flex flex-col gap-1.5 text-sm font-bold">
             Inicio
             <span className="field">
@@ -123,7 +138,7 @@ export function ScheduleEditor({ section }: { section: ManagedSectionView }) {
           </label>
           <button type="submit" className="primary-button" disabled={pending !== null}>
             {pending === 'add' ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <Plus aria-hidden="true" />}
-            Agregar bloque
+            {selectedDays.length > 1 ? `Agregar ${selectedDays.length} bloques` : 'Agregar bloque'}
           </button>
         </form>
       )}
