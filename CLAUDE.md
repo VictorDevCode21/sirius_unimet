@@ -23,8 +23,8 @@ Dependencies only point downward: `app` → `presentation` / `control` → `doma
 | Data | `prisma/` | Schema (12 tables), migrations, seed, curriculum CSVs. |
 
 ```
-app/                          Routes. One folder per portal: student/ (professor/, department-head/, admin/ later)
-                              student/{flowchart,pre-enrollment,history,receipt}, login/, forbidden/
+app/                          Routes. One folder per portal: student/, department-head/ (professor/, admin/ later)
+                              student/{flowchart,pre-enrollment,history,receipt}, department-head/sections, login/, forbidden/
 presentation/
   components/{ui,brand,shared,auth,layout}
   portals/student/            Student portal components (flowchart, pre-enrollment)
@@ -91,6 +91,7 @@ Next.js 15.5 (App Router; 15.x because AWS Amplify supports up to 15), React 19,
 npm run dev          # development server
 npm run build        # production build
 npm run typecheck    # tsc --noEmit
+npm test             # node:test suites in tests/ (integration suites need a migrated and seeded DATABASE_URL)
 npm run db:migrate   # prisma migrate dev
 npm run db:seed      # departments, careers, Systems Engineering curriculum (CSV), terms, sections, sample student
 npm run db:reset     # drop, migrate and seed
@@ -99,7 +100,7 @@ npm run db:studio    # Prisma Studio
 
 Environment: copy `.env.example` to `.env` and set `DATABASE_URL` and `AUTH_SECRET`.
 
-Sample student: `r.victor@correo.unimet.edu.ve` / `Test123**`.
+Sample student: `r.victor@correo.unimet.edu.ve` / `Test123**`. Sample department head (Ingeniería): `jefe.ingenieria@unimet.edu.ve` / `Test123**`.
 
 ## UI conventions
 

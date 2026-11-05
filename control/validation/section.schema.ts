@@ -1,0 +1,23 @@
+import { z } from 'zod'
+import { MAX_SECTION_CAPACITY } from '@/domain/sections/section-rules'
+
+const capacity = z.coerce
+  .number({ message: 'Indica el cupo de la sección.' })
+  .int('El cupo debe ser un número entero.')
+  .min(1, 'El cupo debe ser mayor que cero.')
+  .max(MAX_SECTION_CAPACITY, `El cupo no puede superar ${MAX_SECTION_CAPACITY} estudiantes.`)
+
+const sectionNumber = z.preprocess(
+  (value) => (value === '' || value === null || value === undefined ? undefined : value),
+  z.coerce.number().int('El número de sección debe ser entero.').min(1, 'El número de sección debe ser mayor que cero.').max(99, 'El número de sección no puede superar 99.').optional(),
+)
+
+export const createSectionSchema = z.object({
+  termId: z.string().uuid('Elige un período.'),
+  subjectId: z.string().uuid('Elige una materia.'),
+  professorId: z.string().uuid('Elige un profesor.'),
+  capacity,
+  number: sectionNumber,
+})
+
+export type CreateSectionInput = z.input<typeof createSectionSchema>
