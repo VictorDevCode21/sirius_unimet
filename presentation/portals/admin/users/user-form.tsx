@@ -3,8 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { GraduationCap, KeyRound, LoaderCircle, Mail, Save, ShieldCheck, UserRound } from 'lucide-react'
-import type { CareerOption } from '@/control/controllers/user.queries'
-import { createUser } from '@/control/controllers/user.controller'
+import type { CareerOption, EditableUser } from '@/control/controllers/user.queries'
+import { createUser, updateUser } from '@/control/controllers/user.controller'
 import { FormMessage } from '@/presentation/components/shared/form-message'
 import { ROLE_OPTIONS } from '@/presentation/lib/roles'
 import { useAction } from '@/presentation/lib/use-action'
@@ -12,10 +12,16 @@ import { useAction } from '@/presentation/lib/use-action'
 const inputClass = 'min-w-0 flex-1 border-0 bg-transparent py-3.5 text-[0.95rem] text-foreground outline-0'
 const selectClass = `${inputClass} cursor-pointer`
 
-// Form to create a user; the career field appears only for students.
-export function UserForm({ careers }: { careers: CareerOption[] }) {
+// Form to create or edit a user; the career field appears only for students and the password only on creation.
+export function UserForm({ careers, user }: { careers: CareerOption[]; user?: EditableUser }) {
   const router = useRouter()
-  const [form, setForm] = useState({ name: '', email: '', role: 'STUDENT', password: '', careerId: '' })
+  const [form, setForm] = useState({
+    name: user?.name ?? '',
+    email: user?.email ?? '',
+    role: user?.role ?? 'STUDENT',
+    password: '',
+    careerId: user?.careerId ?? '',
+  })
   const { pending, result, run } = useAction()
 
   const update = (field: keyof typeof form) => (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
@@ -23,7 +29,8 @@ export function UserForm({ careers }: { careers: CareerOption[] }) {
 
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const response = await run(() => createUser(form))
+    const { password, ...fields } = form
+    const response = await run(() => (user ? updateUser({ ...fields, userId: user.id }) : createUser({ ...fields, password })))
     if (response?.ok) router.push('/admin/users')
   }
 
@@ -57,13 +64,15 @@ export function UserForm({ careers }: { careers: CareerOption[] }) {
             </select>
           </span>
         </label>
-        <label className="flex min-w-0 flex-col gap-1.5 text-sm font-bold">
-          Contraseña inicial
-          <span className="field">
-            <KeyRound aria-hidden="true" />
-            <input className={inputClass} type="password" value={form.password} onChange={update('password')} autoComplete="new-password" required />
-          </span>
-        </label>
+        {!user && (
+          <label className="flex min-w-0 flex-col gap-1.5 text-sm font-bold">
+            Contraseña inicial
+            <span className="field">
+              <KeyRound aria-hidden="true" />
+              <input className={inputClass} type="password" value={form.password} onChange={update('password')} autoComplete="new-password" required />
+            </span>
+          </label>
+        )}
         {form.role === 'STUDENT' && (
           <label className="flex min-w-0 flex-col gap-1.5 text-sm font-bold sm:col-span-2">
             Carrera
@@ -84,7 +93,7 @@ export function UserForm({ careers }: { careers: CareerOption[] }) {
       <div className="flex flex-wrap items-center gap-4">
         <button type="submit" className="primary-button" disabled={pending}>
           {pending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-          Crear usuario
+          {user ? 'Guardar cambios' : 'Crear usuario'}
         </button>
         <FormMessage result={result} />
       </div>

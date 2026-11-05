@@ -1,3 +1,5 @@
+import Link from 'next/link'
+import { Pencil } from 'lucide-react'
 import type { UserRow } from '@/control/controllers/user.queries'
 import { ROLE_LABELS } from '@/presentation/lib/roles'
 
@@ -15,6 +17,9 @@ export function UsersList({ users }: { users: UserRow[] }) {
           <div className="flex shrink-0 flex-wrap items-center gap-2">
             <span className="pill">{ROLE_LABELS[user.role]}</span>
             {!user.active && <span className="pill">Inactivo</span>}
+            <Link href={`/admin/users/${user.id}`} className="secondary-button">
+              <Pencil className="h-4 w-4" aria-hidden="true" /> Editar
+            </Link>
           </div>
         </li>
       ))}
