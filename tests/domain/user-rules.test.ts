@@ -1,8 +1,8 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { createUserSchema } from '@/control/validation/user.schema'
+import { createUserSchema, updateUserSchema } from '@/control/validation/user.schema'
 import { DomainError } from '@/domain/shared/domain-error'
-import { validateStudentCareer } from '@/domain/users/user-rules'
+import { validateRoleChange, validateSelfChange, validateStudentCareer } from '@/domain/users/user-rules'
 
 describe('validateStudentCareer', () => {
   it('requires a career for students', () => {
@@ -38,5 +38,43 @@ describe('createUserSchema', () => {
     assert.equal(createUserSchema.safeParse({ ...valid, role: 'ROOT' }).success, false)
     assert.equal(createUserSchema.safeParse({ ...valid, password: 'corta' }).success, false)
     assert.equal(createUserSchema.safeParse({ ...valid, name: '' }).success, false)
+  })
+})
+
+describe('validateRoleChange', () => {
+  const change = { current: 'PROFESSOR', next: 'ADMIN', headsDepartment: false, sectionCount: 0, enrollmentCount: 0 } as const
+
+  it('allows a change with no dependent records', () => {
+    assert.doesNotThrow(() => validateRoleChange(change))
+  })
+
+  it('blocks a change while records depend on the role', () => {
+    assert.throws(() => validateRoleChange({ ...change, headsDepartment: true }), DomainError)
+    assert.throws(() => validateRoleChange({ ...change, sectionCount: 1 }), DomainError)
+    assert.throws(() => validateRoleChange({ ...change, enrollmentCount: 1 }), DomainError)
+  })
+
+  it('ignores dependent records when the role stays the same', () => {
+    assert.doesNotThrow(() => validateRoleChange({ ...change, next: 'PROFESSOR', sectionCount: 3 }))
+  })
+})
+
+describe('validateSelfChange', () => {
+  it('blocks an admin from removing their own access', () => {
+    assert.throws(() => validateSelfChange('a', 'a', { roleChanged: true, deactivating: false }), DomainError)
+    assert.throws(() => validateSelfChange('a', 'a', { roleChanged: false, deactivating: true }), DomainError)
+  })
+
+  it('allows editing their own data and changing other users', () => {
+    assert.doesNotThrow(() => validateSelfChange('a', 'a', { roleChanged: false, deactivating: false }))
+    assert.doesNotThrow(() => validateSelfChange('a', 'b', { roleChanged: true, deactivating: true }))
+  })
+})
+
+describe('updateUserSchema', () => {
+  it('requires a valid user id', () => {
+    const input = { name: 'Ana Pérez', email: 'ana@test.local', role: 'PROFESSOR', careerId: '' }
+    assert.equal(updateUserSchema.safeParse({ ...input, userId: 'x' }).success, false)
+    assert.equal(updateUserSchema.safeParse({ ...input, userId: '00000000-0000-4000-8000-000000000000' }).success, true)
   })
 })
