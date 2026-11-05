@@ -7,11 +7,11 @@ export interface ActionResult {
   message: string
 }
 
-// Runs a use case, refreshes the given routes and turns business rule violations into a message for the UI.
+// Runs a use case, refreshes the given route trees and turns business rule violations into a message for the UI.
 export async function runAction(useCase: () => Promise<string>, paths: string[]): Promise<ActionResult> {
   try {
     const message = await useCase()
-    for (const path of paths) revalidatePath(path)
+    for (const path of paths) revalidatePath(path, 'layout')
     return { ok: true, message }
   } catch (error) {
     if (error instanceof DomainError) return { ok: false, message: error.message }

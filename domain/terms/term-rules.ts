@@ -4,3 +4,20 @@ import { DomainError } from '@/domain/shared/domain-error'
 export function validateTermDates(startsAt: Date, endsAt: Date) {
   if (endsAt <= startsAt) throw new DomainError('La fecha de fin debe ser posterior a la fecha de inicio.')
 }
+
+interface OpenCandidate {
+  id: string
+  endsAt: Date
+}
+
+// Only one term can receive enrollments at a time, and a finished term cannot be reopened.
+export function validateCanOpenTerm(term: OpenCandidate, openTerm: { id: string; name: string } | null, today: Date) {
+  if (openTerm && openTerm.id !== term.id) {
+    throw new DomainError(`Ya hay un periodo abierto: ${openTerm.name}. Ciérralo antes de abrir otro.`)
+  }
+  if (term.endsAt < today) throw new DomainError('No se puede abrir un periodo que ya terminó.')
+}
+
+export function isEnrollmentOpen(openTerm: { open: boolean } | null) {
+  return openTerm?.open === true
+}

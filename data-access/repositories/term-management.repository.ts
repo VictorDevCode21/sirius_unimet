@@ -14,3 +14,27 @@ export async function createTerm(data: { name: string; startsAt: Date; endsAt: D
     throw error
   }
 }
+
+export function findTermById(termId: string) {
+  return prisma.term.findUnique({ where: { id: termId } })
+}
+
+type TermRecord = NonNullable<Awaited<ReturnType<typeof findTermById>>>
+
+// Opens a term while holding a table lock, so two concurrent requests can never leave two terms open.
+// Returns null when the term does not exist.
+export async function openTerm(termId: string, assertCanOpen: (term: TermRecord, openTerm: TermRecord | null) => void) {
+  return prisma.$transaction(async (tx) => {
+    await tx.$executeRaw`LOCK TABLE "Term" IN SHARE ROW EXCLUSIVE MODE`
+    const term = await tx.term.findUnique({ where: { id: termId } })
+    if (!term) return null
+    assertCanOpen(term, await tx.term.findFirst({ where: { open: true } }))
+    return tx.term.update({ where: { id: termId }, data: { open: true } })
+  })
+}
+
+// Closes a term; returns null when the term does not exist.
+export async function closeTerm(termId: string) {
+  const { count } = await prisma.term.updateMany({ where: { id: termId }, data: { open: false } })
+  return count ? findTermById(termId) : null
+}
