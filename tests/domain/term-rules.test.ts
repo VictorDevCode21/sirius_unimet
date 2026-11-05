@@ -42,7 +42,7 @@ describe('createTermSchema', () => {
 
 describe('validateCanOpenTerm', () => {
   const today = utc('2026-11-05')
-  const term = { id: 'a', endsAt: utc('2027-04-05') }
+  const term = { id: 'a', endsAt: utc('2027-04-05'), ratePerCredit: 45 }
 
   it('opens a term when no other term is open', () => {
     assert.doesNotThrow(() => validateCanOpenTerm(term, null, today))
@@ -61,7 +61,11 @@ describe('validateCanOpenTerm', () => {
   })
 
   it('blocks opening a finished term', () => {
-    assert.throws(() => validateCanOpenTerm({ id: 'a', endsAt: utc('2026-01-01') }, null, today), DomainError)
+    assert.throws(() => validateCanOpenTerm({ ...term, endsAt: utc('2026-01-01') }, null, today), DomainError)
+  })
+
+  it('blocks opening a term without a fee', () => {
+    assert.throws(() => validateCanOpenTerm({ ...term, ratePerCredit: 0 }, null, today), DomainError)
   })
 })
 
