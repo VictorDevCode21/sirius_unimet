@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { createUserSchema, updateUserSchema } from '@/control/validation/user.schema'
+import { createUserSchema, updateUserSchema, userFilterSchema } from '@/control/validation/user.schema'
 import { DomainError } from '@/domain/shared/domain-error'
 import { validateRoleChange, validateSelfChange, validateStudentCareer } from '@/domain/users/user-rules'
 
@@ -76,5 +76,15 @@ describe('updateUserSchema', () => {
     const input = { name: 'Ana Pérez', email: 'ana@test.local', role: 'PROFESSOR', careerId: '' }
     assert.equal(updateUserSchema.safeParse({ ...input, userId: 'x' }).success, false)
     assert.equal(updateUserSchema.safeParse({ ...input, userId: '00000000-0000-4000-8000-000000000000' }).success, true)
+  })
+})
+
+describe('userFilterSchema', () => {
+  it('keeps valid filters', () => {
+    assert.deepEqual(userFilterSchema.parse({ search: ' ana ', role: 'STUDENT' }), { search: 'ana', role: 'STUDENT' })
+  })
+
+  it('ignores an unknown role from the URL', () => {
+    assert.equal(userFilterSchema.parse({ role: 'ROOT' }).role, undefined)
   })
 })
