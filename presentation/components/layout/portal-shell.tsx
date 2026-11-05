@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   BookOpen,
+  Building2,
   CalendarDays,
   ChevronDown,
   Clock3,
@@ -46,6 +47,7 @@ const portals: Record<Portal, { home: string; roleLabel: string; navItems: { lab
     navItems: [
       { label: 'Periodos', href: '/admin/terms', icon: CalendarDays },
       { label: 'Usuarios', href: '/admin/users', icon: UsersRound },
+      { label: 'Departamentos', href: '/admin/departments', icon: Building2 },
     ],
   },
 }
