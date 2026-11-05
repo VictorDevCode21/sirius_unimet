@@ -120,7 +120,7 @@ export function FlowchartBoard({ subjects, terms, branches, currentTerm }: Flowc
                 return subject ? (
                   renderCard(subject)
                 ) : (
-                  <div key={`empty-${periodIndex}-${rowIndex}`} className="min-h-[8.25rem] rounded-[1.15rem] border border-dashed border-border" />
+                  <div key={`empty-${periodIndex}-${rowIndex}`} className="min-h-[var(--subject-card-height)] rounded-[var(--card-radius-sm)] border border-dashed border-border" />
                 )
               }),
             )}

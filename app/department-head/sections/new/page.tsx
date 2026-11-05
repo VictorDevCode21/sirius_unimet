@@ -25,7 +25,7 @@ export default async function NewSectionPage({ searchParams }: NewSectionPagePro
       {options && options.terms.length ? (
         <SectionForm options={options} defaultTermName={term} />
       ) : (
-        <div className="surface p-8 text-center text-sm text-muted-foreground">
+        <div className="surface card-pad text-center text-sm text-muted-foreground">
           {options ? 'No hay períodos vigentes o futuros en los que crear secciones.' : 'Tu cuenta no tiene un departamento asignado.'}
         </div>
       )}

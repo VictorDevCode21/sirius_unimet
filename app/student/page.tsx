@@ -16,7 +16,7 @@ export default async function SummaryPage() {
 
   return (
     <div className="content-container">
-      <section className="hero-card reveal !py-6 sm:!py-7">
+      <section className="hero-card reveal !py-[var(--card-padding)] sm:!py-[var(--card-padding-lg)]">
         <div className="login-orb login-orb-orange !h-64 !w-64 opacity-60" />
         <div className="login-bars" aria-hidden="true">
           <span />
@@ -49,7 +49,7 @@ export default async function SummaryPage() {
             </div>
           </div>
 
-          <div className="glass-card flex shrink-0 items-center gap-4 self-start p-4 sm:self-auto">
+          <div className="glass-card flex shrink-0 items-center gap-3 self-start p-[var(--card-padding-sm)] sm:self-auto">
             <div className="relative h-24 w-24 shrink-0">
               <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90" aria-hidden="true">
                 <circle cx="50" cy="50" r="42" fill="none" stroke="rgb(255 255 255 / 15%)" strokeWidth="10" />
@@ -83,31 +83,31 @@ export default async function SummaryPage() {
       <div className="reveal reveal-1 mb-5 mt-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div>
           <p className="eyebrow">Panel del estudiante</p>
-          <h2 className="page-title mt-2 !text-[clamp(1.6rem,2.6vw,2.2rem)]">Tu resumen académico</h2>
+          <h2 className="page-title mt-2 !text-[clamp(1.6rem,calc(2.6vw*var(--ui-scale)),2.2rem)]">Tu resumen académico</h2>
         </div>
         <span className="pill self-start text-muted-foreground">
           <span className="pulse-dot" /> Estudiante activo
         </span>
       </div>
 
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <div className="stat-card reveal reveal-1">
+      <div className="card-grid grid sm:grid-cols-2 xl:grid-cols-4">
+        <Link href="/student/flowchart" className="stat-card reveal reveal-1 block">
           <div className="stat-icon bg-[#003087]/10 text-[#003087] dark:bg-[#1859a9]/25 dark:text-[#8fb8ff]">
             <GraduationCap />
           </div>
           <p className="mt-5 text-xs font-semibold text-muted-foreground">Carrera</p>
           <p className="mt-1 text-lg font-bold leading-tight">{career.name}</p>
           <p className="mt-1 text-xs text-muted-foreground">{stats.planCredits} UC en el plan de estudios</p>
-        </div>
-        <div className="stat-card reveal reveal-2">
+        </Link>
+        <Link href="/student/history" className="stat-card reveal reveal-2 block">
           <div className="stat-icon bg-[#f68629]/15 text-[var(--orange-text)]">
             <Sparkles />
           </div>
           <p className="mt-5 text-xs font-semibold text-muted-foreground">Índice acumulado</p>
           <p className="mt-1 font-display text-4xl font-extrabold">{formatGrade(record.average)}</p>
           <p className="mt-1 text-xs text-muted-foreground">Escala de 0 a 20 puntos</p>
-        </div>
-        <div className="stat-card reveal reveal-3">
+        </Link>
+        <Link href="/student/flowchart" className="stat-card reveal reveal-3 block">
           <div className="stat-icon bg-emerald-500/12 text-emerald-600 dark:text-emerald-400">
             <BookOpen />
           </div>
@@ -119,8 +119,8 @@ export default async function SummaryPage() {
           <div className="progress-track mt-3">
             <span style={{ width: `${stats.progressPercent}%` }} />
           </div>
-        </div>
-        <div className="stat-card reveal reveal-4">
+        </Link>
+        <Link href="/student/flowchart" className="stat-card reveal reveal-4 block">
           <div className="stat-icon bg-violet-500/12 text-violet-600 dark:text-violet-400">
             <CalendarDays />
           </div>
@@ -129,11 +129,11 @@ export default async function SummaryPage() {
           <p className="mt-1 text-xs text-muted-foreground">
             {stats.passedSubjects} de {stats.totalSubjects} materias aprobadas
           </p>
-        </div>
+        </Link>
       </div>
 
-      <div className="mt-6 grid gap-6 xl:grid-cols-[1.35fr_0.65fr]">
-        <section className="surface reveal reveal-3 p-5 sm:p-7">
+      <div className="section-grid mt-5 grid xl:grid-cols-[1.35fr_0.65fr]">
+        <section className="surface card-pad reveal reveal-3">
           <div className="mb-5 flex items-start justify-between gap-4">
             <div>
               <p className="eyebrow">{currentTerm?.name ?? 'Período actual'}</p>
@@ -160,7 +160,7 @@ export default async function SummaryPage() {
           )}
         </section>
 
-        <section className="surface reveal reveal-4 flex flex-col p-5 sm:p-7">
+        <section className="surface card-pad reveal reveal-4 flex flex-col">
           <p className="eyebrow">Pre-inscripción</p>
           <h3 className="mt-1 text-xl font-bold">{offer ? `Período ${offer.term.name}` : 'Sin período abierto'}</h3>
           <div className="mt-5 grid grid-cols-2 gap-3">
