@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Term" ALTER COLUMN "ratePerCredit" SET DEFAULT 0,
+ALTER COLUMN "maxCredits" SET DEFAULT 0;
