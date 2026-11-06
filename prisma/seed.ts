@@ -12,6 +12,14 @@ import { resolveGradeStatus } from '../domain/grades/academic-progress'
 
 const STUDENT_EMAIL = 'r.victor@correo.unimet.edu.ve'
 const STUDENT_PASSWORD = 'Test123**'
+const ADMIN_EMAIL = 'admin@unimet.edu.ve'
+const ADMIN_PASSWORD = 'Test123**'
+const UNASSIGNED_HEAD_EMAIL = 'jefe.disponible@unimet.edu.ve'
+const UNCONFIGURED_TERM = { name: '2627-3', startsAt: new Date(Date.UTC(2027, 3, 20)), endsAt: new Date(Date.UTC(2027, 6, 20)) }
+const SAMPLE_PASSWORD = 'Test123**'
+const SAMPLE_PROFESSOR_EMAIL = 'profesor1@unimet.edu.ve'
+const PROFESSOR_WITHOUT_SECTIONS_EMAIL = 'sin.secciones@unimet.edu.ve'
+const sampleClassmates = ['Andrea Blanco', 'Diego Fuentes', 'Sofía Navarro']
 const RATE_PER_CREDIT = 45
 const MAX_CREDITS = 21
 
@@ -230,6 +238,65 @@ async function seedOpenTermOffer(careerId: string, professorIds: string[]) {
   console.log(`Open term ${OPEN_TERM}: ${index} sections`)
 }
 
+// Sample admin account, a closed and not yet configured period, and a department head without a department.
+async function seedAdminConfig() {
+  const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 12)
+  await prisma.user.upsert({
+    where: { email: ADMIN_EMAIL },
+    update: { passwordHash, role: 'ADMIN', active: true },
+    create: { email: ADMIN_EMAIL, name: 'Administración UNIMET', passwordHash, role: 'ADMIN' },
+  })
+  await prisma.term.upsert({
+    where: { name: UNCONFIGURED_TERM.name },
+    update: {},
+    create: UNCONFIGURED_TERM,
+  })
+  await prisma.user.upsert({
+    where: { email: UNASSIGNED_HEAD_EMAIL },
+    update: { passwordHash, role: 'DEPARTMENT_HEAD', active: true },
+    create: { email: UNASSIGNED_HEAD_EMAIL, name: 'Andrés Salazar', passwordHash, role: 'DEPARTMENT_HEAD' },
+  })
+}
+
+// Sample professor with a login and students in the current term, plus a professor without sections.
+async function seedProfessorSections() {
+  const passwordHash = await bcrypt.hash(SAMPLE_PASSWORD, 12)
+  const professor = await prisma.user.update({ where: { email: SAMPLE_PROFESSOR_EMAIL }, data: { passwordHash } })
+  await prisma.user.upsert({
+    where: { email: PROFESSOR_WITHOUT_SECTIONS_EMAIL },
+    update: { passwordHash, role: 'PROFESSOR', active: true },
+    create: { email: PROFESSOR_WITHOUT_SECTIONS_EMAIL, name: 'Elena Suárez', passwordHash, role: 'PROFESSOR' },
+  })
+
+  const term = await prisma.term.findUniqueOrThrow({ where: { name: CURRENT_TERM } })
+  const career = await prisma.career.findUniqueOrThrow({ where: { name: 'Ingeniería en Sistemas' } })
+  const section = await prisma.section.findFirstOrThrow({
+    where: { termId: term.id, professorId: professor.id },
+    include: { subject: true },
+    orderBy: { subject: { code: 'asc' } },
+  })
+  const amount = calculateAmount(section.subject.credits, Number(term.ratePerCredit))
+
+  for (const [index, name] of sampleClassmates.entries()) {
+    const email = `estudiante${index + 1}@correo.unimet.edu.ve`
+    const student = await prisma.user.upsert({
+      where: { email },
+      update: { name, passwordHash, role: 'STUDENT', careerId: career.id, active: true },
+      create: { email, name, passwordHash, role: 'STUDENT', careerId: career.id },
+    })
+    await prisma.enrollment.create({
+      data: {
+        studentId: student.id,
+        termId: term.id,
+        status: 'CONFIRMED',
+        amount,
+        details: { create: { sectionId: section.id } },
+        payments: { create: { reference: `SIM-${CURRENT_TERM}-${student.id.slice(0, 8)}`.toUpperCase(), amount, status: 'APPROVED' } },
+      },
+    })
+  }
+}
+
 async function main() {
   await reset()
   await seedAcademicStructure()
@@ -237,6 +304,8 @@ async function main() {
   const { professorIds, studentId } = await seedUsers(career.id)
   await seedStudentHistory(career.id, studentId, professorIds)
   await seedOpenTermOffer(career.id, professorIds)
+  await seedAdminConfig()
+  await seedProfessorSections()
   console.log('Seed completed')
 }
 
