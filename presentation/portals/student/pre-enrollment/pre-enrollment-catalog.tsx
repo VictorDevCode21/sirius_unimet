@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from 'react'
 import {
+  ArrowLeftRight,
   CalendarDays,
   CheckCircle2,
   ChevronRight,
@@ -19,7 +20,14 @@ import {
   X,
   XCircle,
 } from 'lucide-react'
-import { addSection, removeSection, type ActionResult, type Offer, type SectionView } from '@/control/controllers/enrollment.controller'
+import {
+  addSection,
+  removeSection,
+  replaceSection,
+  type ActionResult,
+  type Offer,
+  type SectionView,
+} from '@/control/controllers/enrollment.controller'
 import { blocksOverlap } from '@/domain/enrollment/enrollment-validator'
 import { StatusBadge } from '@/presentation/components/shared/status-badge'
 import { formatCurrency, formatSchedule, toRoman } from '@/presentation/lib/format'
@@ -44,7 +52,7 @@ const sortOptions: { value: SortKey; label: string }[] = [
 
 // Highest number of free seats among the subject's sections.
 const freeSeats = (subject: OfferSubject) =>
-  Math.max(0, ...subject.sections.map((section) => section.capacity - section.occupied))
+  Math.max(0, ...subject.sections.map((section) => section.seatsLeft))
 
 const comparators: Record<SortKey, (a: OfferSubject, b: OfferSubject) => number> = {
   TERM: (a, b) => a.term - b.term || a.branch - b.branch,
@@ -73,8 +81,9 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
   const [detail, setDetail] = useState<OfferSubject | null>(null)
   const [toast, setToast] = useState<Toast | null>(null)
   const [pendingId, setPendingId] = useState<string | null>(null)
+  const [replaceTarget, setReplaceTarget] = useState<string | null>(null)
 
-  const selected = offer.enrollment?.sections ?? []
+  const selected = useMemo(() => offer.enrollment?.sections ?? [], [offer.enrollment])
   const isLocked = Boolean(offer.enrollment && offer.enrollment.status !== 'PRE_ENROLLED')
   const selectedBySubject = useMemo(() => new Map(selected.map((section) => [section.subject.id, section])), [selected])
   const totalCredits = selected.reduce((sum, section) => sum + section.subject.credits, 0)
@@ -125,6 +134,16 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
     }
   }
 
+  const confirmReplacement = async (replacedSectionId: string, sectionId: string) => {
+    setPendingId(sectionId)
+    try {
+      setToast(await replaceSection({ replacedSectionId, sectionId }))
+      setReplaceTarget(null)
+    } finally {
+      setPendingId(null)
+    }
+  }
+
   const undoRemoval = (sectionId: string) => {
     setToast(null)
     run(sectionId, addSection)
@@ -143,19 +162,19 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
   const renderSection = (section: SectionView, subject: OfferSubject) => {
     const isSelected = selectedBySubject.get(subject.id)?.id === section.id
     const otherSection = isSelected ? undefined : selectedBySubject.get(subject.id)
-    const isFull = section.occupied >= section.capacity
+    const isFull = section.isFull
     const clash = isSelected ? null : findClash(section)
     const disabledReason = isSelected
       ? null
       : isLocked
         ? 'Tu inscripción ya no admite cambios.'
-        : otherSection
-          ? `Ya tienes la sección ${otherSection.number} de esta materia. Quítala para elegir esta.`
-          : isFull
-            ? 'Sin cupos disponibles en esta sección.'
-            : clash
-              ? `Choca con ${clash.subjectName} (${clash.schedule}).`
-              : null
+        : isFull
+          ? 'Sección llena: no quedan cupos.'
+          : clash
+            ? `Choca con ${clash.subjectName} (${clash.schedule}).`
+            : null
+    const canReplace = Boolean(otherSection) && !disabledReason
+    const confirmingReplace = canReplace && replaceTarget === section.id
     return (
       <li
         key={section.id}
@@ -175,7 +194,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
                 <Clock3 className="h-3.5 w-3.5" /> {formatSchedule(section.blocks)}
               </span>
               <span className={cn('inline-flex items-center gap-1', isFull && 'font-bold text-red-500')}>
-                <UsersRound className="h-3.5 w-3.5" /> {section.capacity - section.occupied} cupos
+                <UsersRound className="h-3.5 w-3.5" /> {isFull ? 'Llena' : `${section.seatsLeft} cupos`}
               </span>
             </div>
           </div>
@@ -200,6 +219,17 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
                 </>
               )}
             </button>
+          ) : canReplace ? (
+            <button
+              type="button"
+              className="secondary-button !px-3.5 !py-2 text-xs"
+              disabled={pendingId === section.id}
+              onClick={() => setReplaceTarget(confirmingReplace ? null : section.id)}
+              aria-expanded={confirmingReplace}
+              aria-controls={`replace-${section.id}`}
+            >
+              <ArrowLeftRight /> Reemplazar
+            </button>
           ) : (
             <button
               type="button"
@@ -209,16 +239,47 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
               aria-describedby={disabledReason ? `reason-${section.id}` : undefined}
             >
               {pendingId === section.id ? <LoaderCircle className="animate-spin" /> : <Plus />}
-              {isFull ? 'Sin cupos' : 'Agregar'}
+              {isFull ? 'Llena' : 'Agregar'}
             </button>
           )}
         </div>
+        {canReplace && !confirmingReplace && (
+          <p className="mt-2 flex items-start gap-1.5 text-[0.72rem] font-semibold leading-snug text-muted-foreground">
+            <Info className="mt-px h-3.5 w-3.5 shrink-0" /> Ya tienes la sección {otherSection!.number} de esta materia.
+          </p>
+        )}
+        {confirmingReplace && (
+          <div
+            id={`replace-${section.id}`}
+            role="group"
+            aria-label="Confirmar reemplazo"
+            className="mt-3 rounded-xl border border-[var(--brand-orange)] bg-card p-3"
+          >
+            <p className="text-xs font-semibold leading-snug">
+              Ya tienes la sección {otherSection!.number} de {subject.name}. ¿Quieres reemplazarla por la sección{' '}
+              {section.number}?
+            </p>
+            <div className="mt-2.5 flex flex-wrap gap-2">
+              <button
+                type="button"
+                className="primary-button !px-3.5 !py-2 text-xs"
+                disabled={pendingId === section.id}
+                onClick={() => confirmReplacement(otherSection!.id, section.id)}
+              >
+                {pendingId === section.id ? <LoaderCircle className="animate-spin" /> : <ArrowLeftRight />} Reemplazar
+              </button>
+              <button type="button" className="secondary-button !px-3.5 !py-2 text-xs" onClick={() => setReplaceTarget(null)}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        )}
         {disabledReason && (
           <p
             id={`reason-${section.id}`}
             className={cn(
               'mt-2 flex items-start gap-1.5 text-[0.72rem] font-semibold leading-snug',
-              clash && !otherSection && !isFull && !isLocked ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground',
+              clash && !isFull && !isLocked ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground',
             )}
           >
             <Info className="mt-px h-3.5 w-3.5 shrink-0" /> {disabledReason}
