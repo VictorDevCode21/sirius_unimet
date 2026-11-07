@@ -3,6 +3,7 @@ import assert from 'node:assert/strict'
 import { maxCreditsSchema } from '@/control/validation/term.schema'
 import { validateMaxCredits, type SectionCandidate } from '@/domain/enrollment/enrollment-validator'
 import { DomainError } from '@/domain/shared/domain-error'
+import { validateMaxCreditsChange } from '@/domain/terms/term-rules'
 
 const section = (id: string, credits: number): SectionCandidate => ({ id, subjectId: id, subjectName: id, credits, blocks: [] })
 
@@ -25,5 +26,29 @@ describe('enrollment against the saved max credits', () => {
     const selected = [section('a', 12)]
     assert.doesNotThrow(() => validateMaxCredits(selected, section('b', 6), 21))
     assert.throws(() => validateMaxCredits(selected, section('b', 6), 15), DomainError)
+  })
+})
+
+describe('validateMaxCreditsChange', () => {
+  it('accepts a max equal to or above every unpaid enrollment', () => {
+    assert.doesNotThrow(() => validateMaxCreditsChange(18, [12, 18, 0]))
+    assert.doesNotThrow(() => validateMaxCreditsChange(15, []))
+  })
+
+  it('rejects a max below one enrollment and says how to fix it', () => {
+    assert.throws(
+      () => validateMaxCreditsChange(15, [12, 18]),
+      (error: unknown) =>
+        error instanceof DomainError &&
+        error.message ===
+          'No puedes bajar el máximo a 15 UC: 1 pre-inscripción del período tiene más créditos. Pide que ajusten su selección o usa un máximo mayor.',
+    )
+  })
+
+  it('counts every enrollment over the new max', () => {
+    assert.throws(
+      () => validateMaxCreditsChange(15, [18, 16, 15, 9]),
+      (error: unknown) => error instanceof DomainError && error.message.startsWith('No puedes bajar el máximo a 15 UC: 2 pre-inscripciones del período tienen más créditos.'),
+    )
   })
 })
