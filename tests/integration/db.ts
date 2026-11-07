@@ -11,3 +11,21 @@ export async function findSeedFixtures() {
   const student = await prisma.user.findUniqueOrThrow({ where: { email: 'r.victor@correo.unimet.edu.ve' } })
   return { department, openTerm, professor, student }
 }
+
+// Creates throwaway students enrolled (PRE_ENROLLED) in a section; returns their ids for cleanup.
+export async function enrollTemporaryStudents(sectionId: string, termId: string, count: number) {
+  const ids: string[] = []
+  for (let index = 0; index < count; index++) {
+    const student = await prisma.user.create({
+      data: { name: `Estudiante prueba ${index}`, email: `test-${Date.now()}-${Math.random().toString(36).slice(2)}@test.local`, passwordHash: 'x', role: 'STUDENT' },
+    })
+    ids.push(student.id)
+    await prisma.enrollment.create({ data: { studentId: student.id, termId, details: { create: { sectionId } } } })
+  }
+  return ids
+}
+
+export async function removeTemporaryStudents(studentIds: string[]) {
+  await prisma.enrollment.deleteMany({ where: { studentId: { in: studentIds } } })
+  await prisma.user.deleteMany({ where: { id: { in: studentIds } } })
+}

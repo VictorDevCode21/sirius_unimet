@@ -82,3 +82,48 @@ export function createSection(params: {
     })
   })
 }
+
+type TransactionClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0]
+
+// Locks the section row so seat assignment, edits and deletion of the same section run one at a time.
+async function lockSection(tx: TransactionClient, sectionId: string) {
+  const [locked] = await tx.$queryRaw<{ id: string }[]>`SELECT "id" FROM "Section" WHERE "id" = ${sectionId}::uuid FOR UPDATE`
+  if (!locked) return null
+  const [occupied, grades] = await Promise.all([
+    tx.enrollmentDetail.count({ where: { sectionId } }),
+    tx.grade.count({ where: { sectionId } }),
+  ])
+  return { occupied, grades }
+}
+
+// Updates professor, capacity and number while holding the section lock; the capacity is checked against
+// the seats taken at that moment.
+export function updateSectionWithLock(params: {
+  sectionId: string
+  professorId: string
+  capacity: number
+  number: number
+  assertCapacity: (capacity: number, occupied: number) => void
+}) {
+  return prisma.$transaction(async (tx) => {
+    const counts = await lockSection(tx, params.sectionId)
+    if (!counts) return null
+    params.assertCapacity(params.capacity, counts.occupied)
+    return tx.section.update({
+      where: { id: params.sectionId },
+      data: { professorId: params.professorId, capacity: params.capacity, number: params.number },
+      select: { id: true, number: true, capacity: true },
+    })
+  })
+}
+
+// Deletes a section and its schedule blocks only when the rule allows it at the moment of the lock.
+export function deleteSectionWithLock(sectionId: string, assertDeletable: (occupied: number, grades: number) => void) {
+  return prisma.$transaction(async (tx) => {
+    const counts = await lockSection(tx, sectionId)
+    if (!counts) return false
+    assertDeletable(counts.occupied, counts.grades)
+    await tx.section.delete({ where: { id: sectionId } })
+    return true
+  })
+}
