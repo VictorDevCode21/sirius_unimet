@@ -17,6 +17,11 @@ export function formatShortDate(date: Date) {
   return new Intl.DateTimeFormat('es-VE', { day: 'numeric', month: 'long', year: 'numeric' }).format(date)
 }
 
+// Date-only columns are stored at UTC midnight, so they are formatted in UTC to keep the calendar day.
+export function formatDateOnly(date: Date) {
+  return new Intl.DateTimeFormat('es-VE', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(date)
+}
+
 export function firstName(fullName: string) {
   return fullName.split(' ')[0] ?? fullName
 }
