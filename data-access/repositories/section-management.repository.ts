@@ -47,6 +47,7 @@ export const managedSectionInclude = {
   term: { select: { id: true, name: true, endsAt: true } },
   professor: { select: { id: true, name: true } },
   scheduleBlocks: { orderBy: [{ weekday: 'asc' as const }, { startTime: 'asc' as const }] },
+  enrollmentDetails: { select: { enrollment: { select: { status: true } } } },
   _count: { select: { enrollmentDetails: true, grades: true } },
 }
 
@@ -60,6 +61,18 @@ export function listDepartmentSections(departmentId: string, termId: string) {
 
 export function findDepartmentSection(sectionId: string, departmentId: string) {
   return prisma.section.findFirst({ where: { id: sectionId, subject: { career: { departmentId } } }, include: managedSectionInclude })
+}
+
+// Students holding a seat in a section, with the status of their enrollment.
+export function listSectionStudents(sectionId: string) {
+  return prisma.enrollmentDetail.findMany({
+    where: { sectionId },
+    select: {
+      createdAt: true,
+      enrollment: { select: { status: true, student: { select: { id: true, name: true, email: true, career: { select: { name: true } } } } } },
+    },
+    orderBy: { enrollment: { student: { name: 'asc' } } },
+  })
 }
 
 // Creates a section; when no number is given, the next free number of the subject in the term is used.

@@ -5,8 +5,10 @@ import {
   listActiveProfessors,
   listDepartmentSections,
   listDepartmentSubjects,
+  listSectionStudents,
   listTerms,
 } from '@/data-access/repositories/section-management.repository'
+import { computeOccupancy, summarizeOccupancy } from '@/domain/sections/occupancy'
 import { isTermEditable } from '@/domain/sections/section-rules'
 
 const toMinutes = (time: Date) => time.getUTCHours() * 60 + time.getUTCMinutes()
@@ -29,6 +31,10 @@ function toManagedSectionView(section: ManagedSection, today: Date) {
     })),
     occupied: section._count.enrollmentDetails,
     grades: section._count.grades,
+    occupancy: computeOccupancy(
+      section.capacity,
+      section.enrollmentDetails.map((detail) => detail.enrollment.status),
+    ),
   }
 }
 
@@ -40,16 +46,23 @@ function toTermOption(term: Awaited<ReturnType<typeof listTerms>>[number], today
 
 export type TermOption = ReturnType<typeof toTermOption>
 
-// Sections of the head's department in the requested term (the open term by default).
-export async function listManagedSections(requestedTermName?: string) {
+const normalize = (text: string) => text.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase()
+
+// Sections of the head's department in the requested term (the open term by default), optionally filtered by
+// subject name or code, with their occupancy totals.
+export async function listManagedSections(requestedTermName?: string, query = '') {
   const { department } = await getDepartmentHeadContext()
   const today = new Date()
   const terms = (await listTerms()).map((term) => toTermOption(term, today))
-  if (!department) return { department: null, terms, term: null, sections: [] }
+  const empty = summarizeOccupancy([])
+  if (!department) return { department: null, terms, term: null, sections: [], totals: empty }
 
   const term = terms.find((item) => item.name === requestedTermName) ?? terms.find((item) => item.open) ?? terms[0] ?? null
-  const sections = term ? await listDepartmentSections(department.id, term.id) : []
-  return { department, terms, term, sections: sections.map((section) => toManagedSectionView(section, today)) }
+  const needle = normalize(query.trim())
+  const sections = (term ? await listDepartmentSections(department.id, term.id) : [])
+    .map((section) => toManagedSectionView(section, today))
+    .filter((section) => !needle || normalize(`${section.subject.code} ${section.subject.name}`).includes(needle))
+  return { department, terms, term, sections, totals: summarizeOccupancy(sections.map((section) => section.occupancy)) }
 }
 
 // Options for the create section form: editable terms, department subjects and active professors.
@@ -74,7 +87,19 @@ export async function getManagedSection(sectionId: string) {
   if (!department || !/^[0-9a-f-]{36}$/i.test(sectionId)) return null
   const [section, professors] = await Promise.all([findDepartmentSection(sectionId, department.id), listActiveProfessors()])
   if (!section) return null
-  return { section: toManagedSectionView(section, new Date()), professors }
+  const students = await listSectionStudents(section.id)
+  return {
+    section: toManagedSectionView(section, new Date()),
+    professors,
+    students: students.map((detail) => ({
+      id: detail.enrollment.student.id,
+      name: detail.enrollment.student.name,
+      email: detail.enrollment.student.email,
+      career: detail.enrollment.student.career?.name ?? '—',
+      status: detail.enrollment.status,
+      since: detail.createdAt,
+    })),
+  }
 }
 
 export type ManagedSectionDetail = NonNullable<Awaited<ReturnType<typeof getManagedSection>>>
