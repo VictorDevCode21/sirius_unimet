@@ -21,3 +21,7 @@ data-access/generated/
 
 
 
+
+# Test output
+playwright-report/
+test-results/
