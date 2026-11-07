@@ -70,8 +70,21 @@ export async function updateRatePerCredit(termId: string, ratePerCredit: number,
   )
 }
 
-// Saves the max credits of a term; returns null when the term does not exist.
-export async function updateMaxCredits(termId: string, maxCredits: number) {
-  const { count } = await prisma.term.updateMany({ where: { id: termId }, data: { maxCredits } })
-  return count ? findTermById(termId) : null
+// Unpaid enrollments: their selection can still change, so they must fit the max credits of their term.
+const UNPAID_ENROLLMENT_STATUSES = ['PRE_ENROLLED', 'PENDING'] as const
+
+// Saves the max credits of a term after checking it against the credits of its unpaid enrollments, in one transaction.
+// The row lock on the term serializes concurrent changes. Returns null when the term does not exist.
+export async function updateMaxCredits(termId: string, maxCredits: number, assertCanSave: (enrollmentCredits: number[]) => void) {
+  return prisma.$transaction(async (tx) => {
+    const [locked] = await tx.$queryRaw<{ id: string }[]>`SELECT "id" FROM "Term" WHERE "id" = ${termId}::uuid FOR UPDATE`
+    if (!locked) return null
+
+    const enrollments = await tx.enrollment.findMany({
+      where: { termId, status: { in: [...UNPAID_ENROLLMENT_STATUSES] } },
+      select: { details: { select: { section: { select: { subject: { select: { credits: true } } } } } } },
+    })
+    assertCanSave(enrollments.map(({ details }) => details.reduce((sum, detail) => sum + detail.section.subject.credits, 0)))
+    return tx.term.update({ where: { id: termId }, data: { maxCredits } })
+  })
 }
