@@ -5,6 +5,7 @@ import { publishSectionGrades, saveGrade } from '@/data-access/repositories/grad
 import { assertAdminCanCorrect, assertProfessorCanEdit, validatePublishable, validateStudentInSection } from '@/domain/grades/grade-rules'
 import { DomainError } from '@/domain/shared/domain-error'
 import { getSubjectStates } from '@/domain/prerequisites/prerequisite.service'
+import { markFailedSubjects } from '@/domain/grades/course-outcome'
 
 // Runs the real flowchart service for a student taking the only prerequisite of another subject.
 describe('grades in the flowchart', () => {
@@ -22,6 +23,16 @@ describe('grades in the flowchart', () => {
     const { subjects } = await getSubjectStates(studentId, careerId, today)
     const statusOf = (id: string) => subjects.find((subject) => subject.id === id)?.status
     return { requirement: statusOf(requirementId), dependent: statusOf(dependentId) }
+  }
+
+  // Same mapping as the flowchart controller: published grades mark the failed subjects.
+  const failedMark = async () => {
+    const { subjects, grades } = await getSubjectStates(studentId, careerId, today)
+    const marked = markFailedSubjects(
+      subjects,
+      grades.map((grade) => ({ subjectId: grade.section.subjectId, passed: grade.status === 'PASSED' })),
+    )
+    return marked.find((subject) => subject.id === requirementId)?.failed
   }
 
   before(async () => {
@@ -58,11 +69,16 @@ describe('grades in the flowchart', () => {
   it('keeps the subject in progress while the grade is not published', async () => {
     await saveGrade({ sectionId, studentId, value: 8, status: 'FAILED' }, validateStudentInSection, assertProfessorCanEdit)
     assert.deepEqual(await statuses(), { requirement: 'IN_PROGRESS', dependent: 'BLOCKED' })
+    assert.equal(await failedMark(), false)
   })
 
   it('leaves a failed subject pending after publishing', async () => {
     await publishSectionGrades(sectionId, validatePublishable)
     assert.deepEqual(await statuses(), { requirement: 'AVAILABLE', dependent: 'BLOCKED' })
+  })
+
+  it('marks the published failed subject as Reprobada while it stays available', async () => {
+    assert.equal(await failedMark(), true)
   })
 
   it('blocks the professor from changing a published grade', async () => {
@@ -74,5 +90,6 @@ describe('grades in the flowchart', () => {
   it('recalculates the flowchart after an admin correction', async () => {
     await saveGrade({ sectionId, studentId, value: 15, status: 'PASSED' }, validateStudentInSection, assertAdminCanCorrect)
     assert.deepEqual(await statuses(), { requirement: 'PASSED', dependent: 'AVAILABLE' })
+    assert.equal(await failedMark(), false)
   })
 })

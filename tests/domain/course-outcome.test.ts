@@ -1,7 +1,7 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { PASSING_GRADE, buildAcademicProgress, resolveGradeStatus } from '@/domain/grades/academic-progress'
-import { resolveCourseOutcomes } from '@/domain/grades/course-outcome'
+import { markFailedSubjects, resolveCourseOutcomes } from '@/domain/grades/course-outcome'
 import { GRADE_LOCKED_MESSAGE, assertAdminCanCorrect, assertProfessorCanEdit } from '@/domain/grades/grade-rules'
 import { resolveSubjectStates, type CurriculumSubject } from '@/domain/prerequisites/prerequisite-engine'
 
@@ -59,6 +59,36 @@ describe('resolveCourseOutcomes', () => {
     ]
     assert.equal(resolveCourseOutcomes(attempts).get('a'), 'PASSED')
     assert.equal(resolveCourseOutcomes([...attempts].reverse()).get('a'), 'PASSED')
+  })
+})
+
+describe('markFailedSubjects', () => {
+  const states = () => resolveSubjectStates(curriculum, buildAcademicProgress([{ subjectId: 'calculus', code: 'CALCULUS', credits: 3, value: 8, passed: false }], []))
+
+  it('marks a failed subject without changing its pending status or the available subjects', () => {
+    const before = states()
+    const marked = markFailedSubjects(before, [{ subjectId: 'calculus', passed: false }])
+    const calculus = marked.find((subject) => subject.id === 'calculus')!
+    assert.equal(calculus.failed, true)
+    assert.equal(calculus.status, 'AVAILABLE')
+    assert.deepEqual(
+      marked.map((subject) => subject.status),
+      before.map((subject) => subject.status),
+    )
+  })
+
+  it('does not mark subjects without grades or a blocked dependent', () => {
+    const marked = markFailedSubjects(states(), [{ subjectId: 'calculus', passed: false }])
+    assert.equal(marked.find((subject) => subject.id === 'physics')!.failed, false)
+  })
+
+  it('does not mark a subject passed on a later attempt', () => {
+    const progress = buildAcademicProgress([{ subjectId: 'calculus', code: 'CALCULUS', credits: 3, value: 15, passed: true }], [])
+    const marked = markFailedSubjects(resolveSubjectStates(curriculum, progress), [
+      { subjectId: 'calculus', passed: false },
+      { subjectId: 'calculus', passed: true },
+    ])
+    assert.equal(marked.find((subject) => subject.id === 'calculus')!.failed, false)
   })
 })
 
