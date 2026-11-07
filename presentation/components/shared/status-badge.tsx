@@ -8,6 +8,9 @@ export const statusConfig: Record<SubjectStatus, { label: string; icon: typeof C
   BLOCKED: { label: 'Bloqueada', icon: LockKeyhole, color: 'var(--status-blocked)' },
 }
 
+// Mark shown next to the status of a pending subject whose published attempts are all failed.
+export const failedConfig = { label: 'Reprobada', color: 'var(--status-failed)' }
+
 export function StatusBadge({ status }: { status: SubjectStatus }) {
   const { label, icon: Icon } = statusConfig[status]
   return (

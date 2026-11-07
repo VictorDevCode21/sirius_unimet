@@ -2,13 +2,14 @@
 
 import { useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowRight, Check, CircleSlash, X } from 'lucide-react'
+import { ArrowRight, Check, CircleSlash, CircleX, X } from 'lucide-react'
 import type { FlowchartSubject } from '@/control/controllers/flowchart.controller'
-import { StatusBadge } from '@/presentation/components/shared/status-badge'
+import { failedConfig, StatusBadge } from '@/presentation/components/shared/status-badge'
 import { toRoman } from '@/presentation/lib/format'
 
 interface SubjectDrawerProps {
-  subject: FlowchartSubject
+  // Pre-enrollment opens the drawer with subjects that do not carry the failed flag.
+  subject: Omit<FlowchartSubject, 'failed'> & { failed?: boolean }
   onClose: () => void
   showEnrollLink?: boolean
 }
@@ -31,7 +32,14 @@ export function SubjectDrawer({ subject, onClose, showEnrollLink = true }: Subje
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <StatusBadge status={subject.status} />
+            <div className="flex flex-wrap items-center gap-2">
+              <StatusBadge status={subject.status} />
+              {subject.failed && (
+                <span className="subject-failed-badge">
+                  <CircleX aria-hidden="true" /> {failedConfig.label}
+                </span>
+              )}
+            </div>
             <h2 id="subject-detail-title" className="mt-4 font-display text-3xl font-extrabold uppercase leading-[0.95]">
               {subject.name}
             </h2>
