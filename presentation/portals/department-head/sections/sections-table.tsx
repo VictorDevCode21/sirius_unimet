@@ -1,6 +1,7 @@
 import Link from 'next/link'
-import { ChevronRight } from 'lucide-react'
+import { CalendarX2, ChevronRight } from 'lucide-react'
 import type { ManagedSectionView } from '@/control/controllers/section-management.queries'
+import { formatSchedule } from '@/presentation/lib/format'
 
 // Sections of a term with subject, number, professor and capacity.
 export function SectionsTable({ sections, termName, highlightId }: { sections: ManagedSectionView[]; termName: string; highlightId?: string }) {
@@ -15,13 +16,14 @@ export function SectionsTable({ sections, termName, highlightId }: { sections: M
 
   return (
     <div className="surface reveal reveal-2 overflow-x-auto">
-      <table className="w-full min-w-[40rem] border-collapse text-left text-sm">
+      <table className="w-full min-w-[52rem] border-collapse text-left text-sm">
         <caption className="sr-only">Secciones del período {termName}</caption>
         <thead>
           <tr className="border-b border-border text-[0.68rem] font-bold uppercase tracking-[0.12em] text-muted-foreground">
             <th scope="col" className="px-5 py-4">Materia</th>
             <th scope="col" className="px-3 py-4">Sección</th>
             <th scope="col" className="px-3 py-4">Profesor</th>
+            <th scope="col" className="px-3 py-4">Horario</th>
             <th scope="col" className="px-3 py-4 text-right">Cupo</th>
             <th scope="col" className="px-5 py-4 text-right">
               <span className="sr-only">Acciones</span>
@@ -39,6 +41,15 @@ export function SectionsTable({ sections, termName, highlightId }: { sections: M
               </td>
               <td className="px-3 py-3.5 font-semibold">{section.number}</td>
               <td className="px-3 py-3.5">{section.professor.name}</td>
+              <td className="px-3 py-3.5 text-xs">
+                {section.blocks.length ? (
+                  formatSchedule(section.blocks)
+                ) : (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-[var(--status-available-bg)] px-2 py-1 font-bold text-[var(--status-available)]">
+                    <CalendarX2 className="h-3.5 w-3.5" aria-hidden="true" /> Sin horario
+                  </span>
+                )}
+              </td>
               <td className="px-3 py-3.5 text-right font-display text-lg font-extrabold">{section.capacity}</td>
               <td className="px-5 py-3.5 text-right">
                 <Link

@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import { ArrowLeft, Info } from 'lucide-react'
 import { getManagedSection } from '@/control/controllers/section-management.queries'
 import { PageHeading } from '@/presentation/components/shared/page-heading'
+import { ScheduleEditor } from '@/presentation/portals/department-head/sections/schedule-editor'
 import { SectionEditor } from '@/presentation/portals/department-head/sections/section-editor'
 
 interface SectionDetailPageProps {
@@ -35,6 +36,7 @@ export default async function SectionDetailPage({ params }: SectionDetailPagePro
       )}
 
       <SectionEditor detail={detail} backHref={backHref} />
+      <ScheduleEditor section={section} />
     </div>
   )
 }
