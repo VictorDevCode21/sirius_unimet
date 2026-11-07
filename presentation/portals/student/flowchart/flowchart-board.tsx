@@ -7,7 +7,6 @@ import { statusConfig } from '@/presentation/components/shared/status-badge'
 import type { FlowchartSubject } from '@/control/controllers/flowchart.controller'
 import type { SubjectStatus } from '@/domain/prerequisites/prerequisite-engine'
 import { toRoman } from '@/presentation/lib/format'
-import { cn } from '@/presentation/lib/utils'
 
 interface FlowchartBoardProps {
   subjects: FlowchartSubject[]

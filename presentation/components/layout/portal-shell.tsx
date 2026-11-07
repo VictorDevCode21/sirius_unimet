@@ -222,13 +222,13 @@ export function PortalShell({ user, currentTermCode, preEnrollmentTermCode, cart
             <button type="button" className="icon-button lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Abrir menú">
               <Menu />
             </button>
-            <p className="flex flex-col text-xs leading-snug sm:flex-row sm:items-baseline sm:gap-2 sm:text-sm">
-              <span className="whitespace-nowrap">
+            <p className="flex min-w-0 flex-col text-xs leading-snug sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-2 sm:text-sm">
+              <span className="sm:whitespace-nowrap">
                 <span className="text-muted-foreground">Período en curso: </span>
                 <strong className="font-display text-sm font-extrabold sm:text-base">{currentTermCode ?? '—'}</strong>
               </span>
               {preEnrollmentTermCode && (
-                <span className="whitespace-nowrap">
+                <span className="sm:whitespace-nowrap">
                   <span className="hidden text-muted-foreground sm:inline">· </span>
                   <span className="text-muted-foreground">Pre-inscripción para: </span>
                   <strong className="font-display text-sm font-extrabold sm:text-base">{preEnrollmentTermCode}</strong>
