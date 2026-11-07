@@ -44,6 +44,29 @@ export async function addSectionWithSeatLock(params: {
   })
 }
 
+// Swaps one section of the enrollment for another in a single transaction, checking the new section's seats
+// under a row lock, so the student never ends up with both sections or with none.
+export async function replaceSectionWithSeatLock(params: {
+  enrollmentId: string
+  replacedSectionId: string
+  sectionId: string
+  assertSeatAvailable: (occupied: number, capacity: number) => void
+  computeAmount: (totalCredits: number) => number
+}) {
+  return prisma.$transaction(async (tx) => {
+    const [locked] = await tx.$queryRaw<{ capacity: number }[]>`
+      SELECT "capacity" FROM "Section" WHERE "id" = ${params.sectionId}::uuid FOR UPDATE`
+    const occupied = await tx.enrollmentDetail.count({ where: { sectionId: params.sectionId } })
+    params.assertSeatAvailable(occupied, locked.capacity)
+
+    await tx.enrollmentDetail.delete({
+      where: { enrollmentId_sectionId: { enrollmentId: params.enrollmentId, sectionId: params.replacedSectionId } },
+    })
+    await tx.enrollmentDetail.create({ data: { enrollmentId: params.enrollmentId, sectionId: params.sectionId } })
+    await refreshAmount(tx, params.enrollmentId, params.computeAmount)
+  })
+}
+
 export async function removeSection(enrollmentId: string, sectionId: string, computeAmount: (totalCredits: number) => number) {
   return prisma.$transaction(async (tx) => {
     await tx.enrollmentDetail.delete({ where: { enrollmentId_sectionId: { enrollmentId, sectionId } } })
