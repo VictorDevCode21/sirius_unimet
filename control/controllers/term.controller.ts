@@ -12,7 +12,7 @@ import {
 } from '@/data-access/repositories/term-management.repository'
 import { repriceEnrollment } from '@/domain/billing/repricing'
 import { DomainError } from '@/domain/shared/domain-error'
-import { validateCanOpenTerm, validateTermDates } from '@/domain/terms/term-rules'
+import { validateCanOpenTerm, validateMaxCreditsChange, validateTermDates } from '@/domain/terms/term-rules'
 
 // Creates an academic period, closed by default.
 export async function createTerm(input: { name: string; startsAt: string; endsAt: string }): Promise<ActionResult> {
@@ -79,7 +79,8 @@ export async function saveMaxCredits(input: { termId: string; maxCredits: string
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0].message }
 
   return runAction(async () => {
-    const term = await updateMaxCredits(parsed.data.termId, parsed.data.maxCredits)
+    const { termId, maxCredits } = parsed.data
+    const term = await updateMaxCredits(termId, maxCredits, (enrollmentCredits) => validateMaxCreditsChange(maxCredits, enrollmentCredits))
     if (!term) throw new DomainError(TERM_NOT_FOUND)
     return `El máximo de UC del periodo ${term.name} se guardó.`
   }, ['/admin', '/student'])
