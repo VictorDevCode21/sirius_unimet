@@ -1,5 +1,6 @@
 import { prisma } from '@/data-access/prisma'
 import { sectionInclude } from '@/data-access/repositories/section.repository'
+import { SEAT_HOLDING_STATUS } from '@/data-access/repositories/seat.repository'
 
 const enrollmentInclude = {
   term: true,
@@ -8,6 +9,21 @@ const enrollmentInclude = {
 
 export function findEnrollment(studentId: string, termId: string) {
   return prisma.enrollment.findUnique({ where: { studentId_termId: { studentId, termId } }, include: enrollmentInclude })
+}
+
+// Credits of each section in an enrollment and the rate per credit of its term.
+export async function findEnrollmentCredits(enrollmentId: string, client: Pick<typeof prisma, 'enrollment'> = prisma) {
+  const enrollment = await client.enrollment.findUniqueOrThrow({
+    where: { id: enrollmentId },
+    select: {
+      term: { select: { ratePerCredit: true } },
+      details: { select: { section: { select: { subject: { select: { credits: true } } } } } },
+    },
+  })
+  return {
+    ratePerCredit: Number(enrollment.term.ratePerCredit),
+    sections: enrollment.details.map((detail) => ({ credits: detail.section.subject.credits })),
+  }
 }
 
 // Subjects of the student's confirmed enrollment in a term that still have no published grade.
@@ -19,8 +35,8 @@ export async function findInProgressSubjectIds(studentId: string, termId: string
   return details.filter((detail) => !detail.section.grades.length).map((detail) => detail.section.subjectId)
 }
 
-// Adds a section to the student's enrollment while holding a row lock on the section, so a seat is never
-// assigned twice under concurrent enrollments.
+// Adds a section to the student's pre-enrollment after checking, under a row lock on the section, that confirmed
+// enrollments have not filled it. Pre-enrolling does not take a seat; seats are taken when the enrollment is confirmed.
 export async function addSectionWithSeatLock(params: {
   studentId: string
   termId: string
@@ -31,7 +47,9 @@ export async function addSectionWithSeatLock(params: {
   return prisma.$transaction(async (tx) => {
     const [locked] = await tx.$queryRaw<{ capacity: number }[]>`
       SELECT "capacity" FROM "Section" WHERE "id" = ${params.sectionId}::uuid FOR UPDATE`
-    const occupied = await tx.enrollmentDetail.count({ where: { sectionId: params.sectionId } })
+    const occupied = await tx.enrollmentDetail.count({
+      where: { sectionId: params.sectionId, enrollment: { status: SEAT_HOLDING_STATUS } },
+    })
     params.assertSeatAvailable(occupied, locked.capacity)
 
     const enrollment = await tx.enrollment.upsert({
@@ -41,6 +59,31 @@ export async function addSectionWithSeatLock(params: {
     })
     await tx.enrollmentDetail.create({ data: { enrollmentId: enrollment.id, sectionId: params.sectionId } })
     await refreshAmount(tx, enrollment.id, params.computeAmount)
+  })
+}
+
+// Swaps one section of the enrollment for another in a single transaction, checking under a row lock that the new
+// section is not full, so the student never ends up with both sections or with none.
+export async function replaceSectionWithSeatLock(params: {
+  enrollmentId: string
+  replacedSectionId: string
+  sectionId: string
+  assertSeatAvailable: (occupied: number, capacity: number) => void
+  computeAmount: (totalCredits: number) => number
+}) {
+  return prisma.$transaction(async (tx) => {
+    const [locked] = await tx.$queryRaw<{ capacity: number }[]>`
+      SELECT "capacity" FROM "Section" WHERE "id" = ${params.sectionId}::uuid FOR UPDATE`
+    const occupied = await tx.enrollmentDetail.count({
+      where: { sectionId: params.sectionId, enrollment: { status: SEAT_HOLDING_STATUS } },
+    })
+    params.assertSeatAvailable(occupied, locked.capacity)
+
+    await tx.enrollmentDetail.delete({
+      where: { enrollmentId_sectionId: { enrollmentId: params.enrollmentId, sectionId: params.replacedSectionId } },
+    })
+    await tx.enrollmentDetail.create({ data: { enrollmentId: params.enrollmentId, sectionId: params.sectionId } })
+    await refreshAmount(tx, params.enrollmentId, params.computeAmount)
   })
 }
 

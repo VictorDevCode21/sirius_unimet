@@ -1,30 +1,40 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { checkEnrollmentSeats } from '@/control/controllers/enrollment-seats'
 import { getStudentContext } from '@/control/controllers/student-context'
-import { sectionIdSchema } from '@/control/validation/enrollment.schema'
+import { replaceSectionSchema, sectionIdSchema, type ReplaceSectionInput } from '@/control/validation/enrollment.schema'
 import {
   addSectionWithSeatLock,
   findEnrollment,
   removeSection as removeEnrollmentSection,
+  replaceSectionWithSeatLock,
 } from '@/data-access/repositories/enrollment.repository'
+import { defaultClient } from '@/data-access/repositories/seat.repository'
 import { findOfferByTerm, findSectionById } from '@/data-access/repositories/section.repository'
-import { findOpenTerm } from '@/data-access/repositories/term.repository'
+import { findNextTerm, findOpenTerm } from '@/data-access/repositories/term.repository'
 import { calculateAmount } from '@/domain/billing/amount-calculator'
 import {
   validateCapacity,
   validateMaxCredits,
   validatePrerequisites,
+  validateReplacement,
   validateScheduleClash,
   validateSingleSectionPerSubject,
   validateTermOpen,
   type SectionCandidate,
 } from '@/domain/enrollment/enrollment-validator'
+import { isOfferable, isSectionFull, seatsLeft } from '@/domain/enrollment/offer-rules'
+import { fullSectionMessage, type FullSection } from '@/domain/enrollment/seat-rules'
 import { DomainError } from '@/domain/shared/domain-error'
 
 export interface ActionResult {
   ok: boolean
   message: string
+}
+
+export interface SeatValidationResult extends ActionResult {
+  fullSections: FullSection[]
 }
 
 type SectionRecord = NonNullable<Awaited<ReturnType<typeof findSectionById>>>
@@ -34,6 +44,7 @@ const toMinutes = (time: Date) => time.getUTCHours() * 60 + time.getUTCMinutes()
 function toCandidate(section: SectionRecord): SectionCandidate {
   return {
     id: section.id,
+    number: section.number,
     subjectId: section.subjectId,
     subjectName: section.subject.name,
     credits: section.subject.credits,
@@ -46,12 +57,15 @@ function toCandidate(section: SectionRecord): SectionCandidate {
 }
 
 function toSectionView(section: SectionRecord) {
+  const occupied = section._count.enrollmentDetails
   return {
     id: section.id,
     number: section.number,
     professor: section.professor.name,
     capacity: section.capacity,
-    occupied: section._count.enrollmentDetails,
+    occupied,
+    seatsLeft: seatsLeft(section.capacity, occupied),
+    isFull: isSectionFull(section.capacity, occupied),
     blocks: section.scheduleBlocks.map((block) => ({
       weekday: block.weekday,
       startMinutes: toMinutes(block.startTime),
@@ -64,6 +78,7 @@ function toSectionView(section: SectionRecord) {
 export type SectionView = ReturnType<typeof toSectionView>
 
 // Lists the open term offer for the student's career, grouped by subject, with the current selection.
+// Only subjects the student can take carry their sections; the rest are listed with the reason they are not offered.
 export async function listOffer() {
   const { profile, subjects } = await getStudentContext()
   const term = await findOpenTerm()
@@ -79,7 +94,7 @@ export async function listOffer() {
     term: { id: term.id, name: term.name, maxCredits: term.maxCredits, ratePerCredit: Number(term.ratePerCredit) },
     subjects: subjects
       .filter((subject) => subject.status !== 'PASSED' && subject.status !== 'IN_PROGRESS')
-      .map((subject) => ({ ...subject, sections: sectionsBySubject.get(subject.id) ?? [] })),
+      .map((subject) => ({ ...subject, sections: isOfferable(subject.status) ? (sectionsBySubject.get(subject.id) ?? []) : [] })),
     enrollment: enrollment
       ? {
           status: enrollment.status,
@@ -92,9 +107,9 @@ export async function listOffer() {
 
 export type Offer = NonNullable<Awaited<ReturnType<typeof listOffer>>>
 
-async function runUseCase(useCase: () => Promise<string>): Promise<ActionResult> {
+async function runUseCase(execute: () => Promise<string>): Promise<ActionResult> {
   try {
-    const message = await useCase()
+    const message = await execute()
     revalidatePath('/student', 'layout')
     return { ok: true, message }
   } catch (error) {
@@ -141,6 +156,47 @@ export async function addSection(rawSectionId: string): Promise<ActionResult> {
   })
 }
 
+// Replaces a selected section with another section of the same subject in one server action, validating the new
+// section against the rest of the selection.
+export async function replaceSection(input: ReplaceSectionInput): Promise<ActionResult> {
+  const parsed = replaceSectionSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0].message }
+
+  return runUseCase(async () => {
+    const { profile, subjects } = await getStudentContext()
+    const term = await findOpenTerm()
+    validateTermOpen(term)
+
+    const section = await findSectionById(parsed.data.sectionId)
+    if (!section || section.termId !== term!.id) {
+      throw new DomainError('La sección no pertenece al período abierto. Recarga la página para ver la oferta vigente.')
+    }
+
+    const enrollment = await findEnrollment(profile.id, term!.id)
+    if (!enrollment) throw new DomainError('No tienes una pre-inscripción que modificar. Recarga la página.')
+    if (enrollment.status !== 'PRE_ENROLLED') {
+      throw new DomainError('Tu inscripción ya no admite cambios porque está en proceso de pago o confirmada.')
+    }
+
+    const selected = enrollment.details.map((detail) => toCandidate(detail.section))
+    const candidate = toCandidate(section)
+    const remaining = validateReplacement(selected, parsed.data.replacedSectionId, candidate)
+    const replaced = selected.find((item) => item.id === parsed.data.replacedSectionId)!
+    validatePrerequisites(subjects.find((subject) => subject.id === section.subjectId))
+    validateScheduleClash(remaining, candidate)
+    validateMaxCredits(remaining, candidate, term!.maxCredits)
+
+    await replaceSectionWithSeatLock({
+      enrollmentId: enrollment.id,
+      replacedSectionId: parsed.data.replacedSectionId,
+      sectionId: section.id,
+      assertSeatAvailable: validateCapacity,
+      computeAmount: (credits) => calculateAmount(credits, Number(term!.ratePerCredit)),
+    })
+    return `Reemplazaste la sección ${replaced.number} de ${section.subject.name} por la sección ${section.number}.`
+  })
+}
+
 export async function removeSection(rawSectionId: string): Promise<ActionResult> {
   const parsed = sectionIdSchema.safeParse(rawSectionId)
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0].message }
@@ -162,6 +218,35 @@ export async function removeSection(rawSectionId: string): Promise<ActionResult>
     await removeEnrollmentSection(enrollment.id, parsed.data, (credits) => calculateAmount(credits, Number(term!.ratePerCredit)))
     return `${detail.section.subject.name} se retiró de tu pre-inscripción.`
   })
+}
+
+// Checks, without taking any seat, that every section of the student's pre-enrollment still has seats. Called before
+// going to payment; returns the full sections with a suggested alternative each.
+export async function validateSeats(): Promise<SeatValidationResult> {
+  try {
+    const { profile } = await getStudentContext()
+    const term = await findOpenTerm()
+    validateTermOpen(term)
+    const enrollment = await findEnrollment(profile.id, term!.id)
+    if (!enrollment?.details.length) {
+      return { ok: false, message: 'Tu pre-inscripción está vacía. Agrega al menos una sección antes de pagar.', fullSections: [] }
+    }
+    const fullSections = await checkEnrollmentSeats(defaultClient, enrollment.id, { lock: false })
+    if (fullSections.length) {
+      return { ok: false, message: fullSections.map(fullSectionMessage).join(' '), fullSections }
+    }
+    return { ok: true, message: 'Todas tus secciones tienen cupo.', fullSections: [] }
+  } catch (error) {
+    if (error instanceof DomainError) return { ok: false, message: error.message, fullSections: [] }
+    throw error
+  }
+}
+
+// Next term that has not started yet, shown when no term is open for pre-enrollment.
+export async function getUpcomingTerm() {
+  await getStudentContext()
+  const term = await findNextTerm(new Date())
+  return term ? { name: term.name, startsAt: term.startsAt, endsAt: term.endsAt } : null
 }
 
 // Confirmed enrollment of the current term, used by the enrollment receipt.
