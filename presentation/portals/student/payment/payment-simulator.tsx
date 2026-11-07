@@ -3,12 +3,12 @@
 import { useRef, useState } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { CheckCircle2, Clock3, CreditCard, FileText, LoaderCircle, XCircle } from 'lucide-react'
+import { CheckCircle2, Clock3, CreditCard, FileText, LoaderCircle, RotateCcw, XCircle } from 'lucide-react'
 import { simulatePayment, type PaymentActionResult } from '@/control/controllers/payment.controller'
 import type { PaymentSummary } from '@/control/controllers/payment.queries'
 import { formatCurrency, formatSchedule, formatShortDate } from '@/presentation/lib/format'
 
-type Outcome = 'APPROVED'
+type Outcome = 'APPROVED' | 'REJECTED'
 
 const enrollmentStatus = {
   PRE_ENROLLED: { label: 'Pendiente de pago', icon: Clock3, className: 'bg-[var(--status-progress-bg)] text-[var(--status-progress)]' },
@@ -31,7 +31,8 @@ export function PaymentSimulator({ summary }: { summary: PaymentSummary }) {
   const status = summary.status ? enrollmentStatus[summary.status] : null
   const StatusIcon = status?.icon
   const confirmed = summary.status === 'CONFIRMED'
-  const payable = summary.status === 'PRE_ENROLLED' && summary.sections.length > 0
+  const payable = (summary.status === 'PRE_ENROLLED' || summary.status === 'PENDING') && summary.sections.length > 0
+  const retrying = summary.status === 'PENDING'
 
   const pay = async (outcome: Outcome) => {
     if (pending) return
@@ -124,7 +125,7 @@ export function PaymentSimulator({ summary }: { summary: PaymentSummary }) {
           Simulador de pago
         </h2>
         <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-          Elige el resultado del pago ficticio. Al aprobarse, tu inscripción queda confirmada y puedes descargar el comprobante.
+          Elige el resultado del pago ficticio. Si se rechaza, no se cobra y puedes reintentar; al aprobarse, tu inscripción queda confirmada y puedes descargar el comprobante.
         </p>
 
         {confirmed ? (
@@ -133,9 +134,19 @@ export function PaymentSimulator({ summary }: { summary: PaymentSummary }) {
           </Link>
         ) : (
           <div className="mt-5 flex flex-col gap-2">
+            {retrying && (
+              <p className="mb-1 flex items-start gap-2 rounded-2xl bg-[var(--status-available-bg)] p-3 text-xs font-semibold text-[var(--status-available)]" role="note">
+                <RotateCcw className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                Tu último pago fue rechazado y no se cobró. Puedes reintentarlo.
+              </p>
+            )}
             <button type="button" className="primary-button w-full" onClick={() => pay('APPROVED')} disabled={!payable || pending !== null}>
-              {pending === 'APPROVED' ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <CheckCircle2 aria-hidden="true" />}
-              {pending === 'APPROVED' ? 'Procesando…' : `Simular pago aprobado · ${formatCurrency(summary.amount)}`}
+              {pending === 'APPROVED' ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : retrying ? <RotateCcw aria-hidden="true" /> : <CheckCircle2 aria-hidden="true" />}
+              {pending === 'APPROVED' ? 'Procesando…' : `${retrying ? 'Reintentar: pago aprobado' : 'Simular pago aprobado'} · ${formatCurrency(summary.amount)}`}
+            </button>
+            <button type="button" className="secondary-button w-full" onClick={() => pay('REJECTED')} disabled={!payable || pending !== null}>
+              {pending === 'REJECTED' ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <XCircle aria-hidden="true" />}
+              {pending === 'REJECTED' ? 'Procesando…' : 'Simular pago rechazado'}
             </button>
           </div>
         )}
