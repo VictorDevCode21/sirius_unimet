@@ -26,3 +26,32 @@ export function validateCanOpenTerm(term: OpenCandidate, openTerm: { id: string;
 export function isEnrollmentOpen(openTerm: { open: boolean } | null) {
   return openTerm?.open === true
 }
+
+interface TermWindow {
+  name: string
+  startsAt: Date
+  endsAt: Date
+}
+
+// What the student portal offers: pre-enrollment for the open term, or the dates of the next term when none is open.
+export function describeEnrollmentAvailability(openTerm: ({ open: boolean } & TermWindow) | null, nextTerm: TermWindow | null) {
+  if (isEnrollmentOpen(openTerm)) return { isOpen: true as const, termName: openTerm!.name, nextTerm: null }
+  return {
+    isOpen: false as const,
+    termName: null,
+    nextTerm: nextTerm ? { name: nextTerm.name, startsAt: nextTerm.startsAt, endsAt: nextTerm.endsAt } : null,
+  }
+}
+
+export type EnrollmentAvailability = ReturnType<typeof describeEnrollmentAvailability>
+
+// A new max credits value applies to every unpaid enrollment of the term, so it cannot be lower than the credits any
+// of them already has.
+export function validateMaxCreditsChange(maxCredits: number, enrollmentCredits: number[]) {
+  const over = enrollmentCredits.filter((credits) => credits > maxCredits).length
+  if (!over) return
+  const subject = over === 1 ? '1 pre-inscripción del período tiene' : `${over} pre-inscripciones del período tienen`
+  throw new DomainError(
+    `No puedes bajar el máximo a ${maxCredits} UC: ${subject} más créditos. Pide que ajusten su selección o usa un máximo mayor.`,
+  )
+}
