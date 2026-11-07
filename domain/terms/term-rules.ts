@@ -44,3 +44,14 @@ export function describeEnrollmentAvailability(openTerm: ({ open: boolean } & Te
 }
 
 export type EnrollmentAvailability = ReturnType<typeof describeEnrollmentAvailability>
+
+// A new max credits value applies to every unpaid enrollment of the term, so it cannot be lower than the credits any
+// of them already has.
+export function validateMaxCreditsChange(maxCredits: number, enrollmentCredits: number[]) {
+  const over = enrollmentCredits.filter((credits) => credits > maxCredits).length
+  if (!over) return
+  const subject = over === 1 ? '1 pre-inscripción del período tiene' : `${over} pre-inscripciones del período tienen`
+  throw new DomainError(
+    `No puedes bajar el máximo a ${maxCredits} UC: ${subject} más créditos. Pide que ajusten su selección o usa un máximo mayor.`,
+  )
+}
