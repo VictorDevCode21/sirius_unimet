@@ -29,7 +29,11 @@ describe('max credits', () => {
     const term = await createTerm({ name, startsAt: new Date('2093-01-08T00:00:00Z'), endsAt: new Date('2093-04-05T00:00:00Z') })
     termId = term!.id
     const subjects = await prisma.subject.findMany({ take: 2, orderBy: { code: 'asc' } })
-    const professor = await prisma.user.findFirstOrThrow({ where: { role: 'PROFESSOR' } })
+    // Seeded professor only: other test files create and delete temporary professors at the same time.
+    const professor = await prisma.user.findFirstOrThrow({
+      where: { role: 'PROFESSOR', email: { not: { endsWith: '@test.local' } } },
+      orderBy: { email: 'asc' },
+    })
     for (const subject of subjects) {
       const section = await prisma.section.create({ data: { number: 1, capacity: 10, subjectId: subject.id, termId, professorId: professor.id } })
       sectionIds.push(section.id)
