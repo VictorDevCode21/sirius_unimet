@@ -42,7 +42,10 @@ const portals: Record<Portal, { home: string; roleLabel: string; navItems: { lab
   admin: {
     home: '/admin',
     roleLabel: 'Administrador',
-    navItems: [{ label: 'Periodos', href: '/admin/terms', icon: CalendarDays }],
+    navItems: [
+      { label: 'Periodos', href: '/admin/terms', icon: CalendarDays },
+      { label: 'Pensum', href: '/admin/curriculum', icon: BookOpen },
+    ],
   },
 }
 
