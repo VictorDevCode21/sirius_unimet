@@ -55,3 +55,20 @@ export async function updateSubject(subjectId: string, data: SubjectData) {
     throw error
   }
 }
+
+export interface SubjectRequirements {
+  requirementIds: string[]
+  minCredits: number | null
+  alternativeCredits: number | null
+  alternativeCreditBlock: string | null
+}
+
+// Replaces the prerequisites, minimum credits and credit alternative of a subject in one transaction.
+export function replaceSubjectRequirements(subjectId: string, requirements: SubjectRequirements) {
+  const { requirementIds, ...credits } = requirements
+  return prisma.$transaction(async (tx) => {
+    await tx.prerequisite.deleteMany({ where: { subjectId } })
+    await tx.prerequisite.createMany({ data: requirementIds.map((requirementId) => ({ subjectId, requirementId })) })
+    return tx.subject.update({ where: { id: subjectId }, data: credits })
+  })
+}
