@@ -1,5 +1,7 @@
 // CSV importer: validates a curriculum file and creates subjects and prerequisites in a single transaction.
-import { createsCycle, type AlternativeRequirement } from '@/domain/prerequisites/prerequisite-engine'
+import { validateRequirements, type PrerequisiteNode } from '@/domain/curriculum/prerequisite-rules'
+import { validateSubjectFields, validateSubjectPlacement, type PlacedSubject } from '@/domain/curriculum/subject-rules'
+import type { AlternativeRequirement } from '@/domain/prerequisites/prerequisite-engine'
 
 // `alternative` holds credits plus block code (e.g. "57BP") that replace every other requirement of the row.
 export const CURRICULUM_CSV_HEADERS = ['code', 'name', 'credits', 'term', 'branch', 'min_credits', 'prerequisites', 'alternative'] as const
@@ -86,82 +88,97 @@ export function inspectCurriculumCsv(text: string): { records: number; error: st
   return { records: records.length, error: null }
 }
 
-export function validateCurriculumCsv(text: string): { rows: CurriculumRow[]; errors: string[] } {
-  const [header, ...records] = parseCsv(text.replace(/^﻿/, ''))
-  const errors: string[] = []
+export interface CsvIssue {
+  line: number | null
+  message: string
+}
 
+export interface CsvPreviewRow extends CurriculumRow {
+  line: number
+  errors: string[]
+}
+
+const formatIssue = (issue: CsvIssue) => (issue.line ? `Línea ${issue.line}: ${issue.message}` : issue.message)
+
+// Validates every row with the same subject and prerequisite rules as the curriculum editor, keeping the line of each
+// problem so the preview can show it next to the row.
+export function previewCurriculumCsv(text: string): { rows: CsvPreviewRow[]; issues: CsvIssue[] } {
+  const [header, ...records] = parseCsv(text.replace(/^\uFEFF/, ''))
   const normalizedHeader = header?.map((value) => value.trim().toLowerCase()) ?? []
   if (CURRICULUM_CSV_HEADERS.some((column, index) => normalizedHeader[index] !== column)) {
-    return { rows: [], errors: [`El encabezado debe ser: ${CURRICULUM_CSV_HEADERS.join(',')}`] }
+    return { rows: [], issues: [{ line: null, message: `El encabezado debe ser: ${CURRICULUM_CSV_HEADERS.join(',')}` }] }
   }
 
-  const rows: CurriculumRow[] = records.map((record, index) => {
-    const line = index + 2
+  const rows: CsvPreviewRow[] = records.map((record, index) => {
     const [code = '', name = '', credits = '', term = '', branch = '', minCredits = '', prerequisites = '', alternative = ''] = record
     const parsedAlternative = parseAlternative(alternative)
-    const row: CurriculumRow = {
+    const row: CsvPreviewRow = {
+      line: index + 2,
+      errors: [],
       code: code.trim().toUpperCase(),
       name: name.trim(),
       credits: toInteger(credits),
       term: toInteger(term),
       branch: toInteger(branch),
       minCredits: minCredits.trim() ? toInteger(minCredits) : null,
-      prerequisiteCodes: prerequisites
-        .split('|')
-        .map((value) => value.trim().toUpperCase())
-        .filter(Boolean),
+      prerequisiteCodes: [
+        ...new Set(
+          prerequisites
+            .split('|')
+            .map((value) => value.trim().toUpperCase())
+            .filter(Boolean),
+        ),
+      ],
       alternative: parsedAlternative ?? null,
     }
-    if (!row.code) errors.push(`Línea ${line}: el código es obligatorio.`)
-    if (!row.name) errors.push(`Línea ${line}: el nombre es obligatorio.`)
-    if (!(row.credits > 0)) errors.push(`Línea ${line}: las UC deben ser un entero mayor que cero.`)
-    if (!(row.term >= 1 && row.term <= 12)) errors.push(`Línea ${line}: el trimestre debe estar entre 1 y 12.`)
-    if (!(row.branch >= 1 && row.branch <= 5)) errors.push(`Línea ${line}: la rama debe estar entre 1 y 5.`)
-    if (row.minCredits !== null && !(row.minCredits >= 0)) errors.push(`Línea ${line}: las UC mínimas deben ser un entero positivo.`)
-    if (parsedAlternative === undefined) {
-      errors.push(`Línea ${line}: la alternativa debe tener el formato UC + bloque, por ejemplo 57BP.`)
-    } else if (parsedAlternative && !(parsedAlternative.credits > 0)) {
-      errors.push(`Línea ${line}: las UC de la alternativa deben ser mayores que cero.`)
-    } else if (parsedAlternative && !row.prerequisiteCodes.length && row.minCredits === null) {
-      errors.push(`Línea ${line}: la alternativa necesita una prelación o UC mínimas a las que reemplazar.`)
-    }
+    row.errors.push(...validateSubjectFields(row))
+    if (row.minCredits !== null && Number.isNaN(row.minCredits)) row.errors.push('Las UC mínimas deben ser un número entero positivo.')
+    if (parsedAlternative === undefined) row.errors.push('La alternativa debe tener el formato UC + bloque, por ejemplo 57BP.')
     return row
   })
 
-  const byCode = new Map<string, CurriculumRow>()
-  const cells = new Set<string>()
+  const placed: PlacedSubject[] = []
   for (const row of rows) {
-    if (byCode.has(row.code)) errors.push(`El código ${row.code} está repetido.`)
-    byCode.set(row.code, row)
-    const cell = `${row.term}-${row.branch}`
-    if (cells.has(cell)) errors.push(`Hay más de una materia en el trimestre ${row.term}, rama ${row.branch}.`)
-    cells.add(cell)
+    row.errors.push(...validateSubjectPlacement(placed, row))
+    placed.push({ id: String(row.line), code: row.code, name: row.name, term: row.term, branch: row.branch })
   }
 
-  const prerequisitesByCode = new Map<string, string[]>()
+  const codes = new Set(rows.map((row) => row.code))
+  const nodes: PrerequisiteNode[] = rows.map((row) => ({
+    id: row.code,
+    code: row.code,
+    term: row.term,
+    credits: Number.isInteger(row.credits) ? row.credits : 0,
+    prerequisiteIds: row.prerequisiteCodes.filter((code) => codes.has(code) && code !== row.code),
+  }))
   for (const row of rows) {
-    for (const requirementCode of row.prerequisiteCodes) {
-      const requirement = byCode.get(requirementCode)
-      if (requirementCode === row.code) {
-        errors.push(`${row.code}: una materia no puede prelarse a sí misma.`)
-      } else if (!requirement) {
-        errors.push(`${row.code}: la prelación ${requirementCode} no existe en el archivo.`)
-      } else if (requirement.term >= row.term) {
-        errors.push(`${row.code}: la prelación ${requirementCode} debe ser de un trimestre anterior.`)
-      } else if (createsCycle(prerequisitesByCode, row.code, requirementCode)) {
-        errors.push(`${row.code}: la prelación ${requirementCode} crea un ciclo.`)
-      } else {
-        prerequisitesByCode.set(row.code, [...(prerequisitesByCode.get(row.code) ?? []), requirementCode])
-      }
+    if (!row.code || !Number.isInteger(row.term)) continue
+    for (const code of row.prerequisiteCodes) {
+      if (!codes.has(code)) row.errors.push(`La prelación ${code} no existe en el archivo.`)
     }
+    row.errors.push(
+      ...validateRequirements(nodes, row.code, {
+        requirementIds: row.prerequisiteCodes.filter((code) => codes.has(code)),
+        minCredits: row.minCredits !== null && Number.isNaN(row.minCredits) ? null : row.minCredits,
+        alternativeCredits: row.alternative?.credits ?? null,
+        alternativeCreditBlock: row.alternative?.block ?? null,
+      }),
+    )
   }
 
-  return { rows, errors }
+  const issues: CsvIssue[] = rows.flatMap((row) => [...new Set(row.errors)].map((message) => ({ line: row.line, message })))
+  for (const row of rows) row.errors = [...new Set(row.errors)]
+  if (!rows.length) issues.push({ line: null, message: 'El archivo no contiene materias.' })
+  return { rows, issues }
+}
+
+export function validateCurriculumCsv(text: string): { rows: CurriculumRow[]; errors: string[] } {
+  const { rows, issues } = previewCurriculumCsv(text)
+  return { rows: rows.map(({ line: _line, errors: _errors, ...row }) => row), errors: issues.map(formatIssue) }
 }
 
 export async function importCurriculum(careerId: string, csvText: string, writer: CurriculumWriter): Promise<ImportResult> {
   const { rows, errors } = validateCurriculumCsv(csvText)
-  if (!rows.length && !errors.length) errors.push('El archivo no contiene materias.')
   if (errors.length) return { ok: false, errors }
 
   await writer.replaceCareerCurriculum(careerId, rows)

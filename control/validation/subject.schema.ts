@@ -36,3 +36,10 @@ export const requirementsSchema = z.object({
 })
 
 export type RequirementsInput = z.input<typeof requirementsSchema>
+
+export const curriculumCsvSchema = z.object({
+  careerId: z.uuid('Selecciona una carrera.'),
+  text: z.string().min(1, 'Sube un archivo CSV.').max(1024 * 1024, 'El archivo supera 1 MB.'),
+})
+
+export type CurriculumCsvInput = z.input<typeof curriculumCsvSchema>

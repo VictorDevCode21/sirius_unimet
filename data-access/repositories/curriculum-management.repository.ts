@@ -72,3 +72,9 @@ export function replaceSubjectRequirements(subjectId: string, requirements: Subj
     return tx.subject.update({ where: { id: subjectId }, data: credits })
   })
 }
+
+// Codes of the subjects of a career with how many sections each one has.
+export async function findCareerSubjectSections(careerId: string) {
+  const subjects = await prisma.subject.findMany({ where: { careerId }, select: { code: true, _count: { select: { sections: true } } } })
+  return subjects.map((subject) => ({ code: subject.code, sections: subject._count.sections }))
+}
