@@ -4,6 +4,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { ArrowLeft, Hash, LoaderCircle, Save, Search, X } from 'lucide-react'
 import { defineRequirements } from '@/control/controllers/curriculum.controller'
 import type { EditorSubject } from '@/control/controllers/curriculum.queries'
+import { validateRequirements } from '@/domain/curriculum/prerequisite-rules'
 import { FormMessage } from '@/presentation/components/shared/form-message'
 import { toRoman } from '@/presentation/lib/format'
 import { useAction } from '@/presentation/lib/use-action'
@@ -26,6 +27,7 @@ export function RequirementsForm({ subject, subjects, onBack, onClose }: Require
     alternativeCredits: subject.alternativeCredits === null ? '' : String(subject.alternativeCredits),
     alternativeCreditBlock: subject.alternativeCreditBlock ?? '',
   })
+  const [errors, setErrors] = useState<string[]>([])
   const { pending, result, run } = useAction()
 
   useEffect(() => {
@@ -37,10 +39,10 @@ export function RequirementsForm({ subject, subjects, onBack, onClose }: Require
   const candidates = useMemo(() => {
     const text = query.trim().toLowerCase()
     return subjects
-      .filter((other) => other.term < subject.term)
+      .filter((other) => other.id !== subject.id && (other.term < subject.term || selected.has(other.id)))
       .filter((other) => !text || other.code.toLowerCase().includes(text) || other.name.toLowerCase().includes(text))
       .sort((a, b) => b.term - a.term || a.branch - b.branch)
-  }, [subjects, subject.term, query])
+  }, [subjects, subject.id, subject.term, selected, query])
 
   const toggle = (id: string) =>
     setSelected((current) => {
@@ -55,6 +57,15 @@ export function RequirementsForm({ subject, subjects, onBack, onClose }: Require
 
   const submit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
+    const toNumber = (value: string) => (value.trim() ? Number(value) : null)
+    const draftErrors = validateRequirements(subjects, subject.id, {
+      requirementIds: [...selected],
+      minCredits: toNumber(form.minCredits),
+      alternativeCredits: toNumber(form.alternativeCredits),
+      alternativeCreditBlock: form.alternativeCreditBlock.trim().toUpperCase() || null,
+    })
+    setErrors(draftErrors)
+    if (draftErrors.length) return
     run(() => defineRequirements({ subjectId: subject.id, requirementIds: [...selected], ...form }))
   }
 
@@ -145,6 +156,13 @@ export function RequirementsForm({ subject, subjects, onBack, onClose }: Require
         </fieldset>
 
         <div className="mt-auto flex flex-col gap-3 pt-2">
+          {errors.length > 0 && (
+            <ul role="alert" className="flex flex-col gap-1 text-sm font-semibold text-red-600 dark:text-red-400">
+              {errors.map((error) => (
+                <li key={error}>{error}</li>
+              ))}
+            </ul>
+          )}
           <FormMessage result={result} />
           <button type="submit" className="primary-button w-full" disabled={pending}>
             {pending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
