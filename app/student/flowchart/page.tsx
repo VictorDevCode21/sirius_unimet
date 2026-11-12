@@ -44,7 +44,13 @@ export default async function FlowchartPage() {
         }
       />
 
-      <FlowchartBoard subjects={subjects} terms={CURRICULUM_TERMS} branches={CURRICULUM_BRANCHES} currentTerm={stats.currentCurriculumTerm} />
+      <FlowchartBoard
+        subjects={subjects}
+        terms={CURRICULUM_TERMS}
+        branches={CURRICULUM_BRANCHES}
+        currentTerm={stats.currentCurriculumTerm}
+        statusCounts={stats.statusCounts}
+      />
     </div>
   )
 }
