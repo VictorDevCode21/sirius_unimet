@@ -3,20 +3,26 @@
 import { requireRole } from '@/control/auth/session'
 import { runAction, type ActionResult } from '@/control/controllers/action-result'
 import {
+  curriculumCsvSchema,
   requirementsSchema,
   subjectSchema,
   subjectUpdateSchema,
+  type CurriculumCsvInput,
   type RequirementsInput,
   type SubjectInput,
   type SubjectUpdateInput,
 } from '@/control/validation/subject.schema'
 import {
   createSubject,
+  findCareer,
+  findCareerSubjectSections,
   findCareerSubjects,
   findSubject,
   replaceSubjectRequirements,
   updateSubject,
 } from '@/data-access/repositories/curriculum-management.repository'
+import { previewCurriculumCsv } from '@/domain/curriculum/csv-importer'
+import { blockedRemovalMessage, compareCurriculum } from '@/domain/curriculum/curriculum-diff'
 import { validateRequirements } from '@/domain/curriculum/prerequisite-rules'
 import { assertValidSubject, validateTermOrder } from '@/domain/curriculum/subject-rules'
 import { DomainError } from '@/domain/shared/domain-error'
@@ -85,3 +91,26 @@ export async function defineRequirements(input: RequirementsInput): Promise<Acti
     return `Se guardaron ${count} ${count === 1 ? 'prelación' : 'prelaciones'} de ${subject.code}.`
   }, ['/admin/curriculum'])
 }
+
+// Validates a curriculum file without saving it: every row with its errors and what the import would change.
+export async function previewCurriculumImport(input: CurriculumCsvInput) {
+  await requireRole('ADMIN')
+  const parsed = curriculumCsvSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0].message, preview: null }
+  const career = await findCareer(parsed.data.careerId)
+  if (!career) return { ok: false, message: 'La carrera ya no existe.', preview: null }
+
+  const { rows, issues } = previewCurriculumCsv(parsed.data.text)
+  const diff = compareCurriculum(
+    rows.map((row) => row.code),
+    await findCareerSubjectSections(career.id),
+  )
+  if (diff.blocked.length) issues.push({ line: null, message: blockedRemovalMessage(diff.blocked) })
+  const ok = issues.length === 0
+  const message = ok
+    ? `El archivo es válido: ${rows.length} materias para ${career.name}.`
+    : `El archivo tiene ${issues.length} ${issues.length === 1 ? 'error' : 'errores'}. Corrígelos y vuelve a subirlo.`
+  return { ok, message, preview: { careerName: career.name, rows, issues, diff } }
+}
+
+export type CurriculumPreview = NonNullable<Awaited<ReturnType<typeof previewCurriculumImport>>['preview']>
