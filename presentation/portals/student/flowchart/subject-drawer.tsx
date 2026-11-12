@@ -8,7 +8,7 @@ import { StatusBadge } from '@/presentation/components/shared/status-badge'
 import { toRoman } from '@/presentation/lib/format'
 
 interface SubjectDrawerProps {
-  subject: FlowchartSubject
+  subject: Omit<FlowchartSubject, 'passingGrade'> & Partial<Pick<FlowchartSubject, 'passingGrade'>>
   onClose: () => void
   showEnrollLink?: boolean
 }
@@ -56,6 +56,12 @@ export function SubjectDrawer({ subject, onClose, showEnrollLink = true }: Subje
             <strong>{subject.branch}</strong>
           </div>
         </div>
+
+        {subject.passingGrade && (
+          <p className="mt-5 rounded-[1.25rem] bg-[var(--status-passed-bg)] px-4 py-3 text-sm font-semibold text-[var(--status-passed)]">
+            Aprobada con {subject.passingGrade.value}/20 en el periodo {subject.passingGrade.termName}.
+          </p>
+        )}
 
         <div className="mt-8">
           <h3 className="text-sm font-bold">Prelaciones</h3>
