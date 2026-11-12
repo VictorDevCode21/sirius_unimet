@@ -12,3 +12,7 @@ export const subjectSchema = z.object({
 })
 
 export type SubjectInput = z.input<typeof subjectSchema>
+
+export const subjectUpdateSchema = subjectSchema.omit({ careerId: true }).extend({ subjectId: z.uuid('Selecciona una materia.') })
+
+export type SubjectUpdateInput = z.input<typeof subjectUpdateSchema>

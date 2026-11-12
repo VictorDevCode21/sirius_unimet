@@ -35,3 +35,23 @@ export async function createSubject(careerId: string, data: SubjectData) {
     throw error
   }
 }
+
+export function findSubject(subjectId: string) {
+  return prisma.subject.findUnique({
+    where: { id: subjectId },
+    include: {
+      prerequisites: { select: { requirement: { select: { code: true, term: true } } } },
+      requiredBy: { select: { subject: { select: { code: true, term: true } } } },
+    },
+  })
+}
+
+// Updates a subject; returns null when its code or grid cell is already taken in the career.
+export async function updateSubject(subjectId: string, data: SubjectData) {
+  try {
+    return await prisma.subject.update({ where: { id: subjectId }, data })
+  } catch (error) {
+    if (isUniqueViolation(error)) return null
+    throw error
+  }
+}

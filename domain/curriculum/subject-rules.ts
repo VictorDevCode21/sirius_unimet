@@ -56,3 +56,21 @@ export function assertValidSubject(subjects: PlacedSubject[], candidate: Subject
   const errors = [...validateSubjectFields(candidate), ...validateSubjectPlacement(subjects, candidate, ignoreId)]
   if (errors.length) throw new DomainError(errors.join(' '))
 }
+
+// A subject must stay after the subjects it requires and before the subjects that require it.
+export function validateTermOrder(
+  term: number,
+  requirements: { code: string; term: number }[],
+  dependents: { code: string; term: number }[],
+) {
+  const errors: string[] = []
+  const lateRequirements = requirements.filter((requirement) => requirement.term >= term).map((requirement) => requirement.code)
+  if (lateRequirements.length) {
+    errors.push(`Debe quedar en un trimestre posterior a sus prelaciones: ${lateRequirements.join(', ')}.`)
+  }
+  const earlyDependents = dependents.filter((dependent) => dependent.term <= term).map((dependent) => dependent.code)
+  if (earlyDependents.length) {
+    errors.push(`Debe quedar en un trimestre anterior a las materias que prela: ${earlyDependents.join(', ')}.`)
+  }
+  return errors
+}
