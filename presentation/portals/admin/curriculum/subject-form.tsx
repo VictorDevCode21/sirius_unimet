@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Hash, LoaderCircle, Move, Plus, Save, Type, X } from 'lucide-react'
+import { GitBranch, Hash, LoaderCircle, Move, Plus, Save, Type, X } from 'lucide-react'
 import { editSubject, registerSubject } from '@/control/controllers/curriculum.controller'
 import type { EditorSubject } from '@/control/controllers/curriculum.queries'
 import { CURRICULUM_BRANCHES, CURRICULUM_TERMS } from '@/domain/curriculum/curriculum-grid'
@@ -18,11 +18,12 @@ interface SubjectFormProps {
   careerId: string
   cell: { term: number; branch: number }
   subject?: EditorSubject
+  onShowRequirements?: () => void
   onClose: () => void
 }
 
 // Dialog to register a subject in an empty cell of the grid, or to edit a subject and move it to another cell.
-export function SubjectForm({ careerId, cell, subject, onClose }: SubjectFormProps) {
+export function SubjectForm({ careerId, cell, subject, onShowRequirements, onClose }: SubjectFormProps) {
   const [form, setForm] = useState({
     code: subject?.code ?? '',
     name: subject?.name ?? '',
@@ -141,6 +142,12 @@ export function SubjectForm({ careerId, cell, subject, onClose }: SubjectFormPro
               </span>
             </label>
           </fieldset>
+        )}
+
+        {subject && onShowRequirements && (
+          <button type="button" className="secondary-button w-full" onClick={onShowRequirements}>
+            <GitBranch aria-hidden="true" /> Prelaciones y UC mínimas ({subject.prerequisiteIds.length})
+          </button>
         )}
 
         <div className="mt-auto flex flex-col gap-3 pt-4">
