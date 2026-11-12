@@ -17,6 +17,7 @@ import {
   replaceSubjectRequirements,
   updateSubject,
 } from '@/data-access/repositories/curriculum-management.repository'
+import { validateRequirements } from '@/domain/curriculum/prerequisite-rules'
 import { assertValidSubject, validateTermOrder } from '@/domain/curriculum/subject-rules'
 import { DomainError } from '@/domain/shared/domain-error'
 
@@ -72,10 +73,12 @@ export async function defineRequirements(input: RequirementsInput): Promise<Acti
   return runAction(async () => {
     const subject = await findSubject(subjectId)
     if (!subject) throw new DomainError('La materia ya no existe.')
-    const careerSubjectIds = new Set((await findCareerSubjects(subject.careerId)).map((other) => other.id))
-    if (requirements.requirementIds.some((id) => !careerSubjectIds.has(id))) {
-      throw new DomainError('Las prelaciones deben ser materias de la misma carrera.')
-    }
+    const curriculum = (await findCareerSubjects(subject.careerId)).map((other) => ({
+      ...other,
+      prerequisiteIds: other.prerequisites.map((prerequisite) => prerequisite.requirementId),
+    }))
+    const errors = validateRequirements(curriculum, subjectId, requirements)
+    if (errors.length) throw new DomainError(errors.join(' '))
 
     await replaceSubjectRequirements(subjectId, requirements)
     const count = requirements.requirementIds.length
