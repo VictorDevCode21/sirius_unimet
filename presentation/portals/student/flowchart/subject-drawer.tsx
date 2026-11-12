@@ -8,7 +8,8 @@ import { StatusBadge } from '@/presentation/components/shared/status-badge'
 import { toRoman } from '@/presentation/lib/format'
 
 interface SubjectDrawerProps {
-  subject: Omit<FlowchartSubject, 'passingGrade'> & Partial<Pick<FlowchartSubject, 'passingGrade'>>
+  subject: Omit<FlowchartSubject, 'passingGrade' | 'pendingRequirements'> &
+    Partial<Pick<FlowchartSubject, 'passingGrade' | 'pendingRequirements'>>
   onClose: () => void
   showEnrollLink?: boolean
 }
@@ -65,6 +66,12 @@ export function SubjectDrawer({ subject, onClose, showEnrollLink = true }: Subje
 
         <div className="mt-8">
           <h3 className="text-sm font-bold">Prelaciones</h3>
+          {subject.pendingRequirements && subject.pendingRequirements.length > 0 && (
+            <p className="mt-1 text-xs font-semibold text-[var(--status-blocked)]">
+              Te {subject.pendingRequirements.length === 1 ? 'falta 1 requisito' : `faltan ${subject.pendingRequirements.length} requisitos`} para
+              cursarla.
+            </p>
+          )}
           {subject.requirements.length ? (
             <div className="mt-3 flex flex-col gap-2">
               {subject.requirements.map((requirement, index) => (

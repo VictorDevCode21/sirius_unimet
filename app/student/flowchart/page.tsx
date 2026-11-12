@@ -1,7 +1,9 @@
 import { CURRICULUM_BRANCHES, CURRICULUM_TERMS, getFlowchart } from '@/control/controllers/flowchart.controller'
 import { GlossaryTerm } from '@/presentation/components/shared/glossary'
 import { PageHeading } from '@/presentation/components/shared/page-heading'
+import { nextBlockedSubjects } from '@/domain/flowchart/pending-requirements'
 import { FlowchartBoard } from '@/presentation/portals/student/flowchart/flowchart-board'
+import { PendingPrerequisites } from '@/presentation/portals/student/flowchart/pending-prerequisites'
 
 export default async function FlowchartPage() {
   const { career, stats, subjects } = await getFlowchart()
@@ -25,9 +27,19 @@ export default async function FlowchartPage() {
                 <span className="text-xs font-semibold text-muted-foreground">Avance</span>
                 <strong className="font-display text-xl font-extrabold">{stats.progressPercent.toFixed(1)}%</strong>
               </div>
-              <div className="progress-track mt-2">
+              <div
+                className="progress-track mt-2"
+                role="progressbar"
+                aria-label="Avance de la carrera"
+                aria-valuemin={0}
+                aria-valuemax={100}
+                aria-valuenow={Math.round(stats.progressPercent)}
+              >
                 <span style={{ width: `${stats.progressPercent}%` }} />
               </div>
+              <p className="mt-1.5 text-[0.7rem] font-semibold text-muted-foreground">
+                {stats.passedCredits} de {stats.planCredits} UC aprobadas
+              </p>
             </div>
             <div className="min-w-[11rem] rounded-[1.25rem] border border-border bg-card px-4 py-3">
               <div className="flex items-baseline justify-between gap-3">
@@ -51,6 +63,8 @@ export default async function FlowchartPage() {
         currentTerm={stats.currentCurriculumTerm}
         statusCounts={stats.statusCounts}
       />
+
+      <PendingPrerequisites subjects={nextBlockedSubjects(subjects, stats.currentCurriculumTerm)} />
     </div>
   )
 }

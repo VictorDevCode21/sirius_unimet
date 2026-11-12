@@ -72,7 +72,13 @@ export function FlowchartBoard({ subjects, terms, branches, currentTerm, statusC
         <p className="mt-2 line-clamp-3 text-[0.8rem] font-semibold leading-tight">{subject.name}</p>
         <div className="mt-auto flex items-center justify-between pt-3 text-[0.66rem] font-semibold opacity-70">
           <span>{subject.credits} UC</span>
-          <span>{subject.passingGrade ? `Nota ${subject.passingGrade.value}` : statusConfig[subject.status].label}</span>
+          <span>
+            {subject.passingGrade
+              ? `Nota ${subject.passingGrade.value}`
+              : subject.pendingRequirements.length
+                ? `Faltan ${subject.pendingRequirements.length}`
+                : statusConfig[subject.status].label}
+          </span>
         </div>
       </button>
     )
