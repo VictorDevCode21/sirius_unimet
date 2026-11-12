@@ -21,7 +21,8 @@ import {
   replaceSubjectRequirements,
   updateSubject,
 } from '@/data-access/repositories/curriculum-management.repository'
-import { previewCurriculumCsv } from '@/domain/curriculum/csv-importer'
+import { createCurriculumRepository } from '@/data-access/repositories/curriculum.repository'
+import { importCurriculum, previewCurriculumCsv } from '@/domain/curriculum/csv-importer'
 import { blockedRemovalMessage, compareCurriculum } from '@/domain/curriculum/curriculum-diff'
 import { validateRequirements } from '@/domain/curriculum/prerequisite-rules'
 import { assertValidSubject, validateTermOrder } from '@/domain/curriculum/subject-rules'
@@ -114,3 +115,26 @@ export async function previewCurriculumImport(input: CurriculumCsvInput) {
 }
 
 export type CurriculumPreview = NonNullable<Awaited<ReturnType<typeof previewCurriculumImport>>['preview']>
+
+// Saves a valid curriculum file as the curriculum of a career, replacing its subjects and prerequisites in one
+// transaction.
+export async function confirmCurriculumImport(input: CurriculumCsvInput): Promise<ActionResult> {
+  await requireRole('ADMIN')
+  const parsed = curriculumCsvSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0].message }
+
+  return runAction(async () => {
+    const career = await findCareer(parsed.data.careerId)
+    if (!career) throw new DomainError('La carrera ya no existe.')
+    const { rows } = previewCurriculumCsv(parsed.data.text)
+    const diff = compareCurriculum(
+      rows.map((row) => row.code),
+      await findCareerSubjectSections(career.id),
+    )
+    if (diff.blocked.length) throw new DomainError(blockedRemovalMessage(diff.blocked))
+
+    const result = await importCurriculum(career.id, parsed.data.text, createCurriculumRepository())
+    if (!result.ok) throw new DomainError(`El archivo tiene errores. ${result.errors.slice(0, 3).join(' ')}`)
+    return `Se importó el pensum de ${career.name}: ${result.subjects} materias y ${result.prerequisites} prelaciones.`
+  }, ['/admin/curriculum', '/admin/curriculum/import'])
+}
