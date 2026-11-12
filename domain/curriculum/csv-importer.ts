@@ -72,6 +72,20 @@ function toInteger(value: string) {
   return /^\d+$/.test(trimmed) ? Number(trimmed) : NaN
 }
 
+export const CURRICULUM_CSV_MAX_BYTES = 1024 * 1024
+
+// First check of an uploaded file: right header and at least one subject row.
+export function inspectCurriculumCsv(text: string): { records: number; error: string | null } {
+  const [header, ...records] = parseCsv(text.replace(/^\uFEFF/, ''))
+  const normalizedHeader = header?.map((value) => value.trim().toLowerCase()) ?? []
+  if (!header) return { records: 0, error: 'El archivo está vacío.' }
+  if (CURRICULUM_CSV_HEADERS.some((column, index) => normalizedHeader[index] !== column)) {
+    return { records: records.length, error: `El encabezado debe ser: ${CURRICULUM_CSV_HEADERS.join(',')}` }
+  }
+  if (!records.length) return { records: 0, error: 'El archivo no contiene materias.' }
+  return { records: records.length, error: null }
+}
+
 export function validateCurriculumCsv(text: string): { rows: CurriculumRow[]; errors: string[] } {
   const [header, ...records] = parseCsv(text.replace(/^﻿/, ''))
   const errors: string[] = []
