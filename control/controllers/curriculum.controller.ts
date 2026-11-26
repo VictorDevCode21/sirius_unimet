@@ -23,7 +23,7 @@ import {
   type SubjectWriteConflict,
 } from '@/data-access/repositories/curriculum-management.repository'
 import { createCurriculumRepository } from '@/data-access/repositories/curriculum.repository'
-import { importCurriculum, previewCurriculumCsv } from '@/domain/curriculum/csv-importer'
+import { countPrerequisites, importCurriculum, previewCurriculumCsv } from '@/domain/curriculum/csv-importer'
 import { blockedRemovalMessage, compareCurriculum } from '@/domain/curriculum/curriculum-diff'
 import { validateRequirements } from '@/domain/curriculum/prerequisite-rules'
 import { assertValidSubject, validateTermOrder } from '@/domain/curriculum/subject-rules'
@@ -122,7 +122,7 @@ export async function previewCurriculumImport(input: CurriculumCsvInput) {
   const message = ok
     ? `El archivo es válido: ${rows.length} materias para ${career.name}.`
     : `El archivo tiene ${issues.length} ${issues.length === 1 ? 'error' : 'errores'}. Corrígelos y vuelve a subirlo.`
-  return { ok, message, preview: { careerName: career.name, rows, issues, diff } }
+  return { ok, message, preview: { careerName: career.name, rows, issues, diff, prerequisites: countPrerequisites(rows) } }
 }
 
 export type CurriculumPreview = NonNullable<Awaited<ReturnType<typeof previewCurriculumImport>>['preview']>

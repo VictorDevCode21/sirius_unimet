@@ -2,7 +2,7 @@ import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { readFileSync } from 'node:fs'
 import { join } from 'node:path'
-import { CURRICULUM_CSV_HEADERS, validateCurriculumCsv } from '@/domain/curriculum/csv-importer'
+import { countPrerequisites, CURRICULUM_CSV_HEADERS, previewCurriculumCsv, validateCurriculumCsv } from '@/domain/curriculum/csv-importer'
 
 const header = CURRICULUM_CSV_HEADERS.join(',')
 
@@ -21,5 +21,14 @@ describe('curriculum CSV field rules', () => {
     assert.ok(errors.includes('Línea 2: El nombre debe tener entre 3 y 100 caracteres.'))
     assert.ok(errors.includes('Línea 2: Las UC deben ser un número entero entre 1 y 10.'))
     assert.ok(errors.includes('Línea 3: Las UC deben ser un número entero entre 1 y 10.'))
+  })
+})
+
+describe('curriculum CSV preview counts', () => {
+  it('counts the prerequisites the import creates', () => {
+    const csv = [header, 'AAA01,Materia uno,3,1,1,,,', 'AAA02,Materia dos,3,2,1,,AAA01,', 'AAA03,Materia tres,3,3,1,,AAA01|AAA02,'].join('\n')
+    const { rows, issues } = previewCurriculumCsv(csv)
+    assert.deepEqual(issues, [])
+    assert.equal(countPrerequisites(rows), 3)
   })
 })

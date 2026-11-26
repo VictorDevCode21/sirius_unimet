@@ -5,7 +5,7 @@ import { cn } from '@/presentation/lib/utils'
 
 // Preview of a curriculum file: summary of changes, every error with its line and the rows as they will be saved.
 export function CsvPreview({ preview }: { preview: CurriculumPreview }) {
-  const { rows, issues, diff } = preview
+  const { rows, issues, diff, prerequisites } = preview
   const valid = issues.length === 0
 
   return (
@@ -14,12 +14,13 @@ export function CsvPreview({ preview }: { preview: CurriculumPreview }) {
         <h2 id="csv-preview-title" className="text-lg font-bold">
           Vista previa
         </h2>
-        <dl className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <dl className="grid grid-cols-2 gap-3 sm:grid-cols-5">
           {[
             { label: 'Materias en el archivo', value: rows.length },
             { label: 'Nuevas', value: diff.created.length },
             { label: 'Se actualizan', value: diff.updated.length },
             { label: 'Se quitan del pensum', value: diff.removed.length },
+            { label: 'Prelaciones a crear', value: prerequisites },
           ].map((item) => (
             <div key={item.label} className="detail-stat">
               <dt>{item.label}</dt>
