@@ -8,6 +8,7 @@ import {
   Building2,
   CalendarDays,
   ChevronDown,
+  ClipboardCheck,
   Clock3,
   ExternalLink,
   FileText,
@@ -50,6 +51,7 @@ const portals: Record<Portal, { home: string; roleLabel: string; navItems: { lab
       { label: 'Usuarios', href: '/admin/users', icon: UsersRound },
       { label: 'Departamentos', href: '/admin/departments', icon: Building2 },
       { label: 'Carreras', href: '/admin/careers', icon: GraduationCap },
+      { label: 'Notas', href: '/admin/grades', icon: ClipboardCheck },
     ],
   },
   professor: {

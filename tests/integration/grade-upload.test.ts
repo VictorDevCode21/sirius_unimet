@@ -3,7 +3,7 @@ import assert from 'node:assert/strict'
 import { prisma, temporaryTermName, uniqueSuffix } from './admin-db'
 import { findPublishedGradesByStudent } from '@/data-access/repositories/grade.repository'
 import { publishSectionGrades, saveGrade } from '@/data-access/repositories/grade-management.repository'
-import { validatePublishable, validateStudentInSection } from '@/domain/grades/grade-rules'
+import { assertProfessorCanEdit, validatePublishable, validateStudentInSection } from '@/domain/grades/grade-rules'
 import { DomainError } from '@/domain/shared/domain-error'
 
 describe('grade upload', () => {
@@ -37,11 +37,11 @@ describe('grade upload', () => {
   })
 
   it('rejects a student who is not enrolled in the section', async () => {
-    await assert.rejects(saveGrade({ sectionId, studentId: students[2], value: 15, status: 'PASSED' }, validateStudentInSection), DomainError)
+    await assert.rejects(saveGrade({ sectionId, studentId: students[2], value: 15, status: 'PASSED' }, validateStudentInSection, assertProfessorCanEdit), DomainError)
   })
 
   it('keeps a saved grade hidden from the student until it is published', async () => {
-    await saveGrade({ sectionId, studentId: students[0], value: 15, status: 'PASSED' }, validateStudentInSection)
+    await saveGrade({ sectionId, studentId: students[0], value: 15, status: 'PASSED' }, validateStudentInSection, assertProfessorCanEdit)
     assert.equal((await findPublishedGradesByStudent(students[0])).length, 0)
   })
 
@@ -50,7 +50,7 @@ describe('grade upload', () => {
   })
 
   it('shows the grades in the student history once published', async () => {
-    await saveGrade({ sectionId, studentId: students[1], value: 8, status: 'FAILED' }, validateStudentInSection)
+    await saveGrade({ sectionId, studentId: students[1], value: 8, status: 'FAILED' }, validateStudentInSection, assertProfessorCanEdit)
     await publishSectionGrades(sectionId, validatePublishable)
     const [grade] = await findPublishedGradesByStudent(students[0])
     assert.equal(grade.value, 15)

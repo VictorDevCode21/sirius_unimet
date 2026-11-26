@@ -6,7 +6,7 @@ import { saveGradeSchema } from '@/control/validation/grade.schema'
 import { professorSectionIdSchema } from '@/control/validation/section-access.schema'
 import { findSectionOwner, publishSectionGrades, saveGrade as storeGrade } from '@/data-access/repositories/grade-management.repository'
 import { resolveGradeStatus } from '@/domain/grades/academic-progress'
-import { validatePublishable, validateStudentInSection } from '@/domain/grades/grade-rules'
+import { assertAdminCanCorrect, assertProfessorCanEdit, validatePublishable, validateStudentInSection } from '@/domain/grades/grade-rules'
 import { assertOwnsSection } from '@/domain/grades/section-ownership'
 import { DomainError } from '@/domain/shared/domain-error'
 
@@ -18,7 +18,7 @@ async function assertProfessorOwnsSection(sectionId: string, professorId: string
   assertOwnsSection(section, professorId)
 }
 
-// Saves the final grade of a student in one of the professor's sections.
+// Saves the final grade of a student in one of the professor's sections, while it is not published.
 export async function saveGrade(input: { sectionId: string; studentId: string; value: string }): Promise<ActionResult> {
   const professor = await requireRole('PROFESSOR')
   const parsed = saveGradeSchema.safeParse(input)
@@ -27,7 +27,7 @@ export async function saveGrade(input: { sectionId: string; studentId: string; v
   return runAction(async () => {
     const { sectionId, studentId, value } = parsed.data
     await assertProfessorOwnsSection(sectionId, professor.id)
-    await storeGrade({ sectionId, studentId, value, status: resolveGradeStatus(value) }, validateStudentInSection)
+    await storeGrade({ sectionId, studentId, value, status: resolveGradeStatus(value) }, validateStudentInSection, assertProfessorCanEdit)
     return 'Nota guardada.'
   }, ['/professor'])
 }
@@ -43,4 +43,17 @@ export async function publishGrades(rawSectionId: string): Promise<ActionResult>
     await publishSectionGrades(parsed.data, validatePublishable)
     return 'Notas publicadas. Los estudiantes ya pueden verlas en su histórico.'
   }, ['/professor', '/student'])
+}
+
+// Corrects a published grade. The outcome is recalculated, so the flowchart of the student follows the new value.
+export async function correctGrade(input: { sectionId: string; studentId: string; value: string }): Promise<ActionResult> {
+  await requireRole('ADMIN')
+  const parsed = saveGradeSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0].message }
+
+  return runAction(async () => {
+    const { sectionId, studentId, value } = parsed.data
+    await storeGrade({ sectionId, studentId, value, status: resolveGradeStatus(value) }, validateStudentInSection, assertAdminCanCorrect)
+    return 'Nota corregida.'
+  }, ['/admin/grades', '/professor', '/student'])
 }
