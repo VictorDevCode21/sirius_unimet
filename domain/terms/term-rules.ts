@@ -1,0 +1,57 @@
+// Term rules: date consistency of an academic period.
+import { DomainError } from '@/domain/shared/domain-error'
+
+export function validateTermDates(startsAt: Date, endsAt: Date) {
+  if (endsAt <= startsAt) throw new DomainError('La fecha de fin debe ser posterior a la fecha de inicio.')
+}
+
+interface OpenCandidate {
+  id: string
+  endsAt: Date
+  ratePerCredit: number
+  maxCredits: number
+}
+
+// Only one term can receive enrollments at a time, a finished term cannot be reopened, and the fee and max
+// credits must be set.
+export function validateCanOpenTerm(term: OpenCandidate, openTerm: { id: string; name: string } | null, today: Date) {
+  if (openTerm && openTerm.id !== term.id) {
+    throw new DomainError(`Ya hay un periodo abierto: ${openTerm.name}. Ciérralo antes de abrir otro.`)
+  }
+  if (term.endsAt < today) throw new DomainError('No se puede abrir un periodo que ya terminó.')
+  if (term.ratePerCredit <= 0) throw new DomainError('Configura el monto por UC antes de abrir el periodo.')
+  if (term.maxCredits <= 0) throw new DomainError('Configura el máximo de UC antes de abrir el periodo.')
+}
+
+export function isEnrollmentOpen(openTerm: { open: boolean } | null) {
+  return openTerm?.open === true
+}
+
+interface TermWindow {
+  name: string
+  startsAt: Date
+  endsAt: Date
+}
+
+// What the student portal offers: pre-enrollment for the open term, or the dates of the next term when none is open.
+export function describeEnrollmentAvailability(openTerm: ({ open: boolean } & TermWindow) | null, nextTerm: TermWindow | null) {
+  if (isEnrollmentOpen(openTerm)) return { isOpen: true as const, termName: openTerm!.name, nextTerm: null }
+  return {
+    isOpen: false as const,
+    termName: null,
+    nextTerm: nextTerm ? { name: nextTerm.name, startsAt: nextTerm.startsAt, endsAt: nextTerm.endsAt } : null,
+  }
+}
+
+export type EnrollmentAvailability = ReturnType<typeof describeEnrollmentAvailability>
+
+// A new max credits value applies to every unpaid enrollment of the term, so it cannot be lower than the credits any
+// of them already has.
+export function validateMaxCreditsChange(maxCredits: number, enrollmentCredits: number[]) {
+  const over = enrollmentCredits.filter((credits) => credits > maxCredits).length
+  if (!over) return
+  const subject = over === 1 ? '1 pre-inscripción del período tiene' : `${over} pre-inscripciones del período tienen`
+  throw new DomainError(
+    `No puedes bajar el máximo a ${maxCredits} UC: ${subject} más créditos. Pide que ajusten su selección o usa un máximo mayor.`,
+  )
+}
