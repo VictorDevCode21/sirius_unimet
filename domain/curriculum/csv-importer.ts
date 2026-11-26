@@ -172,6 +172,11 @@ export function previewCurriculumCsv(text: string): { rows: CsvPreviewRow[]; iss
   return { rows, issues }
 }
 
+// Prerequisites an import creates: one per prerequisite code of every row.
+export function countPrerequisites(rows: { prerequisiteCodes: string[] }[]) {
+  return rows.reduce((sum, row) => sum + row.prerequisiteCodes.length, 0)
+}
+
 export function validateCurriculumCsv(text: string): { rows: CurriculumRow[]; errors: string[] } {
   const { rows, issues } = previewCurriculumCsv(text)
   return { rows: rows.map(({ line: _line, errors: _errors, ...row }) => row), errors: issues.map(formatIssue) }
@@ -185,6 +190,6 @@ export async function importCurriculum(careerId: string, csvText: string, writer
   return {
     ok: true,
     subjects: rows.length,
-    prerequisites: rows.reduce((sum, row) => sum + row.prerequisiteCodes.length, 0),
+    prerequisites: countPrerequisites(rows),
   }
 }
