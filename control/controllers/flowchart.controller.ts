@@ -1,6 +1,6 @@
 import 'server-only'
 import { getStudentContext } from '@/control/controllers/student-context'
-import { pendingRequirements } from '@/domain/flowchart/pending-requirements'
+import { describeRequirement, nextBlockedSubjects, pendingRequirements } from '@/domain/flowchart/pending-requirements'
 import { passingGradesBySubject, summarizeFlowchart } from '@/domain/flowchart/flowchart-summary'
 import { markFailedSubjects } from '@/domain/grades/course-outcome'
 
@@ -22,16 +22,20 @@ export async function getFlowchart() {
     states.map((subject) => ({
       ...subject,
       passingGrade: passingGrades.get(subject.id) ?? null,
+      requirements: subject.requirements.map((requirement) => ({ ...requirement, label: describeRequirement(requirement) })),
       pendingRequirements: pendingRequirements(subject),
     })),
     grades.map((grade) => ({ subjectId: grade.section.subjectId, passed: grade.status === 'PASSED' })),
   )
 
+  const stats = summarizeFlowchart(subjects, progress.passedCredits)
+
   return {
     career: profile.career,
     currentTerm,
     subjects,
-    stats: summarizeFlowchart(subjects, progress.passedCredits),
+    stats,
+    nextBlocked: nextBlockedSubjects(subjects, stats.currentCurriculumTerm),
   }
 }
 

@@ -1,12 +1,11 @@
 import { CURRICULUM_BRANCHES, CURRICULUM_TERMS, getFlowchart } from '@/control/controllers/flowchart.controller'
 import { GlossaryTerm } from '@/presentation/components/shared/glossary'
 import { PageHeading } from '@/presentation/components/shared/page-heading'
-import { nextBlockedSubjects } from '@/domain/flowchart/pending-requirements'
 import { FlowchartBoard } from '@/presentation/portals/student/flowchart/flowchart-board'
 import { PendingPrerequisites } from '@/presentation/portals/student/flowchart/pending-prerequisites'
 
 export default async function FlowchartPage() {
-  const { career, stats, subjects } = await getFlowchart()
+  const { career, stats, subjects, nextBlocked } = await getFlowchart()
 
   return (
     <div className="content-container">
@@ -64,7 +63,7 @@ export default async function FlowchartPage() {
         statusCounts={stats.statusCounts}
       />
 
-      <PendingPrerequisites subjects={nextBlockedSubjects(subjects, stats.currentCurriculumTerm)} />
+      <PendingPrerequisites subjects={nextBlocked} />
     </div>
   )
 }

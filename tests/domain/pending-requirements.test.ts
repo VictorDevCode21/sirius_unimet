@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { nextBlockedSubjects, pendingRequirements } from '@/domain/flowchart/pending-requirements'
+import { describeRequirement, nextBlockedSubjects, pendingRequirements } from '@/domain/flowchart/pending-requirements'
 
 const check = (label: string, met: boolean, isAlternative = false) => ({ label, met, isAlternative })
 
@@ -45,5 +45,23 @@ describe('next blocked subjects', () => {
       { id: 'e', term: 3, branch: 2, status: 'AVAILABLE' as const },
     ]
     assert.deepEqual(nextBlockedSubjects(subjects, 3).map((subject) => subject.id), ['c', 'b', 'a'])
+  })
+})
+
+describe('credit requirements', () => {
+  it('says how many credits are missing for the minimum credit rule', () => {
+    const minimum = { label: '60 créditos aprobados', met: false, isAlternative: false, credits: { required: 60, passed: 48 } }
+    assert.equal(describeRequirement(minimum), 'Faltan 12 UC (mínimo 60)')
+    assert.deepEqual(pendingRequirements({ status: 'BLOCKED', requirements: [minimum] }), ['Faltan 12 UC (mínimo 60)'])
+  })
+
+  it('says how many block credits are missing for the alternative rule', () => {
+    const alternative = { label: '57 créditos aprobados del bloque BP', met: false, isAlternative: true, credits: { required: 57, passed: 40, block: 'BP' } }
+    assert.equal(describeRequirement(alternative), 'Faltan 17 UC del bloque BP (mínimo 57)')
+  })
+
+  it('keeps the plain label once the credit rule is met', () => {
+    const met = { label: '60 créditos aprobados', met: true, isAlternative: false, credits: { required: 60, passed: 75 } }
+    assert.equal(describeRequirement(met), '60 créditos aprobados')
   })
 })
