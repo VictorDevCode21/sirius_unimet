@@ -13,6 +13,7 @@ interface FlowchartBoardProps {
   terms: number
   branches: number
   currentTerm: number
+  statusCounts: Record<SubjectStatus, number>
 }
 
 type Filter = 'ALL' | SubjectStatus | 'FAILED'
@@ -29,8 +30,9 @@ const filters: { value: Filter; label: string }[] = [
 const matchesFilter = (subject: FlowchartSubject, filter: Filter) =>
   filter === 'ALL' || (filter === 'FAILED' ? subject.failed : subject.status === filter)
 
-export function FlowchartBoard({ subjects, terms, branches, currentTerm }: FlowchartBoardProps) {
+export function FlowchartBoard({ subjects, terms, branches, currentTerm, statusCounts }: FlowchartBoardProps) {
   const [filter, setFilter] = useState<Filter>('ALL')
+  const failedCount = subjects.filter((subject) => subject.failed).length
   const [hovered, setHovered] = useState<FlowchartSubject | null>(null)
   const [selected, setSelected] = useState<FlowchartSubject | null>(null)
 
@@ -79,7 +81,7 @@ export function FlowchartBoard({ subjects, terms, branches, currentTerm }: Flowc
         <p className="mt-2 line-clamp-3 text-[0.8rem] font-semibold leading-tight">{subject.name}</p>
         <div className="mt-auto flex items-center justify-between pt-3 text-[0.66rem] font-semibold opacity-70">
           <span>{subject.credits} UC</span>
-          <span>{statusConfig[subject.status].label}</span>
+          <span>{subject.passingGrade ? `${statusConfig.PASSED.label} · ${subject.passingGrade.value}` : statusConfig[subject.status].label}</span>
         </div>
       </button>
     )
@@ -102,6 +104,7 @@ export function FlowchartBoard({ subjects, terms, branches, currentTerm }: Flowc
               {filters.map((item) => (
                 <button key={item.value} type="button" aria-pressed={filter === item.value} onClick={() => setFilter(item.value)}>
                   {item.label}
+                  <span className="ml-1.5 tabular-nums opacity-60">{item.value === 'ALL' ? subjects.length : item.value === 'FAILED' ? failedCount : statusCounts[item.value]}</span>
                 </button>
               ))}
             </div>
@@ -139,7 +142,7 @@ export function FlowchartBoard({ subjects, terms, branches, currentTerm }: Flowc
           {(Object.keys(statusConfig) as SubjectStatus[]).map((status) => (
             <span key={status} className="legend-dot">
               <i style={{ background: statusConfig[status].color }} />
-              {statusConfig[status].label}
+              {statusConfig[status].label} ({statusCounts[status]})
             </span>
           ))}
           <span className="legend-dot">
