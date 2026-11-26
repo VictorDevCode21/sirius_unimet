@@ -15,6 +15,8 @@ import { findOfferByTerm, findSectionById } from '@/data-access/repositories/sec
 import { findOpenTerm } from '@/data-access/repositories/term.repository'
 import { calculateAmount } from '@/domain/billing/amount-calculator'
 import {
+  isEnrollmentEditable,
+  validateEnrollmentEditable,
   validateMaxCredits,
   validatePrerequisites,
   validateReplacement,
@@ -97,6 +99,7 @@ export async function listOffer() {
     enrollment: enrollment
       ? {
           status: enrollment.status,
+          editable: isEnrollmentEditable(enrollment.status),
           amount: Number(enrollment.amount),
           sections: enrollment.details.map((detail) => toSectionView(detail.section)),
         }
@@ -133,9 +136,7 @@ export async function addSection(rawSectionId: string): Promise<ActionResult> {
     }
 
     const enrollment = await findEnrollment(profile.id, term!.id)
-    if (enrollment && enrollment.status !== 'PRE_ENROLLED') {
-      throw new DomainError('Tu inscripción ya no admite cambios porque está en proceso de pago o confirmada.')
-    }
+    validateEnrollmentEditable(enrollment)
 
     const selected = (enrollment?.details ?? []).map((detail) => toCandidate(detail.section))
     const candidate = toCandidate(section)
@@ -173,9 +174,7 @@ export async function replaceSection(input: ReplaceSectionInput): Promise<Action
 
     const enrollment = await findEnrollment(profile.id, term!.id)
     if (!enrollment) throw new DomainError('No tienes una pre-inscripción que modificar. Recarga la página.')
-    if (enrollment.status !== 'PRE_ENROLLED') {
-      throw new DomainError('Tu inscripción ya no admite cambios porque está en proceso de pago o confirmada.')
-    }
+    validateEnrollmentEditable(enrollment)
 
     const selected = enrollment.details.map((detail) => toCandidate(detail.section))
     const candidate = toCandidate(section)
@@ -210,9 +209,7 @@ export async function removeSection(rawSectionId: string): Promise<ActionResult>
     if (!enrollment || !detail) {
       throw new DomainError('La sección no está en tu pre-inscripción. Recarga la página para ver tu selección actual.')
     }
-    if (enrollment.status !== 'PRE_ENROLLED') {
-      throw new DomainError('Tu inscripción ya no admite cambios porque está en proceso de pago o confirmada.')
-    }
+    validateEnrollmentEditable(enrollment)
 
     await removeEnrollmentSection(enrollment.id, parsed.data, (credits) => calculateAmount(credits, Number(term!.ratePerCredit)))
     return `${detail.section.subject.name} se retiró de tu pre-inscripción.`

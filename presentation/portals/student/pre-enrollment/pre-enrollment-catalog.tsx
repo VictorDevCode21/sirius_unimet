@@ -84,7 +84,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
   const [replaceTarget, setReplaceTarget] = useState<string | null>(null)
 
   const selected = useMemo(() => offer.enrollment?.sections ?? [], [offer.enrollment])
-  const isLocked = Boolean(offer.enrollment && offer.enrollment.status !== 'PRE_ENROLLED')
+  const isLocked = Boolean(offer.enrollment && !offer.enrollment.editable)
   const selectedBySubject = useMemo(() => new Map(selected.map((section) => [section.subject.id, section])), [selected])
   const totalCredits = selected.reduce((sum, section) => sum + section.subject.credits, 0)
 
@@ -167,7 +167,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
     const disabledReason = isSelected
       ? null
       : isLocked
-        ? 'Tu inscripción ya no admite cambios.'
+        ? 'Tu inscripción ya está confirmada y no admite cambios.'
         : isFull
           ? 'Sección llena: no quedan cupos.'
           : clash
