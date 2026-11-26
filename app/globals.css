@@ -87,6 +87,8 @@
   --status-blocked-bg: #f1f3f8;
   --status-failed: #b42318;
   --status-failed-bg: rgb(217 45 32 / 10%);
+  --relation-prerequisite: #7c3aed;
+  --relation-unlock: #db2777;
 }
 
 .dark {
@@ -116,6 +118,8 @@
   --status-blocked-bg: rgb(255 255 255 / 3%);
   --status-failed: #f97066;
   --status-failed-bg: rgb(249 112 102 / 14%);
+  --relation-prerequisite: #a78bfa;
+  --relation-unlock: #f472b6;
 }
 
 @layer base {
@@ -1006,6 +1010,7 @@ select.field:disabled {
 /* ---------- Flowchart ---------- */
 
 .flow-board {
+  position: relative;
   display: grid;
   grid-template-columns: repeat(var(--periods), minmax(8rem, 1fr));
   gap: 0.5rem;
@@ -1126,14 +1131,97 @@ select.field:disabled {
   opacity: 0.22;
 }
 
-.subject-card[data-highlight='true'] {
-  border-color: var(--brand-orange);
-  box-shadow: 0 0 0 3px rgb(246 134 41 / 25%);
+/* Relations of the focused subject: violet for the subjects it requires, pink for the ones it unlocks. */
+.subject-card[data-relation='focus'] {
+  z-index: 2;
+  border-color: var(--foreground);
+  border-style: solid;
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--foreground) 14%, transparent), var(--shadow-lift);
+  transform: translateY(-2px);
 }
 
-.subject-card[data-selected='true'] {
-  border-color: var(--brand-sky);
-  box-shadow: 0 0 0 3px rgb(24 89 169 / 30%);
+.subject-card[data-relation='prerequisite'],
+.subject-card[data-relation='unlock'] {
+  z-index: 1;
+  border-style: solid;
+  border-width: 2px;
+}
+
+.subject-card[data-relation='prerequisite'] {
+  border-color: var(--relation-prerequisite);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--relation-prerequisite) 22%, transparent);
+}
+
+.subject-card[data-relation='unlock'] {
+  border-color: var(--relation-unlock);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--relation-unlock) 22%, transparent);
+}
+
+.relation-tag {
+  position: absolute;
+  top: -0.6rem;
+  left: 0.55rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.2rem;
+  border-radius: 999px;
+  padding: 0.1rem 0.45rem;
+  font-size: 0.6rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: white;
+  box-shadow: 0 4px 10px -4px rgb(0 0 0 / 40%);
+  animation: fade-in 0.15s ease;
+}
+
+.relation-tag svg {
+  width: 0.7rem;
+  height: 0.7rem;
+}
+
+.relation-tag[data-kind='prerequisite'] { background: var(--relation-prerequisite); }
+.relation-tag[data-kind='unlock'] { background: var(--relation-unlock); }
+
+.dark .relation-tag { color: #0b1631; }
+
+.legend-relation {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.legend-relation i {
+  height: 0.2rem;
+  width: 1.1rem;
+  border-radius: 999px;
+}
+
+.flow-links {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  overflow: visible;
+  pointer-events: none;
+}
+
+.flow-links path {
+  fill: none;
+  stroke-width: 2.25;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 6 5;
+  animation: flow-dash 0.9s linear infinite;
+}
+
+@keyframes flow-dash {
+  to { stroke-dashoffset: -11; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .flow-links path { animation: none; }
 }
 
 /* ---------- Drawer ---------- */
