@@ -1,4 +1,5 @@
 // CSV importer: validates a curriculum file and creates subjects and prerequisites in a single transaction.
+import { validateSubjectFields } from '@/domain/curriculum/subject-rules'
 import { createsCycle, type AlternativeRequirement } from '@/domain/prerequisites/prerequisite-engine'
 
 // `alternative` holds credits plus block code (e.g. "57BP") that replace every other requirement of the row.
@@ -112,11 +113,8 @@ export function validateCurriculumCsv(text: string): { rows: CurriculumRow[]; er
         .filter(Boolean),
       alternative: parsedAlternative ?? null,
     }
-    if (!row.code) errors.push(`Línea ${line}: el código es obligatorio.`)
-    if (!row.name) errors.push(`Línea ${line}: el nombre es obligatorio.`)
-    if (!(row.credits > 0)) errors.push(`Línea ${line}: las UC deben ser un entero mayor que cero.`)
-    if (!(row.term >= 1 && row.term <= 12)) errors.push(`Línea ${line}: el trimestre debe estar entre 1 y 12.`)
-    if (!(row.branch >= 1 && row.branch <= 5)) errors.push(`Línea ${line}: la rama debe estar entre 1 y 5.`)
+    // Same field rules as the curriculum editor form.
+    for (const error of validateSubjectFields(row)) errors.push(`Línea ${line}: ${error}`)
     if (row.minCredits !== null && !(row.minCredits >= 0)) errors.push(`Línea ${line}: las UC mínimas deben ser un entero positivo.`)
     if (parsedAlternative === undefined) {
       errors.push(`Línea ${line}: la alternativa debe tener el formato UC + bloque, por ejemplo 57BP.`)
