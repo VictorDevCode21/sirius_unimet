@@ -8,8 +8,10 @@ import { failedConfig, StatusBadge } from '@/presentation/components/shared/stat
 import { toRoman } from '@/presentation/lib/format'
 
 interface SubjectDrawerProps {
-  // Pre-enrollment opens the drawer with subjects that do not carry the failed flag.
-  subject: Omit<FlowchartSubject, 'failed'> & { failed?: boolean }
+  // Pre-enrollment opens the drawer with subjects that carry neither the passing grade, the pending requirements nor
+  // the failed flag.
+  subject: Omit<FlowchartSubject, 'passingGrade' | 'pendingRequirements' | 'failed'> &
+    Partial<Pick<FlowchartSubject, 'passingGrade' | 'pendingRequirements' | 'failed'>>
   onClose: () => void
   showEnrollLink?: boolean
 }
@@ -65,8 +67,20 @@ export function SubjectDrawer({ subject, onClose, showEnrollLink = true }: Subje
           </div>
         </div>
 
+        {subject.passingGrade && (
+          <p className="mt-5 rounded-[1.25rem] bg-[var(--status-passed-bg)] px-4 py-3 text-sm font-semibold text-[var(--status-passed)]">
+            Aprobada con {subject.passingGrade.value}/20 en el periodo {subject.passingGrade.termName}.
+          </p>
+        )}
+
         <div className="mt-8">
           <h3 className="text-sm font-bold">Prelaciones</h3>
+          {subject.pendingRequirements && subject.pendingRequirements.length > 0 && (
+            <p className="mt-1 text-xs font-semibold text-[var(--status-blocked)]">
+              Te {subject.pendingRequirements.length === 1 ? 'falta 1 requisito' : `faltan ${subject.pendingRequirements.length} requisitos`} para
+              cursarla.
+            </p>
+          )}
           {subject.requirements.length ? (
             <div className="mt-3 flex flex-col gap-2">
               {subject.requirements.map((requirement, index) => (
