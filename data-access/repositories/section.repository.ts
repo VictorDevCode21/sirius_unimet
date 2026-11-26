@@ -4,7 +4,8 @@ export const sectionInclude = {
   subject: true,
   professor: { select: { name: true } },
   scheduleBlocks: { orderBy: [{ weekday: 'asc' as const }, { startTime: 'asc' as const }] },
-  _count: { select: { enrollmentDetails: true } },
+  // Enrollment status of every detail; the seat rules decide which ones take a seat.
+  enrollmentDetails: { select: { enrollment: { select: { status: true } } } },
 }
 
 export function findOfferByTerm(termId: string, careerId: string) {
