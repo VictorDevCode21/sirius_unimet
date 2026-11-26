@@ -124,7 +124,7 @@ async function lockSection(tx: TransactionClient, sectionId: string, professorId
   const teacherId = professorId ?? locked.professorId
   await tx.$queryRaw`SELECT "id" FROM "User" WHERE "id" = ${teacherId}::uuid FOR UPDATE`
 
-  const occupied = await tx.enrollmentDetail.count({ where: { sectionId } })
+  const details = await tx.enrollmentDetail.findMany({ where: { sectionId }, select: { enrollment: { select: { status: true } } } })
   const grades = await tx.grade.count({ where: { sectionId } })
   const ownBlocks = await tx.scheduleBlock.findMany({ where: { sectionId } })
   const teacherBlocks = await tx.scheduleBlock.findMany({
@@ -133,7 +133,9 @@ async function lockSection(tx: TransactionClient, sectionId: string, professorId
   })
 
   return {
-    occupied,
+    // Every enrollment detail, paid or not: any of them blocks deleting the section or changing its schedule.
+    occupied: details.length,
+    enrollmentStatuses: details.map((detail) => detail.enrollment.status),
     grades,
     ownBlocks: ownBlocks.map((block): LockedBlock & { id: string } => ({
       id: block.id,
@@ -154,19 +156,19 @@ async function lockSection(tx: TransactionClient, sectionId: string, professorId
 }
 
 // Updates professor, capacity and number while holding the section lock; the capacity is checked against
-// the seats taken at that moment and the professor against their other blocks in the term.
+// the enrollment statuses at that moment and the professor against their other blocks in the term.
 export function updateSectionWithLock(params: {
   sectionId: string
   professorId: string
   capacity: number
   number: number
-  assertCapacity: (capacity: number, occupied: number) => void
+  assertCapacity: (capacity: number, enrollmentStatuses: string[]) => void
   assertProfessorAvailable?: (professorBlocks: LockedProfessorBlock[], sectionBlocks: LockedBlock[]) => void
 }) {
   return prisma.$transaction(async (tx) => {
     const locked = await lockSection(tx, params.sectionId, params.professorId)
     if (!locked) return null
-    params.assertCapacity(params.capacity, locked.occupied)
+    params.assertCapacity(params.capacity, locked.enrollmentStatuses)
     params.assertProfessorAvailable?.(locked.professorBlocks, locked.ownBlocks)
     return tx.section.update({
       where: { id: params.sectionId },

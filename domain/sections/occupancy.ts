@@ -1,17 +1,25 @@
-// Section occupancy: every enrollment detail holds a seat (pre-enrolled, pending payment or confirmed), the same
-// rule the seat assignment uses; confirmed students are those with an approved payment.
+// Section occupancy for the department head. Seats follow the shared seat rule: only confirmed (paid) enrollments
+// take a seat; pre-enrolled and pending students are listed but leave the seat free.
+import { countTakenSeats } from '@/domain/enrollment/seat-rules'
+
 export type EnrollmentStatusName = 'PRE_ENROLLED' | 'PENDING' | 'CONFIRMED'
 
+// Share of the capacity from which a section is flagged as nearly full.
+export const NEARLY_FULL_RATIO = 0.9
+
+export function isNearlyFull(enrolled: number, capacity: number) {
+  return capacity > 0 && enrolled >= Math.ceil(capacity * NEARLY_FULL_RATIO)
+}
+
 export function computeOccupancy(capacity: number, statuses: EnrollmentStatusName[]) {
-  const enrolled = statuses.length
-  const confirmed = statuses.filter((status) => status === 'CONFIRMED').length
+  const enrolled = countTakenSeats(statuses)
   return {
     capacity,
     enrolled,
-    confirmed,
-    unpaid: enrolled - confirmed,
+    unpaid: statuses.length - enrolled,
     available: Math.max(0, capacity - enrolled),
     full: enrolled >= capacity,
+    nearlyFull: isNearlyFull(enrolled, capacity),
     percent: capacity > 0 ? Math.min(100, Math.round((enrolled / capacity) * 100)) : 0,
   }
 }
@@ -26,7 +34,8 @@ export function summarizeOccupancy(items: Occupancy[]) {
       enrolled: total.enrolled + item.enrolled,
       available: total.available + item.available,
       full: total.full + (item.full ? 1 : 0),
+      nearlyFull: total.nearlyFull + (item.nearlyFull && !item.full ? 1 : 0),
     }),
-    { sections: 0, capacity: 0, enrolled: 0, available: 0, full: 0 },
+    { sections: 0, capacity: 0, enrolled: 0, available: 0, full: 0, nearlyFull: 0 },
   )
 }

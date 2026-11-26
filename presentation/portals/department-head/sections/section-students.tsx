@@ -30,7 +30,7 @@ export function SectionStudents({ detail }: { detail: ManagedSectionDetail }) {
               Inscritos y cupos
             </h2>
             <p className="text-xs text-muted-foreground">
-              {occupancy.confirmed} con pago confirmado · {occupancy.unpaid} pre-inscritos o con pago pendiente
+              {occupancy.enrolled} con pago confirmado · {occupancy.unpaid} pre-inscritos o con pago pendiente (todavía no ocupan cupo)
             </p>
           </div>
         </div>

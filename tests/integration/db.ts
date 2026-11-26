@@ -13,14 +13,19 @@ export async function findSeedFixtures() {
 }
 
 // Creates throwaway students enrolled (PRE_ENROLLED) in a section; returns their ids for cleanup.
-export async function enrollTemporaryStudents(sectionId: string, termId: string, count: number) {
+export async function enrollTemporaryStudents(
+  sectionId: string,
+  termId: string,
+  count: number,
+  status: 'PRE_ENROLLED' | 'PENDING' | 'CONFIRMED' = 'PRE_ENROLLED',
+) {
   const ids: string[] = []
   for (let index = 0; index < count; index++) {
     const student = await prisma.user.create({
       data: { name: `Estudiante prueba ${index}`, email: `test-${Date.now()}-${Math.random().toString(36).slice(2)}@test.local`, passwordHash: 'x', role: 'STUDENT' },
     })
     ids.push(student.id)
-    await prisma.enrollment.create({ data: { studentId: student.id, termId, details: { create: { sectionId } } } })
+    await prisma.enrollment.create({ data: { studentId: student.id, termId, status, details: { create: { sectionId } } } })
   }
   return ids
 }

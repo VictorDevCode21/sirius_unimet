@@ -58,12 +58,13 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
         </form>
       </div>
 
-      <dl className="reveal reveal-1 mb-5 grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <dl className="reveal reveal-1 mb-5 grid grid-cols-2 gap-3 sm:grid-cols-5">
         {[
           { label: 'Secciones', value: totals.sections },
           { label: 'Cupo total', value: totals.capacity },
           { label: 'Inscritos', value: totals.enrolled },
           { label: 'Disponibles', value: totals.available },
+          { label: 'Casi llenas', value: totals.nearlyFull },
         ].map((figure) => (
           <div key={figure.label} className="stat-card">
             <dt className="text-xs font-semibold text-muted-foreground">{figure.label}</dt>

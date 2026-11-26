@@ -1,5 +1,6 @@
 // Section management rules for the department head: editable terms, professor eligibility and capacity limits.
 import { DomainError } from '@/domain/shared/domain-error'
+import { countTakenSeats } from '@/domain/enrollment/seat-rules'
 
 export const MAX_SECTION_CAPACITY = 200
 
@@ -34,6 +35,11 @@ export function validateSectionCapacity(capacity: number, occupied = 0) {
   if (capacity < occupied) {
     throw new DomainError(`La sección ya tiene ${occupied} inscritos. El cupo no puede ser menor que ${occupied}.`)
   }
+}
+
+// Capacity check while editing a section: it can go down to the seats taken under the shared seat rule.
+export function validateSectionCapacityForStatuses(capacity: number, enrollmentStatuses: readonly string[]) {
+  validateSectionCapacity(capacity, countTakenSeats(enrollmentStatuses))
 }
 
 // Next free section number for a subject in a term.

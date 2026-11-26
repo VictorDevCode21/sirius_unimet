@@ -23,35 +23,49 @@ after(async () => {
 })
 
 describe('HU-12 enrolled students and seats (database)', () => {
-  it('matches the seeded confirmed enrollment of the current term', async () => {
+  it('matches the confirmed enrollments of the seeded student section in the current term', async () => {
     const currentTerm = await prisma.term.findUniqueOrThrow({ where: { name: '2627-1' } })
+    const detail = await prisma.enrollmentDetail.findFirstOrThrow({
+      where: { enrollment: { studentId: fixtures.student.id, termId: currentTerm.id } },
+      select: { sectionId: true },
+    })
     const sections = await listDepartmentSections(fixtures.department.id, currentTerm.id)
-    assert.ok(sections.length > 0)
-    for (const section of sections) {
-      const occupancy = occupancyOf(section)
-      assert.equal(occupancy.enrolled, await prisma.enrollmentDetail.count({ where: { sectionId: section.id } }))
-      assert.equal(occupancy.enrolled, occupancy.confirmed)
-      assert.equal(occupancy.available, section.capacity - occupancy.enrolled)
-    }
-    const students = await listSectionStudents(sections[0].id)
-    assert.equal(students.length, 1)
-    assert.equal(students[0].enrollment.student.id, fixtures.student.id)
-    assert.equal(students[0].enrollment.status, 'CONFIRMED')
+    const section = sections.find((item) => item.id === detail.sectionId)
+    assert.ok(section)
+    const occupancy = occupancyOf(section)
+    const confirmed = await prisma.enrollmentDetail.count({ where: { sectionId: section.id, enrollment: { status: 'CONFIRMED' } } })
+    assert.equal(occupancy.enrolled, confirmed)
+    assert.equal(occupancy.available, Math.max(0, section.capacity - confirmed))
+    const students = await listSectionStudents(section.id)
+    assert.equal(students.length, await prisma.enrollmentDetail.count({ where: { sectionId: section.id } }))
+    assert.ok(students.some((student) => student.enrollment.student.id === fixtures.student.id))
   })
 
-  it('counts pre-enrolled students as seat holders and handles a section without students', async () => {
+  it('lists pre-enrolled students without taking seats and handles a section without students', async () => {
     const subject = await prisma.subject.findFirstOrThrow({ where: { career: { departmentId: fixtures.department.id } }, orderBy: { code: 'asc' } })
-    const busy = await createSection({ subjectId: subject.id, termId: fixtures.openTerm.id, professorId: fixtures.professor.id, capacity: 3, nextNumber: nextSectionNumber })
-    const empty = await createSection({ subjectId: subject.id, termId: fixtures.openTerm.id, professorId: fixtures.professor.id, capacity: 10, nextNumber: nextSectionNumber })
+    // Explicit numbers keep this file from competing with other section tests for the next free number.
+    const busy = await createSection({ subjectId: subject.id, termId: fixtures.openTerm.id, professorId: fixtures.professor.id, capacity: 3, number: 61, nextNumber: nextSectionNumber })
+    const empty = await createSection({ subjectId: subject.id, termId: fixtures.openTerm.id, professorId: fixtures.professor.id, capacity: 10, number: 62, nextNumber: nextSectionNumber })
     sectionIds.push(busy.id, empty.id)
     studentIds = await enrollTemporaryStudents(busy.id, fixtures.openTerm.id, 3)
 
     const sections = await listDepartmentSections(fixtures.department.id, fixtures.openTerm.id)
     const busyOccupancy = occupancyOf(sections.find((section) => section.id === busy.id)!)
-    assert.deepEqual([busyOccupancy.enrolled, busyOccupancy.confirmed, busyOccupancy.available, busyOccupancy.full], [3, 0, 0, true])
+    assert.deepEqual([busyOccupancy.enrolled, busyOccupancy.unpaid, busyOccupancy.available, busyOccupancy.full], [0, 3, 3, false])
     const emptyOccupancy = occupancyOf(sections.find((section) => section.id === empty.id)!)
     assert.deepEqual([emptyOccupancy.enrolled, emptyOccupancy.available], [0, 10])
     assert.equal((await listSectionStudents(empty.id)).length, 0)
     assert.equal((await listSectionStudents(busy.id)).length, 3)
+  })
+
+  it('fills and flags a section with confirmed enrollments', async () => {
+    const subject = await prisma.subject.findFirstOrThrow({ where: { career: { departmentId: fixtures.department.id } }, orderBy: { code: 'asc' } })
+    const section = await createSection({ subjectId: subject.id, termId: fixtures.openTerm.id, professorId: fixtures.professor.id, capacity: 3, number: 63, nextNumber: nextSectionNumber })
+    sectionIds.push(section.id)
+    studentIds = studentIds.concat(await enrollTemporaryStudents(section.id, fixtures.openTerm.id, 3, 'CONFIRMED'))
+
+    const sections = await listDepartmentSections(fixtures.department.id, fixtures.openTerm.id)
+    const occupancy = occupancyOf(sections.find((item) => item.id === section.id)!)
+    assert.deepEqual([occupancy.enrolled, occupancy.available, occupancy.full, occupancy.nearlyFull], [3, 0, true, true])
   })
 })

@@ -2,7 +2,7 @@ import { after, before, describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { enrollTemporaryStudents, findSeedFixtures, prisma, removeTemporaryStudents } from './db'
 import { createSection, deleteSectionWithLock, updateSectionWithLock } from '@/data-access/repositories/section-management.repository'
-import { nextSectionNumber, validateSectionCapacity, validateSectionDeletable } from '@/domain/sections/section-rules'
+import { nextSectionNumber, validateSectionCapacityForStatuses, validateSectionDeletable } from '@/domain/sections/section-rules'
 import { DomainError } from '@/domain/shared/domain-error'
 
 const sectionIds: string[] = []
@@ -40,19 +40,26 @@ describe('HU-10B edit and delete sections', () => {
   it('persists professor, capacity and number changes', async () => {
     const section = await newSection()
     const otherProfessor = await prisma.user.findFirstOrThrow({ where: { role: 'PROFESSOR', id: { not: fixtures.professor.id } } })
-    await updateSectionWithLock({ sectionId: section.id, professorId: otherProfessor.id, capacity: 42, number: 77, assertCapacity: validateSectionCapacity })
+    await updateSectionWithLock({ sectionId: section.id, professorId: otherProfessor.id, capacity: 42, number: 77, assertCapacity: validateSectionCapacityForStatuses })
     const stored = await prisma.section.findUniqueOrThrow({ where: { id: section.id } })
     assert.deepEqual([stored.professorId, stored.capacity, stored.number], [otherProfessor.id, 42, 77])
   })
 
-  it('does not lower capacity below the enrolled students', async () => {
+  it('does not lower capacity below the confirmed students', async () => {
     const section = await newSection(5)
-    studentIds = studentIds.concat(await enrollTemporaryStudents(section.id, fixtures.openTerm.id, 3))
+    studentIds = studentIds.concat(await enrollTemporaryStudents(section.id, fixtures.openTerm.id, 3, 'CONFIRMED'))
     await assert.rejects(
-      updateSectionWithLock({ sectionId: section.id, professorId: fixtures.professor.id, capacity: 2, number: section.number, assertCapacity: validateSectionCapacity }),
+      updateSectionWithLock({ sectionId: section.id, professorId: fixtures.professor.id, capacity: 2, number: section.number, assertCapacity: validateSectionCapacityForStatuses }),
       DomainError,
     )
     assert.equal((await prisma.section.findUniqueOrThrow({ where: { id: section.id } })).capacity, 5)
+  })
+
+  it('lets the capacity go below students who have not paid yet', async () => {
+    const section = await newSection(5)
+    studentIds = studentIds.concat(await enrollTemporaryStudents(section.id, fixtures.openTerm.id, 3))
+    await updateSectionWithLock({ sectionId: section.id, professorId: fixtures.professor.id, capacity: 2, number: section.number, assertCapacity: validateSectionCapacityForStatuses })
+    assert.equal((await prisma.section.findUniqueOrThrow({ where: { id: section.id } })).capacity, 2)
   })
 
   it('keeps a section with enrollments and its enrollment details', async () => {
@@ -73,6 +80,6 @@ describe('HU-10B edit and delete sections', () => {
   it('reports a missing section without throwing', async () => {
     const missing = '00000000-0000-4000-8000-000000000000'
     assert.equal(await deleteSectionWithLock(missing, validateSectionDeletable), false)
-    assert.equal(await updateSectionWithLock({ sectionId: missing, professorId: fixtures.professor.id, capacity: 10, number: 1, assertCapacity: validateSectionCapacity }), null)
+    assert.equal(await updateSectionWithLock({ sectionId: missing, professorId: fixtures.professor.id, capacity: 10, number: 1, assertCapacity: validateSectionCapacityForStatuses }), null)
   })
 })

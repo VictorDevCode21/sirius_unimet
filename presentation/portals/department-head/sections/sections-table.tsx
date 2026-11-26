@@ -48,7 +48,13 @@ export function SectionsTable({
         </thead>
         <tbody>
           {sections.map((section) => (
-            <tr key={section.id} className={`border-b border-border last:border-0 hover:bg-muted/60 ${section.id === highlightId ? 'bg-[var(--status-passed-bg)]' : ''}`}>
+            <tr
+              key={section.id}
+              data-nearly-full={section.occupancy.nearlyFull || undefined}
+              className={`border-b border-border last:border-0 hover:bg-muted/60 ${
+                section.id === highlightId ? 'bg-[var(--status-passed-bg)]' : section.occupancy.nearlyFull ? 'bg-[var(--status-available-bg)]' : ''
+              }`}
+            >
               <td className="px-5 py-3.5">
                 <strong className="block">{section.subject.name}</strong>
                 <small className="font-mono text-[0.7rem] text-muted-foreground">
@@ -70,7 +76,13 @@ export function SectionsTable({
               <td className="px-3 py-3.5 text-right font-display text-lg font-extrabold">{section.occupancy.enrolled}</td>
               <td className="px-3 py-3.5 text-right">
                 <span className="font-display text-lg font-extrabold">{section.occupancy.available}</span>
-                {section.occupancy.full && <span className="block text-[0.68rem] font-bold text-[var(--status-available)] 2xl:hidden">Sin cupos</span>}
+                {section.occupancy.full ? (
+                  <span className="block text-[0.68rem] font-bold text-[var(--status-available)] 2xl:hidden">Sin cupos</span>
+                ) : (
+                  section.occupancy.nearlyFull && (
+                    <span className="block text-[0.68rem] font-bold text-[var(--status-available)] 2xl:hidden">Casi llena</span>
+                  )
+                )}
               </td>
               <td className="hidden px-3 py-3.5 2xl:table-cell">
                 <OccupancyBar occupancy={section.occupancy} />

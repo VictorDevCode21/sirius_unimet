@@ -9,7 +9,7 @@ import {
 } from '@/data-access/repositories/section-management.repository'
 import { findOfferByTerm } from '@/data-access/repositories/section.repository'
 import { validateNoOverlapInSection, validateProfessorAvailability, validateScheduleChangeAllowed } from '@/domain/sections/schedule-rules'
-import { nextSectionNumber, validateSectionCapacity } from '@/domain/sections/section-rules'
+import { nextSectionNumber, validateSectionCapacityForStatuses } from '@/domain/sections/section-rules'
 
 const sectionIds: string[] = []
 let studentIds: string[] = []
@@ -106,7 +106,7 @@ describe('HU-11 schedule blocks (database)', () => {
         professorId: otherProfessor,
         capacity: 20,
         number: mine.number,
-        assertCapacity: validateSectionCapacity,
+        assertCapacity: validateSectionCapacityForStatuses,
         assertProfessorAvailable: (professorBlocks, sectionBlocks) => validateProfessorAvailability('Otro', professorBlocks, sectionBlocks),
       }),
       /ya dicta/,
