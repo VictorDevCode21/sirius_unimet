@@ -24,14 +24,14 @@ export function ProfileSection({ profile }: { profile: SettingsProfile }) {
       </p>
       <dl className="mt-5 grid grid-cols-[minmax(0,1fr)] gap-3 sm:grid-cols-2">
         {rows.map(({ label, value, icon: Icon }) => (
-          <div key={label} className="flex items-start gap-3 rounded-[1.1rem] bg-muted p-4">
-            <span className="stat-icon bg-[#003087]/10 text-[#003087] dark:bg-[#1859a9]/25 dark:text-[#8fb8ff]">
-              <Icon aria-hidden="true" />
-            </span>
-            <div className="min-w-0">
-              <dt className="text-xs font-semibold text-muted-foreground">{label}</dt>
-              <dd className="mt-0.5 text-sm font-bold [overflow-wrap:anywhere]">{value}</dd>
-            </div>
+          <div key={label} className="grid min-w-0 grid-cols-[auto_minmax(0,1fr)] items-center gap-x-3 rounded-[1.1rem] bg-muted p-4">
+            <dt className="contents">
+              <span className="stat-icon row-span-2 bg-[#003087]/10 text-[#003087] dark:bg-[#1859a9]/25 dark:text-[#8fb8ff]">
+                <Icon aria-hidden="true" />
+              </span>
+              <span className="self-end text-xs font-semibold text-muted-foreground">{label}</span>
+            </dt>
+            <dd className="col-start-2 mt-0.5 self-start text-sm font-bold [overflow-wrap:anywhere]">{value}</dd>
           </div>
         ))}
       </dl>
