@@ -23,6 +23,7 @@ import {
   Settings,
   Sun,
   UsersRound,
+  Wallet,
   X,
 } from 'lucide-react'
 import { UnimetLogo } from '@/presentation/components/brand/unimet-logo'
@@ -49,6 +50,7 @@ const portals: Record<Portal, { home: string; roleLabel: string; navItems: { lab
     roleLabel: 'Administrador',
     navItems: [
       { label: 'Periodos', href: '/admin/terms', icon: CalendarDays },
+      { label: 'Matrícula', href: '/admin/tuition', icon: Wallet },
       { label: 'Usuarios', href: '/admin/users', icon: UsersRound },
       { label: 'Departamentos', href: '/admin/departments', icon: Building2 },
       { label: 'Carreras', href: '/admin/careers', icon: GraduationCap },

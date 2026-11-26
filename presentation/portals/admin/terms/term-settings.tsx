@@ -9,7 +9,7 @@ export function TermSettings({ term }: { term: TermView }) {
   return (
     <div className="section-grid grid md:grid-cols-2">
       <TermSettingForm
-        title="Monto por UC"
+        title="Costo de matrícula (monto por UC)"
         description="Se usa en todos los cálculos del periodo. Las inscripciones ya pagadas conservan el monto con el que se pagaron."
         label="Monto por UC (USD)"
         initialValue={term.ratePerCredit > 0 ? String(term.ratePerCredit) : ''}

@@ -1,5 +1,4 @@
 import 'dotenv/config'
-import { randomBytes } from 'node:crypto'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import bcrypt from 'bcryptjs'
@@ -59,6 +58,10 @@ function buildTerm(startYear: number, trimester: number, open = false) {
 }
 
 const terms = [
+  buildTerm(2022, 1),
+  buildTerm(2022, 2),
+  buildTerm(2022, 3),
+  buildTerm(2023, 1),
   buildTerm(2023, 2),
   buildTerm(2023, 3),
   buildTerm(2024, 1),
@@ -151,11 +154,10 @@ async function seedUsers(careerId: string) {
   const professorIds: string[] = []
   for (const [index, name] of professors.entries()) {
     const email = `profesor${index + 1}@unimet.edu.ve`
-    // Professors get an unusable random password until their portal exists.
-    const passwordHash = await bcrypt.hash(randomBytes(24).toString('hex'), 10)
+    const passwordHash = await bcrypt.hash(SAMPLE_PASSWORD, 10)
     const professor = await prisma.user.upsert({
       where: { email },
-      update: { name, role: 'PROFESSOR' },
+      update: { name, role: 'PROFESSOR', passwordHash },
       create: { email, name, passwordHash, role: 'PROFESSOR' },
     })
     professorIds.push(professor.id)
@@ -334,6 +336,146 @@ async function seedPublishedGrades() {
   }
 }
 
+const cohortFirstNames = ['Valentina', 'Santiago', 'Camila', 'Sebastián', 'Isabella', 'Mateo', 'Lucía', 'Diego', 'Mariana', 'Daniel', 'Paula', 'Andrés', 'Gabriela', 'Alejandro', 'Daniela']
+const cohortLastNames = ['Ramírez', 'Morales', 'Castillo', 'Rojas', 'Mendoza', 'Silva', 'Vargas', 'Herrera', 'Medina', 'Guerrero', 'Ortiz', 'Romero', 'Paredes', 'Acosta', 'Rivero']
+const COHORT_SIZE = 30
+const CURRICULUM_LENGTH = 12
+
+// Deterministic pseudo-random number in [0, 1) so every seed run builds the same sample data.
+function seeded(...parts: (string | number)[]) {
+  const hash = parts.join('|').split('').reduce((acc, char) => (acc * 31 + char.charCodeAt(0)) >>> 0, 7)
+  return (hash % 10_000) / 10_000
+}
+
+/**
+ * Sample students of several cohorts in Ingeniería en Sistemas (alumno01…alumno30@correo.unimet.edu.ve, password
+ * Test123**). Each one takes one flowchart term per trimester from its starting term:
+ * - finished terms get published grades; about a third fail one subject in their last finished term;
+ * - students without a failed subject are enrolled and paid in the current term (grades not published yet);
+ * - students with a failed subject skip the current term and pre-enroll in the open term to retake it, some with a
+ *   rejected payment (PENDING). Unpaid enrollments never take seats, so the open term offer keeps its seats.
+ */
+async function seedSampleCohorts(careerId: string, professorIds: string[]) {
+  const passwordHash = await bcrypt.hash(SAMPLE_PASSWORD, 10)
+  const subjects = await prisma.subject.findMany({ where: { careerId }, orderBy: [{ term: 'asc' }, { branch: 'asc' }] })
+  const allTerms = await prisma.term.findMany({ orderBy: { startsAt: 'asc' } })
+  const currentIndex = allTerms.findIndex((term) => term.name === CURRENT_TERM)
+  const finished = allTerms.slice(0, currentIndex)
+  const currentTerm = allTerms[currentIndex]
+  const openTerm = allTerms.find((term) => term.name === OPEN_TERM)!
+
+  // One section per subject and term, created on first use with a professor and slot that do not clash with the
+  // professor's other sections of the term.
+  const busyByTerm = new Map<string, { professorId: string; weekday: string; start: number; end: number }[]>()
+  const sectionCache = new Map<string, { id: string }>()
+  const minutesOf = (time: Date) => time.getUTCHours() * 60 + time.getUTCMinutes()
+  async function busySlots(termId: string) {
+    let busy = busyByTerm.get(termId)
+    if (!busy) {
+      const blocks = await prisma.scheduleBlock.findMany({ where: { section: { termId } }, include: { section: { select: { professorId: true } } } })
+      busy = blocks.map((block) => ({ professorId: block.section.professorId, weekday: block.weekday, start: minutesOf(block.startTime), end: minutesOf(block.endTime) }))
+      busyByTerm.set(termId, busy)
+    }
+    return busy
+  }
+  async function sectionFor(subjectId: string, termId: string) {
+    const key = `${subjectId}:${termId}`
+    const cached = sectionCache.get(key)
+    if (cached) return cached
+    let section: { id: string } | null = await prisma.section.findFirst({ where: { subjectId, termId }, orderBy: { number: 'asc' } })
+    if (!section) {
+      const busy = await busySlots(termId)
+      let index = 0
+      for (; ; index++) {
+        const { professorIndex, blocks } = scheduleFor(index)
+        const professorId = professorIds[professorIndex]
+        const clashes = blocks.some((block) =>
+          busy.some(
+            (other) =>
+              other.professorId === professorId && other.weekday === block.weekday && other.start < minutesOf(block.endTime) && minutesOf(block.startTime) < other.end,
+          ),
+        )
+        if (!clashes) {
+          busy.push(...blocks.map((block) => ({ professorId, weekday: block.weekday, start: minutesOf(block.startTime), end: minutesOf(block.endTime) })))
+          break
+        }
+      }
+      section = await createSection({ subjectId, termId, number: 1, index, professorIds })
+    }
+    sectionCache.set(key, section)
+    return section
+  }
+
+  async function enroll(studentId: string, term: (typeof allTerms)[number], subjectIds: string[], status: 'CONFIRMED' | 'PRE_ENROLLED' | 'PENDING') {
+    const chosen = subjects.filter((subject) => subjectIds.includes(subject.id))
+    const sections: { id: string }[] = []
+    for (const subject of chosen) sections.push(await sectionFor(subject.id, term.id))
+    const amount = calculateAmount(chosen.reduce((sum, subject) => sum + subject.credits, 0), Number(term.ratePerCredit))
+    const reference = `SIM-${term.name}-${studentId.slice(0, 8)}`.toUpperCase()
+    const payments =
+      status === 'CONFIRMED'
+        ? { create: { reference, amount, status: 'APPROVED' as const } }
+        : status === 'PENDING'
+          ? { create: { reference: `${reference}-R`, amount, status: 'REJECTED' as const } }
+          : undefined
+    await prisma.enrollment.create({
+      data: { studentId, termId: term.id, status, amount, details: { create: sections.map((section) => ({ sectionId: section.id })) }, payments },
+    })
+    return chosen.map((subject, index) => ({ subject, section: sections[index] }))
+  }
+
+  const summary = { students: 0, graduated: 0, current: 0, retaking: 0, grades: 0 }
+  for (let index = 0; index < COHORT_SIZE; index++) {
+    const name = `${cohortFirstNames[index % cohortFirstNames.length]} ${cohortLastNames[(index * 7) % cohortLastNames.length]}`
+    const email = `alumno${String(index + 1).padStart(2, '0')}@correo.unimet.edu.ve`
+    const student = await prisma.user.upsert({
+      where: { email },
+      update: { name, passwordHash, role: 'STUDENT', careerId, active: true },
+      create: { email, name, passwordHash, role: 'STUDENT', careerId },
+    })
+    summary.students++
+
+    // Starting terms spread over every finished term, so the cohorts are at different points of the flowchart.
+    const start = index % finished.length
+    const takenTerms = finished.slice(start, start + CURRICULUM_LENGTH)
+    const fails = seeded(email, 'fail') < 0.34
+    let failedSubjectId: string | null = null
+
+    for (const [offset, term] of takenTerms.entries()) {
+      const curriculumTerm = offset + 1
+      const termSubjects = subjects.filter((subject) => subject.term === curriculumTerm)
+      const taken = await enroll(student.id, term, termSubjects.map((subject) => subject.id), 'CONFIRMED')
+      const isLast = offset === takenTerms.length - 1
+      const failIndex = fails && isLast ? Math.floor(seeded(email, term.name) * taken.length) : -1
+      for (const [position, { subject, section }] of taken.entries()) {
+        const value = position === failIndex ? 5 + Math.floor(seeded(email, subject.code) * 5) : 10 + Math.floor(seeded(email, subject.code) * 11)
+        if (position === failIndex) failedSubjectId = subject.id
+        await prisma.grade.create({ data: { sectionId: section.id, studentId: student.id, value, status: resolveGradeStatus(value), published: true } })
+        summary.grades++
+      }
+    }
+
+    const reached = takenTerms.length
+    if (reached >= CURRICULUM_LENGTH && !failedSubjectId) {
+      summary.graduated++
+    } else if (!failedSubjectId) {
+      await enroll(student.id, currentTerm, subjects.filter((subject) => subject.term === reached + 1).map((subject) => subject.id), 'CONFIRMED')
+      summary.current++
+    } else {
+      const failed = subjects.find((subject) => subject.id === failedSubjectId)!
+      const offered = await prisma.section.findFirst({ where: { termId: openTerm.id, subjectId: failed.id } })
+      if (offered) {
+        await enroll(student.id, openTerm, [failed.id], seeded(email, 'pending') < 0.5 ? 'PENDING' : 'PRE_ENROLLED')
+        summary.retaking++
+      }
+    }
+  }
+  console.log(
+    `Sample cohorts: ${summary.students} students, ${summary.grades} grades, ${summary.current} enrolled in ${CURRENT_TERM}, ` +
+      `${summary.retaking} retaking in ${OPEN_TERM}, ${summary.graduated} with the whole flowchart`,
+  )
+}
+
 async function main() {
   await reset()
   await seedAcademicStructure()
@@ -345,6 +487,7 @@ async function main() {
   await seedAdminConfig()
   await seedProfessorSections()
   await seedPublishedGrades()
+  await seedSampleCohorts(career.id, professorIds)
   console.log('Seed completed')
 }
 
