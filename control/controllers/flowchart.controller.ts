@@ -1,37 +1,41 @@
 import 'server-only'
 import { getStudentContext } from '@/control/controllers/student-context'
+import { describeRequirement, nextBlockedSubjects, pendingRequirements } from '@/domain/flowchart/pending-requirements'
+import { passingGradesBySubject, summarizeFlowchart } from '@/domain/flowchart/flowchart-summary'
 import { markFailedSubjects } from '@/domain/grades/course-outcome'
 
-export const CURRICULUM_TERMS = 12
-export const CURRICULUM_BRANCHES = 5
+export { CURRICULUM_BRANCHES, CURRICULUM_TERMS } from '@/domain/flowchart/flowchart-summary'
 
-// Flowchart controller: student flowchart with the status and prerequisites of every subject, and whether its published
-// attempts are all failed.
+// Flowchart controller: student flowchart with the status, prerequisites, pending requirements and passing grade of
+// every subject, and whether its published attempts are all failed.
 export async function getFlowchart() {
   const { profile, subjects: states, progress, currentTerm, grades } = await getStudentContext()
+  const passingGrades = passingGradesBySubject(
+    grades.map((grade) => ({
+      subjectId: grade.section.subjectId,
+      value: grade.value,
+      passed: grade.status === 'PASSED',
+      termName: grade.section.term.name,
+    })),
+  )
   const subjects = markFailedSubjects(
-    states,
+    states.map((subject) => ({
+      ...subject,
+      passingGrade: passingGrades.get(subject.id) ?? null,
+      requirements: subject.requirements.map((requirement) => ({ ...requirement, label: describeRequirement(requirement) })),
+      pendingRequirements: pendingRequirements(subject),
+    })),
     grades.map((grade) => ({ subjectId: grade.section.subjectId, passed: grade.status === 'PASSED' })),
   )
-  const planCredits = subjects.reduce((sum, subject) => sum + subject.credits, 0)
-  const passed = subjects.filter((subject) => subject.status === 'PASSED')
-  const inProgressTerms = subjects.filter((subject) => subject.status === 'IN_PROGRESS').map((subject) => subject.term)
-  const currentCurriculumTerm = inProgressTerms.length
-    ? Math.max(...inProgressTerms)
-    : Math.min(CURRICULUM_TERMS, Math.max(0, ...passed.map((subject) => subject.term)) + 1)
+
+  const stats = summarizeFlowchart(subjects, progress.passedCredits)
 
   return {
     career: profile.career,
     currentTerm,
     subjects,
-    stats: {
-      planCredits,
-      passedCredits: progress.passedCredits,
-      passedSubjects: passed.length,
-      totalSubjects: subjects.length,
-      progressPercent: planCredits ? (progress.passedCredits / planCredits) * 100 : 0,
-      currentCurriculumTerm,
-    },
+    stats,
+    nextBlocked: nextBlockedSubjects(subjects, stats.currentCurriculumTerm),
   }
 }
 
