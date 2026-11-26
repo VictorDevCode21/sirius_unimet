@@ -133,7 +133,7 @@ function ProfileMenu({ user, roleLabel, showSettings }: { user: PortalShellProps
         className="flex items-center gap-2.5 rounded-full border border-border bg-card p-1 transition hover:shadow-[var(--shadow-soft)] sm:pr-3"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
-        aria-haspopup="menu"
+        aria-controls="profile-menu"
       >
         <span className="avatar h-9 w-9 text-[0.72rem]" aria-hidden="true">
           {initialsOf(user.name)}
@@ -148,7 +148,7 @@ function ProfileMenu({ user, roleLabel, showSettings }: { user: PortalShellProps
         <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition max-sm:hidden', open && 'rotate-180')} aria-hidden="true" />
       </button>
       {open && (
-        <div className="profile-menu reveal" role="menu">
+        <div id="profile-menu" className="profile-menu reveal">
           <div className="flex items-center gap-3 border-b border-border p-3">
             <span className="avatar h-10 w-10" aria-hidden="true">
               {initialsOf(user.name)}
@@ -159,16 +159,16 @@ function ProfileMenu({ user, roleLabel, showSettings }: { user: PortalShellProps
             </div>
           </div>
           <div className="pt-1.5">
-            <Link href="/microsoft-365" className="menu-item" role="menuitem" onClick={() => setOpen(false)}>
+            <Link href="/microsoft-365" className="menu-item" onClick={() => setOpen(false)}>
               <ExternalLink aria-hidden="true" /> Microsoft 365
             </Link>
             {showSettings && (
-              <Link href="/student/settings" className="menu-item" role="menuitem" onClick={() => setOpen(false)}>
+              <Link href="/student/settings" className="menu-item" onClick={() => setOpen(false)}>
                 <Settings aria-hidden="true" /> Ajustes
               </Link>
             )}
             <form action={logout}>
-              <button type="submit" className="menu-item" role="menuitem">
+              <button type="submit" className="menu-item">
                 <LogOut aria-hidden="true" /> Cerrar sesión
               </button>
             </form>
