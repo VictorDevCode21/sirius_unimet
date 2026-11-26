@@ -39,14 +39,15 @@ function confirmLikePayment(enrollmentId: string) {
 async function cleanUp() {
   await prisma.enrollment.deleteMany({ where: { student: { email: { startsWith: PREFIX } } } })
   await prisma.user.deleteMany({ where: { email: { startsWith: PREFIX } } })
-  await prisma.section.deleteMany({ where: { number: { in: [90, 91] }, termId } })
+  await prisma.section.deleteMany({ where: { number: { in: [90, 91] }, termId, subjectId } })
 }
 
 describe('seat lock', () => {
   before(async () => {
     const term = await prisma.term.findFirstOrThrow({ where: { open: true } })
     termId = term.id
-    const professor = await prisma.user.findFirstOrThrow({ where: { role: 'PROFESSOR' } })
+    // Seeded professor only: other test files create and delete temporary professors (…@test.local) in parallel.
+    const professor = await prisma.user.findFirstOrThrow({ where: { role: 'PROFESSOR', NOT: { email: { endsWith: '@test.local' } } } })
     const subject = await prisma.subject.findFirstOrThrow({ where: { code: 'FPTSP27' } })
     subjectId = subject.id
     await cleanUp()
