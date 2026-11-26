@@ -1,7 +1,7 @@
 import 'dotenv/config'
 import assert from 'node:assert/strict'
 import { after, before, describe, it } from 'node:test'
-import { checkEnrollmentSeats, confirmEnrollmentSeats } from '@/control/controllers/enrollment-seats'
+import { checkEnrollmentSeats, confirmEnrollmentSeats } from '@/control/controllers/seat-confirmation'
 import { prisma } from '@/data-access/prisma'
 import { addSectionWithSeatLock } from '@/data-access/repositories/enrollment.repository'
 import { validateCapacity } from '@/domain/enrollment/enrollment-validator'
