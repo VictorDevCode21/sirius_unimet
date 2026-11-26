@@ -1,41 +1,51 @@
 import 'server-only'
-import { randomUUID } from 'node:crypto'
 import { getStudentContext } from '@/control/controllers/student-context'
-import { findEnrollment } from '@/data-access/repositories/enrollment.repository'
-import { listPayments } from '@/data-access/repositories/payment.repository'
-import { findOpenTerm } from '@/data-access/repositories/term.repository'
-import { calculateAmount } from '@/domain/billing/amount-calculator'
-import { paymentReference } from '@/domain/billing/payment-simulator'
+import { getBcvUsdRate } from '@/data-access/external/bcv-rate'
+import { findStudentAccounts } from '@/data-access/repositories/payment.repository'
+import { summarizeBalance } from '@/domain/billing/account-balance'
+import { PAYMENT_METHODS } from '@/domain/billing/payment-methods'
 
-const toMinutes = (time: Date) => time.getUTCHours() * 60 + time.getUTCMinutes()
-
-// Enrollment of the open term with its sections and payment attempts. The amount is what was paid once the enrollment
-// is confirmed, and otherwise what the payment will charge (credits × current rate per credit, as the payment action).
-// Each page load opens a new payment attempt whose reference is shown before paying.
-export async function getPaymentSummary() {
+// Account statement of the signed-in student: every enrolled term with its amount, approved payments and balance,
+// the payment history, the BCV rate for bolívar methods and the accepted payment methods.
+export async function getPaymentsOverview() {
   const { profile } = await getStudentContext()
-  const term = await findOpenTerm()
-  if (!term) return null
-  const enrollment = await findEnrollment(profile.id, term.id)
-  const payments = enrollment ? await listPayments(enrollment.id) : []
-  const sections = (enrollment?.details ?? []).map(({ section }) => ({
-    id: section.id,
-    number: section.number,
-    subject: { code: section.subject.code, name: section.subject.name, credits: section.subject.credits },
-    blocks: section.scheduleBlocks.map((block) => ({ weekday: block.weekday, startMinutes: toMinutes(block.startTime), endMinutes: toMinutes(block.endTime) })),
-  }))
-  const ratePerCredit = Number(term.ratePerCredit)
-  const totalCredits = sections.reduce((sum, section) => sum + section.subject.credits, 0)
-  const attemptId = randomUUID()
+  const [accounts, bcv] = await Promise.all([findStudentAccounts(profile.id), getBcvUsdRate()])
+
+  const terms = accounts
+    .filter((account) => account.status === 'CONFIRMED')
+    .map((account) => {
+      const payments = account.payments.map((payment) => ({
+        id: payment.id,
+        reference: payment.reference,
+        payerReference: payment.payerReference,
+        method: payment.method,
+        currency: payment.currency,
+        amount: Number(payment.amount),
+        paidAmount: payment.paidAmount === null ? null : Number(payment.paidAmount),
+        exchangeRate: payment.exchangeRate === null ? null : Number(payment.exchangeRate),
+        status: payment.status,
+        details: (payment.details ?? {}) as Record<string, string>,
+        createdAt: payment.createdAt,
+      }))
+      return {
+        termId: account.term.id,
+        termName: account.term.name,
+        termStartsAt: account.term.startsAt,
+        enrolledAt: account.enrolledAt,
+        subjects: account._count.details,
+        ...summarizeBalance(Number(account.amount), payments),
+        payments,
+      }
+    })
+    .reverse()
+
   return {
-    term: { name: term.name, ratePerCredit },
-    attempt: { id: attemptId, reference: paymentReference(term.name, attemptId) },
-    status: enrollment?.status ?? null,
-    amount: enrollment?.status === 'CONFIRMED' ? Number(enrollment.amount) : calculateAmount(totalCredits, ratePerCredit),
-    totalCredits,
-    sections,
-    payments: payments.map((payment) => ({ reference: payment.reference, amount: Number(payment.amount), status: payment.status, createdAt: payment.createdAt })),
+    terms,
+    totalDue: Math.round(terms.reduce((sum, term) => sum + term.balance * 100, 0)) / 100,
+    bcv: bcv ? { rate: bcv.rate, valueDate: bcv.valueDate, stale: bcv.stale } : null,
+    methods: PAYMENT_METHODS,
   }
 }
 
-export type PaymentSummary = NonNullable<Awaited<ReturnType<typeof getPaymentSummary>>>
+export type PaymentsOverview = Awaited<ReturnType<typeof getPaymentsOverview>>
+export type TermStatement = PaymentsOverview['terms'][number]
