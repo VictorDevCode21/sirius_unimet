@@ -61,7 +61,8 @@ export function findDepartmentSection(sectionId: string, departmentId: string) {
   return prisma.section.findFirst({ where: { id: sectionId, subject: { career: { departmentId } } }, include: managedSectionInclude })
 }
 
-// Creates a section; when no number is given, the next free number of the subject in the term is used.
+// Creates a section; when no number is given, the next free number of the subject in the term is used, computed
+// while the subject row is locked (SELECT … FOR UPDATE).
 export function createSection(params: {
   subjectId: string
   termId: string
@@ -71,6 +72,7 @@ export function createSection(params: {
   nextNumber: (existing: number[]) => number
 }) {
   return prisma.$transaction(async (tx) => {
+    await tx.$queryRaw`SELECT "id" FROM "Subject" WHERE "id" = ${params.subjectId}::uuid FOR UPDATE`
     let number = params.number
     if (number === undefined) {
       const existing = await tx.section.findMany({ where: { subjectId: params.subjectId, termId: params.termId }, select: { number: true } })
