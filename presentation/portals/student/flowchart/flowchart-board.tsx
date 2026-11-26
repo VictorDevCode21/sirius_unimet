@@ -1,13 +1,12 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { LockKeyhole, LockKeyholeOpen, MapPin } from 'lucide-react'
+import { CircleX, LockKeyhole, LockKeyholeOpen, MapPin } from 'lucide-react'
 import { SubjectDrawer } from '@/presentation/portals/student/flowchart/subject-drawer'
-import { statusConfig } from '@/presentation/components/shared/status-badge'
+import { failedConfig, statusConfig } from '@/presentation/components/shared/status-badge'
 import type { FlowchartSubject } from '@/control/controllers/flowchart.controller'
 import type { SubjectStatus } from '@/domain/prerequisites/prerequisite-engine'
 import { toRoman } from '@/presentation/lib/format'
-import { cn } from '@/presentation/lib/utils'
 
 interface FlowchartBoardProps {
   subjects: FlowchartSubject[]
@@ -17,7 +16,7 @@ interface FlowchartBoardProps {
   statusCounts: Record<SubjectStatus, number>
 }
 
-type Filter = 'ALL' | SubjectStatus
+type Filter = 'ALL' | SubjectStatus | 'FAILED'
 
 const filters: { value: Filter; label: string }[] = [
   { value: 'ALL', label: 'Todas' },
@@ -25,10 +24,15 @@ const filters: { value: Filter; label: string }[] = [
   { value: 'IN_PROGRESS', label: 'En curso' },
   { value: 'AVAILABLE', label: 'Disponibles' },
   { value: 'BLOCKED', label: 'Bloqueadas' },
+  { value: 'FAILED', label: 'Reprobadas' },
 ]
+
+const matchesFilter = (subject: FlowchartSubject, filter: Filter) =>
+  filter === 'ALL' || (filter === 'FAILED' ? subject.failed : subject.status === filter)
 
 export function FlowchartBoard({ subjects, terms, branches, currentTerm, statusCounts }: FlowchartBoardProps) {
   const [filter, setFilter] = useState<Filter>('ALL')
+  const failedCount = subjects.filter((subject) => subject.failed).length
   const [hovered, setHovered] = useState<FlowchartSubject | null>(null)
   const [selected, setSelected] = useState<FlowchartSubject | null>(null)
 
@@ -45,7 +49,7 @@ export function FlowchartBoard({ subjects, terms, branches, currentTerm, statusC
   const renderCard = (subject: FlowchartSubject) => {
     const isFocus = focus?.id === subject.id
     const isRelated = relatedPrerequisites.has(subject.id) || relatedUnlocks.has(subject.id)
-    const dimmed = (filter !== 'ALL' && subject.status !== filter) || (focus && !isFocus && !isRelated)
+    const dimmed = !matchesFilter(subject, filter) || (focus && !isFocus && !isRelated)
     return (
       <button
         type="button"
@@ -69,6 +73,11 @@ export function FlowchartBoard({ subjects, terms, branches, currentTerm, statusC
           {subject.status === 'PASSED' && <span className="h-2 w-2 rounded-full bg-[var(--status-passed)]" aria-label="Aprobada" />}
           {subject.status === 'IN_PROGRESS' && <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--status-progress)]" aria-label="En curso" />}
         </div>
+        {subject.failed && (
+          <span className="subject-failed-badge mt-1.5">
+            <CircleX aria-hidden="true" /> {failedConfig.label}
+          </span>
+        )}
         <p className="mt-2 line-clamp-3 text-[0.8rem] font-semibold leading-tight">{subject.name}</p>
         <div className="mt-auto flex items-center justify-between pt-3 text-[0.66rem] font-semibold opacity-70">
           <span>{subject.credits} UC</span>
@@ -95,7 +104,7 @@ export function FlowchartBoard({ subjects, terms, branches, currentTerm, statusC
               {filters.map((item) => (
                 <button key={item.value} type="button" aria-pressed={filter === item.value} onClick={() => setFilter(item.value)}>
                   {item.label}
-                  <span className="ml-1.5 tabular-nums opacity-60">{item.value === 'ALL' ? subjects.length : statusCounts[item.value]}</span>
+                  <span className="ml-1.5 tabular-nums opacity-60">{item.value === 'ALL' ? subjects.length : item.value === 'FAILED' ? failedCount : statusCounts[item.value]}</span>
                 </button>
               ))}
             </div>
@@ -136,6 +145,10 @@ export function FlowchartBoard({ subjects, terms, branches, currentTerm, statusC
               {statusConfig[status].label} ({statusCounts[status]})
             </span>
           ))}
+          <span className="legend-dot">
+            <i style={{ background: failedConfig.color }} />
+            {failedConfig.label} (sigue pendiente)
+          </span>
         </div>
       </section>
 

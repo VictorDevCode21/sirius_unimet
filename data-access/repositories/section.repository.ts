@@ -4,12 +4,14 @@ export const sectionInclude = {
   subject: true,
   professor: { select: { name: true } },
   scheduleBlocks: { orderBy: [{ weekday: 'asc' as const }, { startTime: 'asc' as const }] },
-  _count: { select: { enrollmentDetails: true } },
+  // Enrollment status of every detail; the seat rules decide which ones take a seat.
+  enrollmentDetails: { select: { enrollment: { select: { status: true } } } },
 }
 
 export function findOfferByTerm(termId: string, careerId: string) {
   return prisma.section.findMany({
-    where: { termId, subject: { careerId } },
+    // A section without schedule blocks is not open for enrollment yet.
+    where: { termId, subject: { careerId }, scheduleBlocks: { some: {} } },
     include: sectionInclude,
     orderBy: [{ subject: { term: 'asc' } }, { subject: { branch: 'asc' } }, { number: 'asc' }],
   })
