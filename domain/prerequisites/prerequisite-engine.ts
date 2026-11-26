@@ -28,11 +28,13 @@ export interface AcademicProgress {
   passedCreditsByCode: Map<string, number>
 }
 
-// `isAlternative` marks the check that, when met, satisfies the subject on its own.
+// `isAlternative` marks the check that, when met, satisfies the subject on its own. Credit rules carry the credits
+// they require and the credits the student has passed toward them (from `block` for the alternative rule).
 export interface RequirementCheck {
   label: string
   met: boolean
   isAlternative: boolean
+  credits?: { required: number; passed: number; block?: string }
 }
 
 export interface SubjectState extends CurriculumSubject {
@@ -65,6 +67,7 @@ export function checkRequirements(
       label: `${subject.minCredits} créditos aprobados`,
       met: progress.passedCredits >= subject.minCredits,
       isAlternative: false,
+      credits: { required: subject.minCredits, passed: progress.passedCredits },
     })
   }
   if (subject.alternative) {
@@ -72,6 +75,7 @@ export function checkRequirements(
       label: `${subject.alternative.credits} créditos aprobados del bloque ${subject.alternative.block}`,
       met: meetsAlternative(subject, progress),
       isAlternative: true,
+      credits: { required: subject.alternative.credits, passed: blockCredits(progress, subject.alternative.block), block: subject.alternative.block },
     })
   }
   return checks
