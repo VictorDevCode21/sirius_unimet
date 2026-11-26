@@ -1,6 +1,6 @@
 import { describe, it } from 'node:test'
 import assert from 'node:assert/strict'
-import { assertValidSubject, validateSubjectFields, validateSubjectPlacement } from '@/domain/curriculum/subject-rules'
+import { assertValidSubject, validateSubjectFields, validateSubjectPlacement, validateTermOrder } from '@/domain/curriculum/subject-rules'
 import { DomainError } from '@/domain/shared/domain-error'
 
 const valid = { code: 'FPTSP07', name: 'Ingeniería de Software', credits: 3, term: 8, branch: 5 }
@@ -50,5 +50,22 @@ describe('subject placement', () => {
 
   it('throws a DomainError with every problem', () => {
     assert.throws(() => assertValidSubject(existing, { ...valid, credits: 0 }), (error) => error instanceof DomainError && error.message.includes('UC'))
+  })
+})
+
+describe('term order when moving a subject', () => {
+  const requirements = [{ code: 'BPTMI01', term: 2 }]
+  const dependents = [{ code: 'BPTMI03', term: 4 }]
+
+  it('accepts a term between its prerequisites and the subjects it unlocks', () => {
+    assert.deepEqual(validateTermOrder(3, requirements, dependents), [])
+  })
+
+  it('rejects a term at or before a prerequisite', () => {
+    assert.deepEqual(validateTermOrder(2, requirements, dependents), ['Debe quedar en un trimestre posterior a sus prelaciones: BPTMI01.'])
+  })
+
+  it('rejects a term at or after a subject it unlocks', () => {
+    assert.deepEqual(validateTermOrder(5, requirements, dependents), ['Debe quedar en un trimestre anterior a las materias que prela: BPTMI03.'])
   })
 })

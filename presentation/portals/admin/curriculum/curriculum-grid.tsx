@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { GraduationCap, Plus } from 'lucide-react'
-import type { CurriculumEditor } from '@/control/controllers/curriculum.queries'
+import type { CurriculumEditor, EditorSubject } from '@/control/controllers/curriculum.queries'
 import { SubjectForm } from '@/presentation/portals/admin/curriculum/subject-form'
 import { toRoman } from '@/presentation/lib/format'
 
@@ -16,6 +16,7 @@ interface CurriculumGridProps extends CurriculumEditor {
 export function CurriculumGrid({ careers, career, subjects, terms, branches }: CurriculumGridProps) {
   const router = useRouter()
   const [cell, setCell] = useState<{ term: number; branch: number } | null>(null)
+  const [editing, setEditing] = useState<EditorSubject | null>(null)
   const cellMap = new Map(subjects.map((subject) => [`${subject.term}-${subject.branch}`, subject]))
   const totalCredits = subjects.reduce((sum, subject) => sum + subject.credits, 0)
 
@@ -32,7 +33,7 @@ export function CurriculumGrid({ careers, career, subjects, terms, branches }: C
               Pensum de {career.name}
             </h2>
             <p className="mt-1 text-sm text-muted-foreground">
-              {subjects.length} materias · {totalCredits} UC. Selecciona una celda vacía para registrar una materia.
+              {subjects.length} materias · {totalCredits} UC. Selecciona una celda vacía para registrar una materia o una materia para editarla y moverla.
             </p>
           </div>
           <label className="flex min-w-0 flex-col gap-1.5 text-sm font-bold lg:w-80">
@@ -69,11 +70,17 @@ export function CurriculumGrid({ careers, career, subjects, terms, branches }: C
                 const subject = cellMap.get(`${term}-${branch}`)
                 if (subject) {
                   return (
-                    <div key={subject.id} className="subject-card border-border bg-card">
+                    <button
+                      key={subject.id}
+                      type="button"
+                      className="subject-card border-border bg-card hover:border-[var(--brand-sky)]"
+                      aria-label={`Editar ${subject.name} (${subject.code})`}
+                      onClick={() => setEditing(subject)}
+                    >
                       <span className="subject-code">{subject.code}</span>
                       <p className="mt-2 line-clamp-3 text-[0.8rem] font-semibold leading-tight">{subject.name}</p>
                       <span className="mt-auto pt-3 text-[0.66rem] font-semibold opacity-70">{subject.credits} UC</span>
-                    </div>
+                    </button>
                   )
                 }
                 return (
@@ -94,6 +101,15 @@ export function CurriculumGrid({ careers, career, subjects, terms, branches }: C
       </section>
 
       {cell && <SubjectForm careerId={career.id} cell={cell} onClose={() => setCell(null)} />}
+      {editing && (
+        <SubjectForm
+          key={editing.id}
+          careerId={career.id}
+          cell={{ term: editing.term, branch: editing.branch }}
+          subject={editing}
+          onClose={() => setEditing(null)}
+        />
+      )}
     </>
   )
 }

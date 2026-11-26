@@ -1,8 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Hash, LoaderCircle, Plus, Type, X } from 'lucide-react'
-import { registerSubject } from '@/control/controllers/curriculum.controller'
+import { Hash, LoaderCircle, Move, Plus, Save, Type, X } from 'lucide-react'
+import { editSubject, registerSubject } from '@/control/controllers/curriculum.controller'
+import type { EditorSubject } from '@/control/controllers/curriculum.queries'
+import { CURRICULUM_BRANCHES, CURRICULUM_TERMS } from '@/domain/curriculum/curriculum-grid'
 import { SUBJECT_CREDITS, SUBJECT_NAME_LENGTH, validateSubjectFields } from '@/domain/curriculum/subject-rules'
 import { FormMessage } from '@/presentation/components/shared/form-message'
 import { toRoman } from '@/presentation/lib/format'
@@ -10,16 +12,29 @@ import { useAction } from '@/presentation/lib/use-action'
 
 const inputClass = 'min-w-0 flex-1 border-0 bg-transparent py-3.5 text-[0.95rem] text-foreground outline-0'
 
+const selectClass = 'min-w-0 flex-1 border-0 bg-transparent py-3.5 text-[0.95rem] text-foreground outline-0'
+
 interface SubjectFormProps {
   careerId: string
   cell: { term: number; branch: number }
+  subject?: EditorSubject
   onClose: () => void
 }
 
-// Dialog to register a subject in an empty cell of the curriculum grid.
-export function SubjectForm({ careerId, cell, onClose }: SubjectFormProps) {
-  const [form, setForm] = useState({ code: '', name: '', credits: '3' })
+// Dialog to register a subject in an empty cell of the grid, or to edit a subject and move it to another cell.
+export function SubjectForm({ careerId, cell, subject, onClose }: SubjectFormProps) {
+  const [form, setForm] = useState({
+    code: subject?.code ?? '',
+    name: subject?.name ?? '',
+    credits: String(subject?.credits ?? 3),
+    term: String(cell.term),
+    branch: String(cell.branch),
+  })
   const [errors, setErrors] = useState<string[]>([])
+  // Cell picked in the form; while editing, a different cell means the subject is being moved there.
+  const targetTerm = Number(form.term) || cell.term
+  const targetBranch = Number(form.branch) || cell.branch
+  const moving = Boolean(subject) && (targetTerm !== cell.term || targetBranch !== cell.branch)
   const { pending, result, run } = useAction()
 
   useEffect(() => {
@@ -30,14 +45,20 @@ export function SubjectForm({ careerId, cell, onClose }: SubjectFormProps) {
 
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const fieldErrors = validateSubjectFields({ ...cell, code: form.code.trim().toUpperCase(), name: form.name.trim(), credits: Number(form.credits) })
+    const fieldErrors = validateSubjectFields({
+      code: form.code.trim().toUpperCase(),
+      name: form.name.trim(),
+      credits: Number(form.credits),
+      term: Number(form.term),
+      branch: Number(form.branch),
+    })
     setErrors(fieldErrors)
     if (fieldErrors.length) return
-    const response = await run(() => registerSubject({ careerId, ...cell, ...form }))
+    const response = await run(() => (subject ? editSubject({ subjectId: subject.id, ...form }) : registerSubject({ careerId, ...form })))
     if (response?.ok) onClose()
   }
 
-  const update = (field: keyof typeof form) => (event: React.ChangeEvent<HTMLInputElement>) =>
+  const update = (field: keyof typeof form) => (event: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) =>
     setForm((current) => ({ ...current, [field]: event.target.value }))
 
   return (
@@ -53,11 +74,19 @@ export function SubjectForm({ careerId, cell, onClose }: SubjectFormProps) {
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              Trimestre {toRoman(cell.term)} · Rama {cell.branch}
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground" aria-live="polite">
+              {moving ? (
+                <>
+                  Trimestre {toRoman(cell.term)} · Rama {cell.branch} → Trimestre {toRoman(targetTerm)} · Rama {targetBranch}
+                </>
+              ) : (
+                <>
+                  Trimestre {toRoman(targetTerm)} · Rama {targetBranch}
+                </>
+              )}
             </p>
             <h2 id="subject-form-title" className="mt-2 font-display text-3xl font-extrabold uppercase leading-[0.95]">
-              Registrar materia
+              {subject ? 'Editar materia' : 'Registrar materia'}
             </h2>
           </div>
           <button type="button" className="icon-button" onClick={onClose} aria-label="Cerrar">
@@ -69,7 +98,7 @@ export function SubjectForm({ careerId, cell, onClose }: SubjectFormProps) {
           Código
           <span className="field">
             <Hash aria-hidden="true" />
-            <input className={inputClass} value={form.code} onChange={update('code')} placeholder="FPTSP07" maxLength={10} autoFocus required />
+            <input className={inputClass} value={form.code} onChange={update('code')} placeholder="FPTSP07" maxLength={10} autoFocus={!subject} required />
           </span>
         </label>
         <label className="flex min-w-0 flex-col gap-1.5 text-sm font-bold">
@@ -94,6 +123,38 @@ export function SubjectForm({ careerId, cell, onClose }: SubjectFormProps) {
           </span>
         </label>
 
+        {subject && (
+          <fieldset className="grid grid-cols-2 gap-3">
+            <legend className="mb-1.5 flex items-center gap-1.5 text-sm font-bold">
+              <Move className="h-4 w-4" aria-hidden="true" /> Ubicación en el pensum
+            </legend>
+            <label className="flex min-w-0 flex-col gap-1.5 text-xs font-bold text-muted-foreground">
+              Trimestre
+              <span className="field">
+                <select className={selectClass} value={form.term} onChange={update('term')}>
+                  {Array.from({ length: CURRICULUM_TERMS }, (_, index) => (
+                    <option key={index} value={index + 1}>
+                      {toRoman(index + 1)}
+                    </option>
+                  ))}
+                </select>
+              </span>
+            </label>
+            <label className="flex min-w-0 flex-col gap-1.5 text-xs font-bold text-muted-foreground">
+              Rama
+              <span className="field">
+                <select className={selectClass} value={form.branch} onChange={update('branch')}>
+                  {Array.from({ length: CURRICULUM_BRANCHES }, (_, index) => (
+                    <option key={index} value={index + 1}>
+                      {index + 1}
+                    </option>
+                  ))}
+                </select>
+              </span>
+            </label>
+          </fieldset>
+        )}
+
         <div className="mt-auto flex flex-col gap-3 pt-4">
           {errors.length > 0 && (
             <ul role="alert" className="flex flex-col gap-1 text-sm font-semibold text-red-600 dark:text-red-400">
@@ -104,8 +165,8 @@ export function SubjectForm({ careerId, cell, onClose }: SubjectFormProps) {
           )}
           <FormMessage result={result} />
           <button type="submit" className="primary-button w-full" disabled={pending}>
-            {pending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
-            Registrar materia
+            {pending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : subject ? <Save className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+            {subject ? 'Guardar cambios' : 'Registrar materia'}
           </button>
         </div>
       </form>
