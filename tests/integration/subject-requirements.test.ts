@@ -12,7 +12,9 @@ describe('subject requirements', () => {
   before(async () => {
     temporary = await createTemporaryCareer()
     for (const [code, term] of [['TST01', 1], ['TST02', 1], ['TST03', 2]] as const) {
-      ids[code] = (await createSubject(temporary.career.id, { code, name: `Materia ${code}`, credits: 3, term, branch: Number(code.slice(-1)) }))!.id
+      const result = await createSubject(temporary.career.id, { code, name: `Materia ${code}`, credits: 3, term, branch: Number(code.slice(-1)) })
+      assert.ok(result.ok)
+      ids[code] = result.subject.id
     }
   })
 
