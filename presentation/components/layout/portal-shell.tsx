@@ -134,10 +134,12 @@ function ProfileMenu({ user, roleLabel, showSettings }: { user: PortalShellProps
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         aria-haspopup="menu"
-        aria-label={`Menú de ${user.name}, ${roleLabel}`}
       >
         <span className="avatar h-9 w-9 text-[0.72rem]" aria-hidden="true">
           {initialsOf(user.name)}
+        </span>
+        <span className="sr-only sm:hidden">
+          {user.name} {roleLabel}
         </span>
         <span className="hidden text-left sm:block">
           <strong className="block text-[0.8rem] leading-tight">{user.name}</strong>
