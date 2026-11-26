@@ -1,5 +1,7 @@
+import Link from 'next/link'
+import { SlidersHorizontal } from 'lucide-react'
 import type { TermView } from '@/control/controllers/term.queries'
-import { formatDateOnly } from '@/presentation/lib/format'
+import { formatCurrency, formatDateOnly } from '@/presentation/lib/format'
 import { EnrollmentToggle } from '@/presentation/portals/admin/terms/enrollment-toggle'
 
 // List of academic periods with their dates and enrollment status.
@@ -18,10 +20,18 @@ export function TermsList({ terms }: { terms: TermView[] }) {
               <p className="mt-0.5 text-sm text-muted-foreground">
                 {formatDateOnly(term.startsAt)} – {formatDateOnly(term.endsAt)}
               </p>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                Monto por UC: {term.ratePerCredit > 0 ? formatCurrency(term.ratePerCredit) : 'sin configurar'}
+              </p>
             </div>
             <span className="pill self-start sm:self-auto">{term.open ? 'Abierto' : 'Cerrado'}</span>
           </div>
-          <EnrollmentToggle termId={term.id} open={term.open} />
+          <div className="flex flex-wrap items-center gap-3">
+            <Link href={`/admin/terms/${term.id}`} className="secondary-button">
+              <SlidersHorizontal className="h-4 w-4" aria-hidden="true" /> Configurar
+            </Link>
+            <EnrollmentToggle termId={term.id} open={term.open} />
+          </div>
         </li>
       ))}
     </ul>
