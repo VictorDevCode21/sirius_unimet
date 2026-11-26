@@ -4,7 +4,7 @@ import { after, before, describe, it } from 'node:test'
 import { checkEnrollmentSeats, confirmEnrollmentSeats } from '@/control/controllers/seat-confirmation'
 import { prisma } from '@/data-access/prisma'
 import { addSectionWithSeatLock } from '@/data-access/repositories/enrollment.repository'
-import { validateCapacity } from '@/domain/enrollment/enrollment-validator'
+import { assertSeatAvailable } from '@/domain/enrollment/seat-rules'
 import { DomainError } from '@/domain/shared/domain-error'
 
 const PREFIX = 'seat-lock-test'
@@ -109,7 +109,7 @@ describe('seat lock', () => {
         studentId: student.id,
         termId,
         sectionId: lastSeatSectionId,
-        assertSeatAvailable: validateCapacity,
+        assertSeatAvailable,
         computeAmount: (credits) => credits * 10,
       }),
       /La sección está llena/,

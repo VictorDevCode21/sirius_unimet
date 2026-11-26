@@ -15,7 +15,6 @@ import { findOfferByTerm, findSectionById } from '@/data-access/repositories/sec
 import { findOpenTerm } from '@/data-access/repositories/term.repository'
 import { calculateAmount } from '@/domain/billing/amount-calculator'
 import {
-  validateCapacity,
   validateMaxCredits,
   validatePrerequisites,
   validateReplacement,
@@ -25,7 +24,7 @@ import {
   type SectionCandidate,
 } from '@/domain/enrollment/enrollment-validator'
 import { isOfferable, isSectionFull, seatsLeft } from '@/domain/enrollment/offer-rules'
-import { fullSectionMessage, type FullSection } from '@/domain/enrollment/seat-rules'
+import { assertSeatAvailable, countTakenSeats, fullSectionMessage, type FullSection } from '@/domain/enrollment/seat-rules'
 import { DomainError } from '@/domain/shared/domain-error'
 
 export interface ActionResult {
@@ -57,7 +56,7 @@ function toCandidate(section: SectionRecord): SectionCandidate {
 }
 
 function toSectionView(section: SectionRecord) {
-  const occupied = section._count.enrollmentDetails
+  const occupied = countTakenSeats(section.enrollmentDetails.map((detail) => detail.enrollment.status))
   return {
     id: section.id,
     number: section.number,
@@ -149,7 +148,7 @@ export async function addSection(rawSectionId: string): Promise<ActionResult> {
       studentId: profile.id,
       termId: term!.id,
       sectionId: section.id,
-      assertSeatAvailable: validateCapacity,
+      assertSeatAvailable,
       computeAmount: (credits) => calculateAmount(credits, Number(term!.ratePerCredit)),
     })
     return `${section.subject.name} (sección ${section.number}) se agregó a tu pre-inscripción.`
@@ -190,7 +189,7 @@ export async function replaceSection(input: ReplaceSectionInput): Promise<Action
       enrollmentId: enrollment.id,
       replacedSectionId: parsed.data.replacedSectionId,
       sectionId: section.id,
-      assertSeatAvailable: validateCapacity,
+      assertSeatAvailable,
       computeAmount: (credits) => calculateAmount(credits, Number(term!.ratePerCredit)),
     })
     return `Reemplazaste la sección ${replaced.number} de ${section.subject.name} por la sección ${section.number}.`

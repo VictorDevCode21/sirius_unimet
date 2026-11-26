@@ -1,9 +1,26 @@
 // Seat rules: a seat is taken only by a confirmed (paid) enrollment, so pre-enrollments never hold seats.
 // Detects full sections in a selection and suggests another section of the same subject with seats left.
-import { blocksOverlap, type TimeBlock } from '@/domain/enrollment/enrollment-validator'
+import { blocksOverlap, validateCapacity, type TimeBlock } from '@/domain/enrollment/enrollment-validator'
 import { seatsLeft } from '@/domain/enrollment/offer-rules'
 import { DomainError } from '@/domain/shared/domain-error'
 import { formatSchedule } from '@/domain/shared/schedule-format'
+
+// Enrollment statuses whose sections hold a seat. Pre-enrolled and pending (unpaid) enrollments never hold one.
+export const SEAT_HOLDING_STATUSES: readonly string[] = ['CONFIRMED']
+
+export function holdsSeat(status: string) {
+  return SEAT_HOLDING_STATUSES.includes(status)
+}
+
+// Seats taken in a section, given the enrollment status of each of its enrollment details.
+export function countTakenSeats(enrollmentStatuses: readonly string[]) {
+  return enrollmentStatuses.filter(holdsSeat).length
+}
+
+// Rejects adding a student to a section whose seat-holding enrollments already fill its capacity.
+export function assertSeatAvailable(enrollmentStatuses: readonly string[], capacity: number) {
+  validateCapacity(countTakenSeats(enrollmentStatuses), capacity)
+}
 
 export interface SelectedSeat {
   sectionId: string

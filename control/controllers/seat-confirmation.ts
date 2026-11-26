@@ -3,20 +3,27 @@
 import type { Prisma } from '@/data-access/generated/prisma/client'
 import { prisma } from '@/data-access/prisma'
 import { loadAlternativeSections, loadSelectedSeats, type DbClient } from '@/data-access/repositories/seat.repository'
-import { assertSeatsAvailable, evaluateSeats, type FullSection } from '@/domain/enrollment/seat-rules'
+import { assertSeatsAvailable, countTakenSeats, evaluateSeats, type FullSection } from '@/domain/enrollment/seat-rules'
+
+const withTakenSeats = <T extends { holderStatuses: string[] }>({ holderStatuses, ...record }: T) => ({
+  ...record,
+  taken: countTakenSeats(holderStatuses),
+})
 
 // Full sections of an enrollment with a suggested alternative each. With `lock`, the sections stay locked until the
 // transaction of `client` ends.
 export async function checkEnrollmentSeats(client: DbClient, enrollmentId: string, options: { lock: boolean }): Promise<FullSection[]> {
-  const { termId, seats } = await loadSelectedSeats(client, enrollmentId, options)
+  const loaded = await loadSelectedSeats(client, enrollmentId, options)
+  const seats = loaded.seats.map(withTakenSeats)
   const fullSubjects = seats.filter((seat) => seat.taken >= seat.capacity)
   if (!fullSubjects.length) return []
-  const alternatives = await loadAlternativeSections(
+  const alternativeRecords = await loadAlternativeSections(
     client,
-    termId,
+    loaded.termId,
     fullSubjects.map((seat) => seat.subjectId),
     seats.map((seat) => seat.sectionId),
   )
+  const alternatives = new Map([...alternativeRecords].map(([subjectId, records]) => [subjectId, records.map(withTakenSeats)]))
   return evaluateSeats(seats, alternatives)
 }
 
