@@ -19,20 +19,26 @@ export async function findInProgressSubjectIds(studentId: string, termId: string
   return details.filter((detail) => !detail.section.grades.length).map((detail) => detail.section.subjectId)
 }
 
-// Adds a section to the student's enrollment while holding a row lock on the section, so a seat is never
-// assigned twice under concurrent enrollments.
+// Adds a section to the student's pre-enrollment after checking, under a row lock on the section, that the enrollments
+// holding a seat have not filled it. Pre-enrolling does not take a seat; seats are taken when the enrollment is confirmed.
 export async function addSectionWithSeatLock(params: {
   studentId: string
   termId: string
   sectionId: string
-  assertSeatAvailable: (occupied: number, capacity: number) => void
+  assertSeatAvailable: (enrollmentStatuses: string[], capacity: number) => void
   computeAmount: (totalCredits: number) => number
 }) {
   return prisma.$transaction(async (tx) => {
     const [locked] = await tx.$queryRaw<{ capacity: number }[]>`
       SELECT "capacity" FROM "Section" WHERE "id" = ${params.sectionId}::uuid FOR UPDATE`
-    const occupied = await tx.enrollmentDetail.count({ where: { sectionId: params.sectionId } })
-    params.assertSeatAvailable(occupied, locked.capacity)
+    const details = await tx.enrollmentDetail.findMany({
+      where: { sectionId: params.sectionId },
+      select: { enrollment: { select: { status: true } } },
+    })
+    params.assertSeatAvailable(
+      details.map((detail) => detail.enrollment.status),
+      locked.capacity,
+    )
 
     const enrollment = await tx.enrollment.upsert({
       where: { studentId_termId: { studentId: params.studentId, termId: params.termId } },
@@ -44,20 +50,26 @@ export async function addSectionWithSeatLock(params: {
   })
 }
 
-// Swaps one section of the enrollment for another in a single transaction, checking the new section's seats
-// under a row lock, so the student never ends up with both sections or with none.
+// Swaps one section of the enrollment for another in a single transaction, checking under a row lock that the new
+// section is not full, so the student never ends up with both sections or with none.
 export async function replaceSectionWithSeatLock(params: {
   enrollmentId: string
   replacedSectionId: string
   sectionId: string
-  assertSeatAvailable: (occupied: number, capacity: number) => void
+  assertSeatAvailable: (enrollmentStatuses: string[], capacity: number) => void
   computeAmount: (totalCredits: number) => number
 }) {
   return prisma.$transaction(async (tx) => {
     const [locked] = await tx.$queryRaw<{ capacity: number }[]>`
       SELECT "capacity" FROM "Section" WHERE "id" = ${params.sectionId}::uuid FOR UPDATE`
-    const occupied = await tx.enrollmentDetail.count({ where: { sectionId: params.sectionId } })
-    params.assertSeatAvailable(occupied, locked.capacity)
+    const details = await tx.enrollmentDetail.findMany({
+      where: { sectionId: params.sectionId },
+      select: { enrollment: { select: { status: true } } },
+    })
+    params.assertSeatAvailable(
+      details.map((detail) => detail.enrollment.status),
+      locked.capacity,
+    )
 
     await tx.enrollmentDetail.delete({
       where: { enrollmentId_sectionId: { enrollmentId: params.enrollmentId, sectionId: params.replacedSectionId } },

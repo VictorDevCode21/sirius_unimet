@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import {
+  isEnrollmentEditable,
   joinList,
+  validateEnrollmentEditable,
   missingPrerequisitesMessage,
   validatePrerequisites,
   validateReplacement,
@@ -80,5 +82,19 @@ describe('one section per subject and replacement', () => {
     assert.throws(() => validateReplacement(selected, 'x', section('b', 'redes', 2)), /ya no está en tu pre-inscripción/)
     assert.throws(() => validateReplacement(selected, 'c', section('b', 'redes', 2)), /misma materia/)
     assert.throws(() => validateReplacement(selected, 'a', section('a', 'redes', 1)), /ya está en tu pre-inscripción/)
+  })
+})
+
+describe('editable enrollment', () => {
+  it('lets the student change a pre-enrollment and a pending enrollment after a rejected payment', () => {
+    assert.equal(isEnrollmentEditable('PRE_ENROLLED'), true)
+    assert.equal(isEnrollmentEditable('PENDING'), true)
+    assert.doesNotThrow(() => validateEnrollmentEditable({ status: 'PENDING' }))
+    assert.doesNotThrow(() => validateEnrollmentEditable(null))
+  })
+
+  it('rejects changes to a confirmed enrollment', () => {
+    assert.equal(isEnrollmentEditable('CONFIRMED'), false)
+    assert.throws(() => validateEnrollmentEditable({ status: 'CONFIRMED' }), /ya está confirmada/)
   })
 })
