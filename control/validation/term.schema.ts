@@ -38,3 +38,17 @@ export const ratePerCreditSchema = z.object({
     .transform(Number)
     .refine((value) => value > 0 && value <= MAX_RATE_PER_CREDIT, INVALID_RATE),
 })
+
+const MAX_CREDITS_LIMIT = 99
+const INVALID_MAX_CREDITS = `Ingresa un número entero de UC entre 1 y ${MAX_CREDITS_LIMIT}.`
+
+export const maxCreditsSchema = z.object({
+  termId: termIdSchema,
+  maxCredits: z
+    .string({ error: 'Ingresa el máximo de UC.' })
+    .trim()
+    .min(1, 'Ingresa el máximo de UC.')
+    .regex(/^\d+$/, INVALID_MAX_CREDITS)
+    .transform(Number)
+    .refine((value) => value >= 1 && value <= MAX_CREDITS_LIMIT, INVALID_MAX_CREDITS),
+})

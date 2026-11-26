@@ -21,7 +21,8 @@ export function TermsList({ terms }: { terms: TermView[] }) {
                 {formatDateOnly(term.startsAt)} – {formatDateOnly(term.endsAt)}
               </p>
               <p className="mt-0.5 text-sm text-muted-foreground">
-                Monto por UC: {term.ratePerCredit > 0 ? formatCurrency(term.ratePerCredit) : 'sin configurar'}
+                Monto por UC: {term.ratePerCredit > 0 ? formatCurrency(term.ratePerCredit) : 'sin configurar'} · Máximo:{' '}
+                {term.maxCredits > 0 ? `${term.maxCredits} UC` : 'sin configurar'}
               </p>
             </div>
             <span className="pill self-start sm:self-auto">{term.open ? 'Abierto' : 'Cerrado'}</span>

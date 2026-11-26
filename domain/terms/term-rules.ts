@@ -9,15 +9,18 @@ interface OpenCandidate {
   id: string
   endsAt: Date
   ratePerCredit: number
+  maxCredits: number
 }
 
-// Only one term can receive enrollments at a time, a finished term cannot be reopened and the fee must be set.
+// Only one term can receive enrollments at a time, a finished term cannot be reopened, and the fee and max
+// credits must be set.
 export function validateCanOpenTerm(term: OpenCandidate, openTerm: { id: string; name: string } | null, today: Date) {
   if (openTerm && openTerm.id !== term.id) {
     throw new DomainError(`Ya hay un periodo abierto: ${openTerm.name}. Ciérralo antes de abrir otro.`)
   }
   if (term.endsAt < today) throw new DomainError('No se puede abrir un periodo que ya terminó.')
   if (term.ratePerCredit <= 0) throw new DomainError('Configura el monto por UC antes de abrir el periodo.')
+  if (term.maxCredits <= 0) throw new DomainError('Configura el máximo de UC antes de abrir el periodo.')
 }
 
 export function isEnrollmentOpen(openTerm: { open: boolean } | null) {
@@ -41,3 +44,14 @@ export function describeEnrollmentAvailability(openTerm: ({ open: boolean } & Te
 }
 
 export type EnrollmentAvailability = ReturnType<typeof describeEnrollmentAvailability>
+
+// A new max credits value applies to every unpaid enrollment of the term, so it cannot be lower than the credits any
+// of them already has.
+export function validateMaxCreditsChange(maxCredits: number, enrollmentCredits: number[]) {
+  const over = enrollmentCredits.filter((credits) => credits > maxCredits).length
+  if (!over) return
+  const subject = over === 1 ? '1 pre-inscripción del período tiene' : `${over} pre-inscripciones del período tienen`
+  throw new DomainError(
+    `No puedes bajar el máximo a ${maxCredits} UC: ${subject} más créditos. Pide que ajusten su selección o usa un máximo mayor.`,
+  )
+}

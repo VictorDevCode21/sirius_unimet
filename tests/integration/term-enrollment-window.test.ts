@@ -22,7 +22,7 @@ describe('enrollment window', () => {
 
   it('blocks opening a term while another one is open and leaves it closed', async () => {
     await assert.rejects(
-      openTerm(termId, (term, open) => validateCanOpenTerm({ ...term, ratePerCredit: 45 }, open, new Date())),
+      openTerm(termId, (term, open) => validateCanOpenTerm({ ...term, ratePerCredit: 45, maxCredits: 21 }, open, new Date())),
       DomainError,
     )
     assert.equal((await findTermById(termId))?.open, false)
