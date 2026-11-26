@@ -1,10 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useCallback, useState } from 'react'
 import { CheckCircle2, Landmark, TrendingUp, Wallet } from 'lucide-react'
+import type { PaymentReceipt } from '@/control/controllers/payment.controller'
 import type { PaymentsOverview } from '@/control/controllers/payment.queries'
 import { formatCurrency, formatRate } from '@/presentation/lib/format'
 import { PaymentForm } from '@/presentation/portals/student/payments/payment-form'
+import { PaymentSuccessDialog } from '@/presentation/portals/student/payments/payment-success-dialog'
 import { TermStatementCard } from '@/presentation/portals/student/payments/term-statement'
 
 // Account statement of the student: totals, BCV rate, the payment form for a term with balance and every term's
@@ -14,6 +16,14 @@ export function PaymentsCenter({ overview }: { overview: PaymentsOverview }) {
   const owed = [...terms].filter((term) => !term.settled).sort((a, b) => new Date(a.termStartsAt).getTime() - new Date(b.termStartsAt).getTime())
   const [termId, setTermId] = useState(owed[0]?.termId ?? null)
   const selected = owed.find((term) => term.termId === termId) ?? owed[0] ?? null
+  const [receipt, setReceipt] = useState<PaymentReceipt | null>(null)
+  // Changes after each confirmed payment so the form mounts again, empty and with the updated balance.
+  const [formRound, setFormRound] = useState(0)
+
+  const closeReceipt = useCallback(() => {
+    setReceipt(null)
+    setFormRound((round) => round + 1)
+  }, [])
 
   return (
     <div className="flex flex-col gap-5">
@@ -48,12 +58,13 @@ export function PaymentsCenter({ overview }: { overview: PaymentsOverview }) {
 
       {selected ? (
         <PaymentForm
-          key={selected.termId}
+          key={`${selected.termId}-${formRound}`}
           term={selected}
           owedTerms={owed.map((term) => ({ termId: term.termId, termName: term.termName, balance: term.balance }))}
           onTermChange={setTermId}
           methods={methods}
           bcv={bcv}
+          onPaid={setReceipt}
         />
       ) : (
         <p role="status" className="surface card-pad reveal flex items-center gap-2 text-sm font-semibold text-[var(--status-passed)]">
@@ -70,6 +81,7 @@ export function PaymentsCenter({ overview }: { overview: PaymentsOverview }) {
           <TermStatementCard key={term.termId} term={term} methods={methods} />
         ))}
       </section>
+      {receipt && <PaymentSuccessDialog receipt={receipt} onClose={closeReceipt} />}
     </div>
   )
 }

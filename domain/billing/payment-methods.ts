@@ -191,6 +191,11 @@ export function toBolivares(usd: number, rate: number) {
   return round2(usd * rate)
 }
 
+// Dollars credited for a payment made in bolívares at the given BCV rate, rounded to cents.
+export function toDollars(bolivares: number, rate: number) {
+  return round2(bolivares / rate)
+}
+
 const VE_PHONE = /^04(12|14|16|22|24|26)\d{7}$/
 const VE_ID = /^[VEJPG]\d{6,9}$/
 const DIGITS = (min: number, max: number) => new RegExp(`^\\d{${min},${max}}$`)

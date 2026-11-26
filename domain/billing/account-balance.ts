@@ -42,9 +42,11 @@ export function assertNoFinancialHold(debts: { termName: string; balance: number
 }
 
 // A payment must be positive and cannot exceed what is still owed.
+const formatAmount = (value: number) => value.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+
 export function validatePaymentAmount(amount: number, balance: number) {
   if (!Number.isFinite(amount) || toCents(amount) <= 0) throw new DomainError('El monto a pagar debe ser mayor que cero.')
   if (toCents(amount) > toCents(balance)) {
-    throw new DomainError(`El monto supera tu saldo pendiente de US$ ${balance.toFixed(2)}.`)
+    throw new DomainError(`El monto supera tu saldo pendiente de USD ${formatAmount(balance)}.`)
   }
 }

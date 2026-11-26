@@ -10,7 +10,7 @@ export const registerPaymentSchema = z.object({
   amount: z
     .string()
     .trim()
-    .regex(/^\d+([.,]\d{1,2})?$/, 'Escribe el monto en dólares con hasta 2 decimales, por ejemplo 135,00.'),
+    .regex(/^\d+([.,]\d{1,2})?$/, 'Escribe el monto con hasta 2 decimales, por ejemplo 135,00.'),
   fields,
   otpToken: z.string().max(200).optional(),
 })

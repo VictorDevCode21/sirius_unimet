@@ -3,19 +3,21 @@
 import { useState } from 'react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { Bitcoin, CircleDollarSign, Landmark, LoaderCircle, MessageSquareText, Send } from 'lucide-react'
-import { registerPayment, requestDebitOtp } from '@/control/controllers/payment.controller'
+import { Check, CircleDollarSign, Landmark, LoaderCircle, MessageSquareText, Send } from 'lucide-react'
+import { registerPayment, requestDebitOtp, type PaymentReceipt } from '@/control/controllers/payment.controller'
 import type { PaymentsOverview, TermStatement } from '@/control/controllers/payment.queries'
 import { FormMessage } from '@/presentation/components/shared/form-message'
+import { MoneyInput } from '@/presentation/components/shared/money-input'
 import { formatBolivares, formatCurrency, formatRate } from '@/presentation/lib/format'
+import { centsToDecimal, formatCents, toCents } from '@/presentation/lib/money-entry'
 import { cn } from '@/presentation/lib/utils'
 import { useAction } from '@/presentation/lib/use-action'
+import { accentOf, currencyTags, methodIcons } from '@/presentation/portals/student/payments/method-visuals'
 
 type Method = PaymentsOverview['methods'][number]
 
 const inputClass = 'min-w-0 flex-1 border-0 bg-transparent py-3.5 text-[0.95rem] text-foreground outline-0'
 
-const foreignIcons: Record<string, typeof Landmark> = { ZELLE: CircleDollarSign, BINANCE_PAY: Bitcoin, US_BANK_TRANSFER: Landmark }
 
 interface PaymentFormProps {
   term: TermStatement
@@ -23,13 +25,16 @@ interface PaymentFormProps {
   onTermChange: (termId: string) => void
   methods: Method[]
   bcv: PaymentsOverview['bcv']
+  onPaid: (receipt: PaymentReceipt) => void
 }
 
 // Payment of a term with balance: choose a method, see where to send the money, report the payment data.
-export function PaymentForm({ term, owedTerms, onTermChange, methods, bcv }: PaymentFormProps) {
+export function PaymentForm({ term, owedTerms, onTermChange, methods, bcv, onPaid }: PaymentFormProps) {
   const router = useRouter()
   const [methodId, setMethodId] = useState<string>(methods[0].id)
-  const [amount, setAmount] = useState(term.balance.toFixed(2).replace('.', ','))
+  // Balance of the term in the currency of a method: bolívars at the BCV rate, dollars (or USDT 1:1) as they are.
+  const balanceIn = (currency: string) => (currency === 'VES' ? (bcv ? Math.round(term.balance * bcv.rate * 100) / 100 : 0) : term.balance)
+  const [amountCents, setAmountCents] = useState(() => toCents(balanceIn(methods[0].currency)))
   const [fields, setFields] = useState<Record<string, string>>({})
   const [otp, setOtp] = useState<{ token: string; sms: string; message: string } | null>(null)
   const { pending, result, run } = useAction()
@@ -37,11 +42,15 @@ export function PaymentForm({ term, owedTerms, onTermChange, methods, bcv }: Pay
 
   const method = methods.find((item) => item.id === methodId)!
   const bolivar = method.currency === 'VES'
-  const amountNumber = Number(amount.replace(',', '.'))
-  const bolivarAmount = bcv && Number.isFinite(amountNumber) ? Math.round(amountNumber * bcv.rate * 100) / 100 : null
+  const amountNumber = amountCents / 100
+  const dollarEquivalent = bolivar && bcv ? Math.round((amountNumber / bcv.rate) * 100) / 100 : null
   const unavailable = bolivar && !bcv
+  const formatIn = (currency: string, value: number) =>
+    currency === 'VES' ? formatBolivares(value) : currency === 'USDT' ? `USDT ${formatCents(toCents(value))}` : formatCurrency(value)
 
   const chooseMethod = (id: string) => {
+    const next = methods.find((item) => item.id === id)!
+    if (next.currency !== method.currency) setAmountCents(toCents(balanceIn(next.currency)))
     setMethodId(id)
     setFields({})
     setOtp(null)
@@ -56,11 +65,10 @@ export function PaymentForm({ term, owedTerms, onTermChange, methods, bcv }: Pay
 
   const submit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    const response = await run(() => registerPayment({ termId: term.termId, method: method.id, amount, fields, otpToken: otp?.token }))
-    if (response?.ok) {
-      setFields({})
-      setOtp(null)
+    const response = await run(() => registerPayment({ termId: term.termId, method: method.id, amount: centsToDecimal(amountCents), fields, otpToken: otp?.token }))
+    if (response?.ok && response.receipt) {
       router.refresh()
+      onPaid(response.receipt)
     }
   }
 
@@ -75,6 +83,7 @@ export function PaymentForm({ term, owedTerms, onTermChange, methods, bcv }: Pay
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
             Saldo del período {term.termName}: <strong className="text-foreground">{formatCurrency(term.balance)}</strong>
+            {bolivar && bcv && <span> · {formatBolivares(balanceIn('VES'))} a la tasa BCV</span>}
           </p>
         </div>
         {owedTerms.length > 1 && (
@@ -96,31 +105,30 @@ export function PaymentForm({ term, owedTerms, onTermChange, methods, bcv }: Pay
       <fieldset className="grid gap-3">
         <legend className="mb-2 flex items-center gap-2 text-sm font-bold">
           Bolívares
-          <Image src="/brands/mercantil.svg" alt="Mercantil" width={92} height={22} className="h-5 w-auto" />
+          <span className="rounded-md bg-white px-2 py-0.5">
+            <Image src="/brands/mercantil.svg" alt="Mercantil" width={92} height={22} className="h-4 w-auto" />
+          </span>
         </legend>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {methods
             .filter((item) => item.currency === 'VES')
             .map((item) => (
               <MethodOption key={item.id} method={item} selected={item.id === methodId} onSelect={chooseMethod}>
-                <Image src="/brands/mercantil.svg" alt="" width={70} height={17} className="h-4 w-auto" />
+                <span className="w-fit rounded-md bg-white px-1.5 py-0.5 dark:shadow-sm">
+                  <Image src="/brands/mercantil.svg" alt="" width={70} height={17} className="h-3 w-auto" />
+                </span>
               </MethodOption>
             ))}
         </div>
       </fieldset>
       <fieldset className="grid gap-3">
         <legend className="mb-2 text-sm font-bold">Divisas</legend>
-        <div className="grid gap-2 sm:grid-cols-3">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
           {methods
             .filter((item) => item.currency !== 'VES')
-            .map((item) => {
-              const Icon = foreignIcons[item.id] ?? Landmark
-              return (
-                <MethodOption key={item.id} method={item} selected={item.id === methodId} onSelect={chooseMethod}>
-                  <Icon className="h-4 w-4 text-[var(--accent-text)]" aria-hidden="true" />
-                </MethodOption>
-              )
-            })}
+            .map((item) => (
+              <MethodOption key={item.id} method={item} selected={item.id === methodId} onSelect={chooseMethod} />
+            ))}
         </div>
       </fieldset>
 
@@ -138,14 +146,16 @@ export function PaymentForm({ term, owedTerms, onTermChange, methods, bcv }: Pay
             ))}
           </dl>
           <div className="mt-4 border-t border-border pt-3 text-sm">
-            <p className="flex justify-between gap-2">
-              <span className="text-muted-foreground">Monto</span>
-              <strong>{Number.isFinite(amountNumber) ? formatCurrency(amountNumber) : '—'}</strong>
+            <p className="flex items-baseline justify-between gap-2">
+              <span className="text-muted-foreground">Monto a pagar</span>
+              <strong className="text-base" data-testid="amount-to-pay">
+                {formatIn(method.currency, amountNumber)}
+              </strong>
             </p>
             {bolivar && (
-              <p className="mt-1 flex justify-between gap-2" data-testid="bolivar-amount">
-                <span className="text-muted-foreground">{bcv ? `A pagar en bolívares (tasa ${formatRate(bcv.rate)})` : 'Tasa BCV no disponible'}</span>
-                <strong>{bolivarAmount !== null ? formatBolivares(bolivarAmount) : '—'}</strong>
+              <p className="mt-1 flex justify-between gap-2" data-testid="dollar-equivalent">
+                <span className="text-muted-foreground">{bcv ? `Equivale a (tasa BCV ${formatRate(bcv.rate)})` : 'Tasa BCV no disponible'}</span>
+                <strong>{dollarEquivalent !== null ? formatCurrency(dollarEquivalent) : '—'}</strong>
               </p>
             )}
             {method.currency === 'USDT' && <p className="mt-1 text-xs text-muted-foreground">Se acepta USDT 1:1 con el dólar.</p>}
@@ -155,12 +165,22 @@ export function PaymentForm({ term, owedTerms, onTermChange, methods, bcv }: Pay
 
         <div className="grid content-start gap-3 sm:grid-cols-2">
           <label className="flex min-w-0 flex-col gap-1.5 text-sm font-bold sm:col-span-2">
-            Monto a abonar (USD)
+            Monto a abonar ({method.currency === 'VES' ? 'Bs.' : method.currency})
             <span className="field">
-              <CircleDollarSign aria-hidden="true" />
-              <input className={inputClass} inputMode="decimal" value={amount} onChange={(event) => setAmount(event.target.value)} required />
+              {bolivar ? (
+                <span aria-hidden="true" className="text-sm font-bold text-muted-foreground">
+                  Bs.
+                </span>
+              ) : (
+                <CircleDollarSign aria-hidden="true" />
+              )}
+              <MoneyInput className={inputClass} cents={amountCents} onCentsChange={setAmountCents} required />
             </span>
-            <small className="text-xs font-normal text-muted-foreground">Puedes pagar el saldo completo o un abono parcial.</small>
+            <small className="text-xs font-normal text-muted-foreground">
+              {bolivar
+                ? 'Escribe el monto en bolívares. Se abona su equivalente en dólares a la tasa BCV del momento del registro.'
+                : `Escribe el monto en ${method.currency === 'USDT' ? 'USDT' : 'dólares'}. Puedes pagar el saldo completo o un abono parcial.`}
+            </small>
           </label>
           {visibleFields.map((field) => (
             <label key={field.name} className="flex min-w-0 flex-col gap-1.5 text-sm font-bold">
@@ -213,25 +233,62 @@ export function PaymentForm({ term, owedTerms, onTermChange, methods, bcv }: Pay
           {pending ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <Send aria-hidden="true" />}
           {pending ? 'Registrando…' : 'Registrar pago'}
         </button>
-        <FormMessage result={result} />
+        <FormMessage result={result?.ok ? null : result} />
       </div>
     </form>
   )
 }
 
-function MethodOption({ method, selected, onSelect, children }: { method: Method; selected: boolean; onSelect: (id: string) => void; children: React.ReactNode }) {
+// Selectable payment method card: icon tile, currency tag, name and an optional brand mark, highlighted in the method's brand color.
+function MethodOption({ method, selected, onSelect, children }: { method: Method; selected: boolean; onSelect: (id: string) => void; children?: React.ReactNode }) {
+  const Icon = methodIcons[method.id] ?? Landmark
+  const accent = accentOf(method.id)
   return (
     <button
       type="button"
       aria-pressed={selected}
       onClick={() => onSelect(method.id)}
+      style={{ '--method-accent': accent.color, '--method-on-accent': accent.on } as React.CSSProperties}
       className={cn(
-        'flex items-center justify-between gap-2 rounded-2xl border-[1.5px] px-4 py-3 text-left text-sm font-bold transition',
-        selected ? 'border-[var(--brand-orange)] bg-[var(--status-available-bg)]' : 'border-border bg-card hover:border-[var(--brand-sky)]',
+        'group relative flex min-h-[8.5rem] flex-col justify-between gap-4 overflow-hidden rounded-3xl border-[1.5px] p-4 text-left transition duration-200',
+        'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--method-accent)]',
+        selected
+          ? 'border-[var(--method-accent)] bg-[color-mix(in_oklab,var(--method-accent)_9%,var(--card))] shadow-[0_10px_28px_-16px_var(--method-accent)]'
+          : 'border-border bg-card hover:-translate-y-0.5 hover:border-[color-mix(in_oklab,var(--method-accent)_55%,var(--border))]',
       )}
     >
-      <span>{method.label}</span>
-      {children}
+      <span
+        aria-hidden="true"
+        className={cn(
+          'pointer-events-none absolute -right-10 -top-10 h-24 w-24 rounded-full bg-[var(--method-accent)] blur-2xl transition-opacity',
+          selected ? 'opacity-15' : 'opacity-0 group-hover:opacity-10',
+        )}
+      />
+      <div className="flex items-start justify-between gap-2">
+        <span
+          className={cn(
+            'grid h-11 w-11 place-items-center rounded-2xl transition-colors',
+            selected
+              ? 'bg-[var(--method-accent)] text-[var(--method-on-accent)]'
+              : 'bg-muted text-[var(--accent-text)] group-hover:text-[var(--method-accent)] dark:group-hover:text-foreground',
+          )}
+        >
+          <Icon className="h-5 w-5" aria-hidden="true" />
+        </span>
+        {selected ? (
+          <span className="grid h-6 w-6 place-items-center rounded-full bg-[var(--method-accent)] text-[var(--method-on-accent)]">
+            <Check className="h-3.5 w-3.5" strokeWidth={3} aria-hidden="true" />
+          </span>
+        ) : (
+          <span className="rounded-full bg-muted px-2 py-0.5 text-[0.65rem] font-bold tracking-wide text-muted-foreground">
+            {currencyTags[method.currency] ?? method.currency}
+          </span>
+        )}
+      </div>
+      <div className="relative grid gap-1.5">
+        <span className="text-sm font-bold leading-tight">{method.label}</span>
+        {children}
+      </div>
     </button>
   )
 }

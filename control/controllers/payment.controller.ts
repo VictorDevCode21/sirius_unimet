@@ -8,14 +8,34 @@ import { getBcvUsdRate } from '@/data-access/external/bcv-rate'
 import { findEnrollment } from '@/data-access/repositories/enrollment.repository'
 import { recordPayment } from '@/data-access/repositories/payment.repository'
 import { summarizeBalance, validatePaymentAmount } from '@/domain/billing/account-balance'
-import { checkPaymentDetails, findPaymentMethod, toBolivares } from '@/domain/billing/payment-methods'
+import { checkPaymentDetails, findPaymentMethod, toBolivares, toDollars } from '@/domain/billing/payment-methods'
 import { DomainError } from '@/domain/shared/domain-error'
+
+// Data of a registered payment, shown to the student as the confirmation of the payment.
+export interface PaymentReceipt {
+  reference: string
+  termName: string
+  methodLabel: string
+  currency: 'VES' | 'USD' | 'USDT'
+  amount: number
+  paidAmount: number
+  exchangeRate: number | null
+  payerReference: string | null
+  authorization: string | null
+  balance: number
+  settled: boolean
+  registeredAt: string
+}
 
 export interface PaymentActionResult {
   ok: boolean
   message: string
-  reference?: string
+  receipt?: PaymentReceipt
 }
+
+const decimal = (value: number) => value.toLocaleString('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+const usd = (value: number) => `USD ${decimal(value)}`
+const bolivares = (value: number) => `Bs. ${decimal(value)}`
 
 export interface DebitOtpResult {
   ok: boolean
@@ -71,13 +91,13 @@ export async function requestDebitOtp(input: DebitOtpInput): Promise<DebitOtpRes
   }
 }
 
-// Registers a payment (full or partial) of an enrolled term. The data reported for the method is checked, bolívar
-// methods are converted at the BCV rate read on the server, and the amount can never exceed the balance.
+// Registers a payment (full or partial) of an enrolled term. The amount comes in the currency of the method: bolívar
+// payments are credited in dollars at the BCV rate read on the server, and the credit can never exceed the balance.
 export async function registerPayment(input: RegisterPaymentInput): Promise<PaymentActionResult> {
   const parsed = registerPaymentSchema.safeParse(input)
   if (!parsed.success) return { ok: false, message: parsed.error.issues[0].message }
   const { termId, method, fields, otpToken } = parsed.data
-  const amount = Number(parsed.data.amount.replace(',', '.'))
+  const entered = Number(parsed.data.amount.replace(',', '.'))
 
   try {
     const { profile } = await getStudentContext()
@@ -88,12 +108,13 @@ export async function registerPayment(input: RegisterPaymentInput): Promise<Paym
     if (method === 'IMMEDIATE_DEBIT') verifyOtp(profile.id, fields, otpToken)
 
     let exchangeRate: number | null = null
-    let paidAmount = amount
+    let amount = entered
+    const paidAmount = entered
     if (info.currency === 'VES') {
       const bcv = await getBcvUsdRate()
       if (!bcv) throw new DomainError('No pudimos obtener la tasa del BCV. Intenta en unos minutos o paga con un método en divisas.')
       exchangeRate = bcv.rate
-      paidAmount = toBolivares(amount, bcv.rate)
+      amount = toDollars(entered, bcv.rate)
     }
     // Card and debit payments get the authorization code the platform would return.
     const details = { ...checked.details }
@@ -119,6 +140,9 @@ export async function registerPayment(input: RegisterPaymentInput): Promise<Paym
           state.amount,
           state.approvedPayments.map((value) => ({ amount: value, status: 'APPROVED' })),
         )
+        if (exchangeRate && amount > balance) {
+          throw new DomainError(`El monto supera tu saldo pendiente, que equivale a ${bolivares(toBolivares(balance, exchangeRate))} a la tasa BCV.`)
+        }
         validatePaymentAmount(amount, balance)
         remaining = Math.round((balance - amount) * 100) / 100
       },
@@ -136,10 +160,23 @@ export async function registerPayment(input: RegisterPaymentInput): Promise<Paym
     const settled = remaining <= 0
     return {
       ok: true,
-      reference,
       message: settled
         ? `Pago registrado. El período ${enrollment.term.name} quedó pagado en su totalidad.`
-        : `Pago registrado: abonaste US$ ${amount.toFixed(2)}. Saldo pendiente del período ${enrollment.term.name}: US$ ${remaining.toFixed(2)}.`,
+        : `Pago registrado por ${exchangeRate ? `${bolivares(paidAmount)} (${usd(amount)})` : usd(amount)}. Saldo pendiente del período ${enrollment.term.name}: ${usd(remaining)}.`,
+      receipt: {
+        reference,
+        termName: enrollment.term.name,
+        methodLabel: info.label,
+        currency: info.currency,
+        amount,
+        paidAmount,
+        exchangeRate,
+        payerReference: checked.payerReference,
+        authorization: details.authorization ?? null,
+        balance: Math.max(remaining, 0),
+        settled,
+        registeredAt: new Date().toISOString(),
+      },
     }
   } catch (error) {
     if (error instanceof DomainError) return { ok: false, message: error.message }
