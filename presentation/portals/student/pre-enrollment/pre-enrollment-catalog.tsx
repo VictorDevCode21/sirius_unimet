@@ -197,7 +197,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
               <span className="inline-flex items-center gap-1">
                 <Clock3 className="h-3.5 w-3.5" /> {formatSchedule(section.blocks)}
               </span>
-              <span className={cn('inline-flex items-center gap-1', isFull && 'font-bold text-red-500')}>
+              <span className={cn('inline-flex items-center gap-1', isFull && 'font-bold text-[var(--status-failed)]')}>
                 <UsersRound className="h-3.5 w-3.5" /> {isFull ? 'Llena' : `${section.seatsLeft} cupos`}
               </span>
             </div>
@@ -205,7 +205,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
           {isSelected ? (
             <button
               type="button"
-              className="secondary-button group !px-3.5 !py-2 text-xs hover:border-red-500/40 hover:text-red-600 focus:border-red-500/40 focus:text-red-600"
+              className="secondary-button group !px-3.5 !py-2 text-xs hover:border-[var(--status-failed)] hover:text-[var(--status-failed)] focus:border-[var(--status-failed)] focus:text-[var(--status-failed)]"
               disabled={isLocked || pendingId === section.id}
               onClick={() => removeWithUndo(section.id)}
               aria-label={`Quitar ${subject.name}`}
@@ -283,7 +283,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
             id={`reason-${section.id}`}
             className={cn(
               'mt-2 flex items-start gap-1.5 text-[0.72rem] font-semibold leading-snug',
-              clash && !isFull && !isLocked ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground',
+              clash && !isFull && !isLocked ? 'text-[var(--status-failed)]' : 'text-muted-foreground',
             )}
           >
             <Info className="mt-px h-3.5 w-3.5 shrink-0" /> {disabledReason}
@@ -355,7 +355,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
                     </span>
                   </div>
                   <div className="mt-3 flex items-start justify-between gap-3">
-                    <h3 className="font-display text-xl font-bold uppercase leading-tight">{subject.name}</h3>
+                    <h2 className="font-display text-xl font-bold uppercase leading-tight">{subject.name}</h2>
                     <button
                       type="button"
                       className="inline-flex min-h-[max(1.5rem,var(--tap-min))] shrink-0 items-center gap-0.5 text-xs font-bold text-[#003087] dark:text-[#8fb8ff]"
@@ -397,7 +397,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
               <CalendarDays />
             </span>
             <div>
-              <p className="font-bold">Tu selección</p>
+              <h2 className="font-bold">Tu selección</h2>
               <p className="text-xs text-muted-foreground">Período {offer.term.name}</p>
             </div>
           </div>
@@ -417,7 +417,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
                 {!isLocked && (
                   <button
                     type="button"
-                    className="flex h-[max(2rem,var(--tap-min))] w-[max(2rem,var(--tap-min))] shrink-0 items-center justify-center rounded-full text-muted-foreground transition hover:bg-red-500/10 hover:text-red-500"
+                    className="flex h-[max(2rem,var(--tap-min))] w-[max(2rem,var(--tap-min))] shrink-0 items-center justify-center rounded-full text-muted-foreground transition hover:bg-red-500/10 hover:text-[var(--status-failed)]"
                     onClick={() => removeWithUndo(section.id)}
                     disabled={pendingId === section.id}
                     aria-label={`Quitar ${section.subject.name}`}
