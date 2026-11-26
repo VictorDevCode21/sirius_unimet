@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { LoaderCircle } from 'lucide-react'
 import { previewCurriculumImport, type CurriculumPreview } from '@/control/controllers/curriculum.controller'
+import { CsvConfirm } from '@/presentation/portals/admin/curriculum/csv-confirm'
 import { CsvPreview } from '@/presentation/portals/admin/curriculum/csv-preview'
 import { CsvUpload, type UploadedCsv } from '@/presentation/portals/admin/curriculum/csv-upload'
 
@@ -11,19 +12,21 @@ interface CsvImportProps {
   initialCareerId: string | null
 }
 
-// Curriculum import flow: upload a file, then review its preview and errors.
+// Curriculum import flow: upload a file, review its preview and errors, then confirm it.
 export function CsvImport({ careers, initialCareerId }: CsvImportProps) {
+  const [file, setFile] = useState<UploadedCsv | null>(null)
   const [preview, setPreview] = useState<CurriculumPreview | null>(null)
   const [message, setMessage] = useState<string | null>(null)
   const [pending, setPending] = useState(false)
 
-  const review = async (file: UploadedCsv | null) => {
+  const review = async (next: UploadedCsv | null) => {
+    setFile(next)
     setPreview(null)
     setMessage(null)
-    if (!file) return
+    if (!next) return
     setPending(true)
     try {
-      const result = await previewCurriculumImport({ careerId: file.careerId, text: file.text })
+      const result = await previewCurriculumImport({ careerId: next.careerId, text: next.text })
       setPreview(result.preview)
       setMessage(result.preview ? null : result.message)
     } finally {
@@ -45,6 +48,7 @@ export function CsvImport({ careers, initialCareerId }: CsvImportProps) {
         </p>
       )}
       {preview && <CsvPreview preview={preview} />}
+      {file && preview && preview.issues.length === 0 && <CsvConfirm key={`${file.careerId}-${file.fileName}`} file={file} preview={preview} />}
     </>
   )
 }

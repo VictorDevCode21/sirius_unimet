@@ -2,6 +2,8 @@
 import { validateRequirements, type PrerequisiteNode } from '@/domain/curriculum/prerequisite-rules'
 import { validateSubjectFields, validateSubjectPlacement, type PlacedSubject } from '@/domain/curriculum/subject-rules'
 import type { AlternativeRequirement } from '@/domain/prerequisites/prerequisite-engine'
+import { blockedRemovalMessage, compareCurriculum, type CurrentSubject } from '@/domain/curriculum/curriculum-diff'
+import { DomainError } from '@/domain/shared/domain-error'
 
 // `alternative` holds credits plus block code (e.g. "57BP") that replace every other requirement of the row.
 export const CURRICULUM_CSV_HEADERS = ['code', 'name', 'credits', 'term', 'branch', 'min_credits', 'prerequisites', 'alternative'] as const
@@ -17,8 +19,10 @@ export interface CurriculumRow {
   alternative: AlternativeRequirement | null
 }
 
+// Writes a validated curriculum. `assertRemovable` receives the career's current subjects with their section counts,
+// read inside the write transaction, and throws to cancel the whole import.
 export interface CurriculumWriter {
-  replaceCareerCurriculum(careerId: string, rows: CurriculumRow[]): Promise<void>
+  replaceCareerCurriculum(careerId: string, rows: CurriculumRow[], assertRemovable: (current: CurrentSubject[]) => void): Promise<void>
 }
 
 export type ImportResult = { ok: true; subjects: number; prerequisites: number } | { ok: false; errors: string[] }
@@ -186,7 +190,11 @@ export async function importCurriculum(careerId: string, csvText: string, writer
   const { rows, errors } = validateCurriculumCsv(csvText)
   if (errors.length) return { ok: false, errors }
 
-  await writer.replaceCareerCurriculum(careerId, rows)
+  const fileCodes = rows.map((row) => row.code)
+  await writer.replaceCareerCurriculum(careerId, rows, (current) => {
+    const { blocked } = compareCurriculum(fileCodes, current)
+    if (blocked.length) throw new DomainError(blockedRemovalMessage(blocked))
+  })
   return {
     ok: true,
     subjects: rows.length,
