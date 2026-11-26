@@ -36,3 +36,21 @@ export const updateSectionSchema = z.object({
 })
 
 export type UpdateSectionInput = z.input<typeof updateSectionSchema>
+
+const clockText = z.string().regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'Usa el formato HH:MM.')
+
+const weekday = z.enum(['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT'], { message: 'Elige un día entre lunes y sábado.' })
+
+export const addScheduleBlocksSchema = z.object({
+  sectionId: sectionIdSchema,
+  weekdays: z
+    .array(weekday)
+    .min(1, 'Elige al menos un día de clase.')
+    .refine((days) => new Set(days).size === days.length, 'Cada día se puede elegir una sola vez.'),
+  start: clockText,
+  end: clockText,
+})
+
+export type AddScheduleBlocksInput = z.input<typeof addScheduleBlocksSchema>
+
+export const removeScheduleBlockSchema = z.object({ sectionId: sectionIdSchema, blockId: z.string().uuid('Bloque inválido.') })

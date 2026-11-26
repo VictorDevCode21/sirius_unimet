@@ -3,13 +3,17 @@
 import { revalidatePath } from 'next/cache'
 import { getDepartmentHeadContext } from '@/control/controllers/department-head-context'
 import {
+  addScheduleBlocksSchema,
   createSectionSchema,
+  removeScheduleBlockSchema,
   sectionIdSchema,
   updateSectionSchema,
+  type AddScheduleBlocksInput,
   type CreateSectionInput,
   type UpdateSectionInput,
 } from '@/control/validation/section.schema'
 import {
+  addScheduleBlocksWithLock,
   createSection as insertSection,
   deleteSectionWithLock,
   findDepartmentSection,
@@ -17,6 +21,7 @@ import {
   findTermById,
   findUserRole,
   isUniqueViolation,
+  removeScheduleBlockWithLock,
   updateSectionWithLock,
 } from '@/data-access/repositories/section-management.repository'
 import {
@@ -28,6 +33,14 @@ import {
   validateSubjectInDepartment,
   validateTermEditable,
 } from '@/domain/sections/section-rules'
+import {
+  buildWeeklyBlocks,
+  describeBlock,
+  parseClock,
+  validateNoOverlapInSection,
+  validateProfessorAvailability,
+  validateScheduleChangeAllowed,
+} from '@/domain/sections/schedule-rules'
 import { DomainError } from '@/domain/shared/domain-error'
 
 export interface SectionActionResult {
@@ -110,10 +123,15 @@ export async function updateSection(input: UpdateSectionInput): Promise<SectionA
 
   return runSectionUseCase(async () => {
     const section = await requireEditableSection(data.sectionId)
-    validateProfessor(await findUserRole(data.professorId))
+    const professor = await findUserRole(data.professorId)
+    validateProfessor(professor)
 
     try {
-      const updated = await updateSectionWithLock({ ...data, assertCapacity: validateSectionCapacity })
+      const updated = await updateSectionWithLock({
+        ...data,
+        assertCapacity: validateSectionCapacity,
+        assertProfessorAvailable: (professorBlocks, sectionBlocks) => validateProfessorAvailability(professor!.name, professorBlocks, sectionBlocks),
+      })
       validateSectionFound(updated)
       return { ok: true, sectionId: section.id, message: `Se guardaron los cambios de la sección ${updated!.number} de ${section.subject.name}.` }
     } catch (error) {
@@ -135,5 +153,47 @@ export async function deleteSection(rawSectionId: string): Promise<SectionAction
     const deleted = await deleteSectionWithLock(section.id, validateSectionDeletable)
     validateSectionFound(deleted || null)
     return { ok: true, message: `Se eliminó la sección ${section.number} de ${section.subject.name} del período ${section.term.name}.` }
+  })
+}
+
+// Adds the same time range on one or more weekdays to a section without enrolled students, checking range, overlaps
+// and professor availability for every block; either all blocks are stored or none.
+export async function addScheduleBlocks(input: AddScheduleBlocksInput): Promise<SectionActionResult> {
+  const parsed = addScheduleBlocksSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0].message }
+  const { sectionId, weekdays, start, end } = parsed.data
+
+  return runSectionUseCase(async () => {
+    const blocks = buildWeeklyBlocks(weekdays, parseClock(start)!, parseClock(end)!)
+    const section = await requireEditableSection(sectionId)
+    const created = await addScheduleBlocksWithLock({
+      sectionId: section.id,
+      blocks,
+      assertAllowed: ({ occupied, ownBlocks, professorBlocks }) => {
+        validateScheduleChangeAllowed(occupied)
+        blocks.forEach((block) => validateNoOverlapInSection(ownBlocks, block))
+        validateProfessorAvailability(section.professor.name, professorBlocks, blocks)
+      },
+    })
+    validateSectionFound(created)
+    const added = blocks.map(describeBlock).join(', ')
+    return {
+      ok: true,
+      sectionId: section.id,
+      message: `Se ${blocks.length === 1 ? 'agregó el bloque' : 'agregaron los bloques'} ${added} a la sección ${section.number}.`,
+    }
+  })
+}
+
+// Removes a weekly block from a section without enrolled students.
+export async function removeScheduleBlock(input: { sectionId: string; blockId: string }): Promise<SectionActionResult> {
+  const parsed = removeScheduleBlockSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0].message }
+
+  return runSectionUseCase(async () => {
+    const section = await requireEditableSection(parsed.data.sectionId)
+    const removed = await removeScheduleBlockWithLock({ ...parsed.data, assertAllowed: validateScheduleChangeAllowed })
+    if (!removed) throw new DomainError('El bloque ya no existe. Recarga la página para ver el horario actual.')
+    return { ok: true, sectionId: section.id, message: `Se quitó el bloque del horario de la sección ${section.number}.` }
   })
 }
