@@ -9,18 +9,23 @@ import {
 } from '@/data-access/repositories/section-management.repository'
 import { findOfferByTerm } from '@/data-access/repositories/section.repository'
 import { validateNoOverlapInSection, validateProfessorAvailability, validateScheduleChangeAllowed } from '@/domain/sections/schedule-rules'
-import { nextSectionNumber, validateSectionCapacity } from '@/domain/sections/section-rules'
+import { nextSectionNumber, validateSectionCapacityForStatuses } from '@/domain/sections/section-rules'
 
 const sectionIds: string[] = []
 let studentIds: string[] = []
 let fixtures: Awaited<ReturnType<typeof findSeedFixtures>>
 let subjectId: string
 let professorId: string
+let otherProfessorId: string
 
-// Seeded professors only: other test files create and delete temporary professors while this one runs.
-const seededOnly = { NOT: { email: { endsWith: '@test.local' } } }
+// Throwaway professors without other sections, so the tests own their whole week.
+async function temporaryProfessor(label: string) {
+  const professor = await prisma.user.create({
+    data: { name: `Profesor ${label}`, email: `prof-${label}-${Date.now()}@test.local`, passwordHash: 'x', role: 'PROFESSOR' },
+  })
+  return professor.id
+}
 
-// A professor with no blocks on Saturdays in the open term, so the tests own that day.
 const saturday = (start: number, end: number) => ({ weekday: 'SAT' as const, startMinutes: start * 60, endMinutes: end * 60 })
 
 const assertFor = (block: ReturnType<typeof saturday>) => (state: { occupied: number; ownBlocks: never[] | { weekday: string; startMinutes: number; endMinutes: number }[]; professorBlocks: Parameters<typeof validateProfessorAvailability>[1] }) => {
@@ -40,12 +45,14 @@ before(async () => {
   const career = await prisma.career.findUniqueOrThrow({ where: { name: 'Ingeniería en Sistemas' } })
   // Each section test file works on its own subject so parallel files never compete for section numbers.
   subjectId = (await prisma.subject.findFirstOrThrow({ where: { careerId: career.id, term: 1 }, orderBy: { code: 'asc' }, skip: 2 })).id
-  professorId = (await prisma.user.findFirstOrThrow({ where: { role: 'PROFESSOR', ...seededOnly }, orderBy: { email: 'desc' } })).id
+  professorId = await temporaryProfessor('a')
+  otherProfessorId = await temporaryProfessor('b')
 })
 
 after(async () => {
   await removeTemporaryStudents(studentIds)
   await prisma.section.deleteMany({ where: { id: { in: sectionIds } } })
+  await prisma.user.deleteMany({ where: { id: { in: [professorId, otherProfessorId] } } })
   await prisma.$disconnect()
 })
 
@@ -87,7 +94,7 @@ describe('HU-11 schedule blocks (database)', () => {
   })
 
   it('rejects moving a section to a professor who is busy at that time', async () => {
-    const otherProfessor = (await prisma.user.findFirstOrThrow({ where: { role: 'PROFESSOR', id: { not: professorId }, ...seededOnly }, orderBy: { email: 'asc' } })).id
+    const otherProfessor = otherProfessorId
     const theirs = await newSection(otherProfessor)
     const block = saturday(19, 21)
     await addScheduleBlocksWithLock({ sectionId: theirs.id, blocks: [block], assertAllowed: assertFor(block) })
@@ -99,7 +106,7 @@ describe('HU-11 schedule blocks (database)', () => {
         professorId: otherProfessor,
         capacity: 20,
         number: mine.number,
-        assertCapacity: validateSectionCapacity,
+        assertCapacity: validateSectionCapacityForStatuses,
         assertProfessorAvailable: (professorBlocks, sectionBlocks) => validateProfessorAvailability('Otro', professorBlocks, sectionBlocks),
       }),
       /ya dicta/,

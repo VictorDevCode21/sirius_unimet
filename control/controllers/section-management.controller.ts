@@ -28,6 +28,7 @@ import {
   nextSectionNumber,
   validateProfessor,
   validateSectionCapacity,
+  validateSectionCapacityForStatuses,
   validateSectionDeletable,
   validateSectionFound,
   validateSubjectInDepartment,
@@ -129,7 +130,7 @@ export async function updateSection(input: UpdateSectionInput): Promise<SectionA
     try {
       const updated = await updateSectionWithLock({
         ...data,
-        assertCapacity: validateSectionCapacity,
+        assertCapacity: validateSectionCapacityForStatuses,
         assertProfessorAvailable: (professorBlocks, sectionBlocks) => validateProfessorAvailability(professor!.name, professorBlocks, sectionBlocks),
       })
       validateSectionFound(updated)

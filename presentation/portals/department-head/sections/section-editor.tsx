@@ -90,7 +90,7 @@ export function SectionEditor({ detail, backHref }: { detail: ManagedSectionDeta
                 className={fieldClass}
                 type="number"
                 inputMode="numeric"
-                min={Math.max(1, section.occupied)}
+                min={Math.max(1, section.occupancy.enrolled)}
                 max={MAX_SECTION_CAPACITY}
                 value={capacity}
                 onChange={(event) => setCapacity(event.target.value)}
@@ -99,7 +99,9 @@ export function SectionEditor({ detail, backHref }: { detail: ManagedSectionDeta
               />
             </span>
             <small id="edit-capacity-help" className="text-xs font-normal text-muted-foreground">
-              {section.occupied > 0 ? `No puede ser menor que los ${section.occupied} inscritos.` : `Entre 1 y ${MAX_SECTION_CAPACITY}.`}
+              {section.occupancy.enrolled > 0
+                ? `No puede ser menor que los ${section.occupancy.enrolled} inscritos con pago confirmado.`
+                : `Entre 1 y ${MAX_SECTION_CAPACITY}.`}
             </small>
           </label>
           <label className="flex flex-col gap-1.5 text-sm font-bold">
