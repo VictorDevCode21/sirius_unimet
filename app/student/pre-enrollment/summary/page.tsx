@@ -28,7 +28,7 @@ export default async function EnrollmentSummaryPage() {
   const disabledReason = !sections.length
     ? 'Agrega al menos una sección a tu pre-inscripción para poder inscribir.'
     : status === 'CONFIRMED'
-      ? 'Ya estás inscrito en este período. Revisa tu constancia y tus pagos.'
+      ? 'Ya estás inscrito en este período. Consulta tu certificado de inscripción y tus pagos.'
       : null
 
   return (

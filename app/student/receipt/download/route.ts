@@ -2,8 +2,8 @@ import { getReceiptForDownload } from '@/control/controllers/receipt.controller'
 import { buildReceiptPdf, receiptFileName } from '@/presentation/lib/receipt-pdf'
 
 const messages = {
-  401: 'Inicia sesión para descargar tu constancia.',
-  403: 'Solo los estudiantes pueden descargar constancias de inscripción.',
+  401: 'Inicia sesión para descargar tu certificado de inscripción.',
+  403: 'Solo los estudiantes pueden descargar certificados de inscripción.',
   404: 'No tienes una inscripción confirmada en ese período.',
 }
 

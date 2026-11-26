@@ -46,6 +46,6 @@ export async function enroll(input: EnrollInput): Promise<ActionResult> {
     })
     if (!confirmed) throw new DomainError('No se encontró tu pre-inscripción. Recarga la página.')
     const count = confirmed.details.length
-    return `Inscripción completada: ${count} ${count === 1 ? 'materia' : 'materias'} en el período ${term!.name}. Tu constancia ya está disponible y puedes pagar en Pagos.`
+    return `Inscripción completada: ${count} ${count === 1 ? 'materia' : 'materias'} en el período ${term!.name}. Tu certificado de inscripción ya está disponible; puedes realizar el pago en Pagos.`
   }, ['/student'])
 }

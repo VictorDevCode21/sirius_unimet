@@ -5,7 +5,6 @@ import { findEnrollment } from '@/data-access/repositories/enrollment.repository
 import { findConfirmedEnrollments } from '@/data-access/repositories/receipt.repository'
 import { findOpenTerm } from '@/data-access/repositories/term.repository'
 import { findStudentProfile } from '@/data-access/repositories/user.repository'
-import { summarizeBalance } from '@/domain/billing/account-balance'
 import { isAwaitingEnrollment } from '@/domain/enrollment/enrollment-validator'
 
 const toMinutes = (time: Date) => time.getUTCHours() * 60 + time.getUTCMinutes()
@@ -20,19 +19,12 @@ function toReceiptView(enrollment: ConfirmedEnrollment, student: { name: string;
     blocks: section.scheduleBlocks.map((block) => ({ weekday: block.weekday, startMinutes: toMinutes(block.startTime), endMinutes: toMinutes(block.endTime) })),
     subject: { code: section.subject.code, name: section.subject.name, credits: section.subject.credits },
   }))
-  const balance = summarizeBalance(
-    Number(enrollment.amount),
-    enrollment.payments.map((payment) => ({ amount: Number(payment.amount), status: payment.status })),
-  )
-  const lastPayment = enrollment.payments[0]
   return {
     term: enrollment.term.name,
     student,
     sections,
     totalCredits: sections.reduce((sum, section) => sum + section.subject.credits, 0),
-    amount: Number(enrollment.amount),
     enrolledAt: enrollment.enrolledAt ?? enrollment.updatedAt,
-    payment: { paid: balance.paid, balance: balance.balance, settled: balance.settled, lastPaidAt: lastPayment?.createdAt ?? null },
   }
 }
 

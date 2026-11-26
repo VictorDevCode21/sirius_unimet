@@ -34,7 +34,7 @@ export default async function EnrollmentPage() {
       <PageHeading
         eyebrow={`Período ${registration.term.name}`}
         title="Inscripción"
-        description="En tu turno, inscribe las materias que pre-inscribiste. Al inscribir se toman los cupos y recibes tu constancia; el pago se hace después en Pagos."
+        description="En tu turno, inscribe las materias que pre-inscribiste. Al inscribir se reservan los cupos y se emite tu certificado de inscripción; el pago se realiza después en Pagos."
       />
       <div className="section-grid grid xl:grid-cols-[minmax(0,1.35fr)_minmax(18rem,0.65fr)]">
         <RegistrationPanel registration={registration} />

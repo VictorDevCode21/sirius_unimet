@@ -13,14 +13,13 @@ after(async () => {
 })
 
 describe('HU-19 confirmed enrollments for the receipt (database)', () => {
-  it('returns the seeded confirmed enrollments with sections and approved payment, newest first', async () => {
+  it('returns the seeded confirmed enrollments with their sections, newest first', async () => {
     const student = await prisma.user.findUniqueOrThrow({ where: { email: 'r.victor@correo.unimet.edu.ve' } })
     const enrollments = await findConfirmedEnrollments(student.id)
     assert.ok(enrollments.length > 0)
     assert.ok(enrollments.every((enrollment) => enrollment.status === 'CONFIRMED' && enrollment.studentId === student.id))
     assert.equal(enrollments[0].term.name, '2627-1')
     assert.ok(enrollments[0].details.length > 0)
-    assert.equal(enrollments[0].payments[0]?.status, 'APPROVED')
   })
 
   it('does not return unconfirmed enrollments', async () => {

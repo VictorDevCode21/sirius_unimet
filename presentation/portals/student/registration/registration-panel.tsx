@@ -139,7 +139,7 @@ export function RegistrationPanel({ registration }: { registration: Registration
       {enrolled ? (
         <div className="mt-5 grid gap-2 sm:grid-cols-2">
           <Link href={ROUTES.studentReceipt} className="secondary-button w-full">
-            <FileText aria-hidden="true" /> Ver constancia
+            <FileText aria-hidden="true" /> Ver certificado
           </Link>
           <Link href={ROUTES.studentPayments} className="primary-button w-full">
             <CreditCard aria-hidden="true" /> Ir a Pagos

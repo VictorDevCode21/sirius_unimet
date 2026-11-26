@@ -1,6 +1,6 @@
 import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFPage } from 'pdf-lib'
 import type { ReceiptView } from '@/control/controllers/receipt.controller'
-import { formatCurrency, formatSchedule, formatShortDate } from '@/presentation/lib/format'
+import { formatSchedule, formatShortDate } from '@/presentation/lib/format'
 
 const BLUE = rgb(0, 48 / 255, 135 / 255)
 const ORANGE = rgb(246 / 255, 134 / 255, 41 / 255)
@@ -48,10 +48,10 @@ function text(page: PDFPage, font: PDFFont, value: string, x: number, y: number,
   page.drawText(safeText(font, value), { x, y, size, font, color })
 }
 
-// Builds the enrollment receipt PDF with student, sections, credits, amount and the simulated payment seal.
+// Builds the enrollment certificate PDF: student, enrolled sections, credits and the date of the enrollment.
 export async function buildReceiptPdf(receipt: ReceiptView, issuedAt = new Date()) {
   const pdf = await PDFDocument.create()
-  pdf.setTitle(`Constancia de inscripción ${receipt.term}`)
+  pdf.setTitle(`Certificado de inscripción ${receipt.term}`)
   pdf.setAuthor('Sirius UNIMET')
   pdf.setSubject(`Inscripción de ${receipt.student.name} en el período ${receipt.term}`)
   pdf.setCreationDate(issuedAt)
@@ -68,7 +68,7 @@ export async function buildReceiptPdf(receipt: ReceiptView, issuedAt = new Date(
   text(page, fonts.bold, termLabel, PAGE.width - PAGE.margin - fonts.bold.widthOfTextAtSize(termLabel, 11), PAGE.height - 52, 11, rgb(1, 1, 1))
 
   let y = PAGE.height - 140
-  text(page, fonts.bold, 'COMPROBANTE DE INSCRIPCIÓN', PAGE.margin, y, 20, BLUE)
+  text(page, fonts.bold, 'CERTIFICADO DE INSCRIPCIÓN', PAGE.margin, y, 20, BLUE)
   y -= 26
   for (const line of wrap(
     fonts.regular,
@@ -114,19 +114,15 @@ export async function buildReceiptPdf(receipt: ReceiptView, issuedAt = new Date(
   }
 
   y -= 8
-  text(page, fonts.bold, `Total de unidades de crédito: ${receipt.totalCredits} UC`, PAGE.margin, y, 10)
-  const amountLabel = `Monto de la inscripción: ${formatCurrency(receipt.amount)}`
-  text(page, fonts.bold, amountLabel, PAGE.width - PAGE.margin - fonts.bold.widthOfTextAtSize(safeText(fonts.bold, amountLabel), 12), y, 12, BLUE)
+  const creditsLabel = `Total de unidades de crédito: ${receipt.totalCredits} UC`
+  text(page, fonts.bold, creditsLabel, PAGE.width - PAGE.margin - fonts.bold.widthOfTextAtSize(safeText(fonts.bold, creditsLabel), 11), y, 11, BLUE)
 
   y -= 40
-  const sealHeight = 76
+  const sealHeight = 60
   page.drawRectangle({ x: PAGE.margin, y: y - sealHeight + 14, width: contentWidth, height: sealHeight, borderColor: ORANGE, borderWidth: 2, color: rgb(1, 247 / 255, 238 / 255) })
-  const paymentState = receipt.payment.settled ? 'PAGADA' : `SALDO PENDIENTE ${formatCurrency(receipt.payment.balance)}`
-  text(page, fonts.bold, `INSCRIPCIÓN CONFIRMADA · ${paymentState}`, PAGE.margin + 16, y - 6, 14, INK)
-  const lastPaid = receipt.payment.lastPaidAt ? formatShortDate(receipt.payment.lastPaidAt) : '—'
-  const paymentLine = `Inscrito el ${formatShortDate(receipt.enrolledAt)}  ·  Pagado ${formatCurrency(receipt.payment.paid)} de ${formatCurrency(receipt.amount)}  ·  Último pago: ${lastPaid}`
-  text(page, fonts.regular, paymentLine, PAGE.margin + 16, y - 26, 9.5, INK)
-  text(page, fonts.regular, 'Pagos registrados en el simulador del sistema. No corresponden a cobros reales.', PAGE.margin + 16, y - 42, 8.5, MUTED)
+  text(page, fonts.bold, 'INSCRIPCIÓN CONFIRMADA', PAGE.margin + 16, y - 6, 14, INK)
+  const enrolledLine = `Inscripción formalizada el ${formatShortDate(receipt.enrolledAt)} en el período ${receipt.term}  ·  ${receipt.sections.length} ${receipt.sections.length === 1 ? 'asignatura' : 'asignaturas'}, ${receipt.totalCredits} UC`
+  text(page, fonts.regular, enrolledLine, PAGE.margin + 16, y - 26, 9.5, INK)
 
   const footerY = 56
   page.drawLine({ start: { x: PAGE.margin, y: footerY + 16 }, end: { x: PAGE.width - PAGE.margin, y: footerY + 16 }, thickness: 0.6, color: LINE })
@@ -137,4 +133,4 @@ export async function buildReceiptPdf(receipt: ReceiptView, issuedAt = new Date(
   return pdf.save()
 }
 
-export const receiptFileName = (term: string) => `constancia-inscripcion-${term.replace(/[^0-9A-Za-z-]/g, '')}.pdf`
+export const receiptFileName = (term: string) => `certificado-inscripcion-${term.replace(/[^0-9A-Za-z-]/g, '')}.pdf`

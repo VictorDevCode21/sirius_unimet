@@ -45,7 +45,7 @@ const portals: Record<Portal, { home: string; roleLabel: string; navItems: { lab
       { label: 'Pre-inscripción', href: '/student/pre-enrollment', icon: CalendarDays },
       { label: 'Inscripción', href: '/student/enrollment', icon: ListChecks },
       { label: 'Pagos', href: '/student/payments', icon: CreditCard },
-      { label: 'Constancia', href: '/student/receipt', icon: FileText },
+      { label: 'Certificado', href: '/student/receipt', icon: FileText },
       { label: 'Histórico', href: '/student/history', icon: Clock3 },
     ],
   },
