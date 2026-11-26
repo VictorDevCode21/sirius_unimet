@@ -17,8 +17,8 @@ export function formatShortDate(date: Date) {
   return new Intl.DateTimeFormat('es-VE', { day: 'numeric', month: 'long', year: 'numeric' }).format(date)
 }
 
-// Formats a date-only database value (stored at UTC midnight) without shifting it to the local time zone.
-export function formatCalendarDate(date: Date) {
+// Date-only columns are stored at UTC midnight, so they are formatted in UTC to keep the calendar day.
+export function formatDateOnly(date: Date) {
   return new Intl.DateTimeFormat('es-VE', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(date)
 }
 
