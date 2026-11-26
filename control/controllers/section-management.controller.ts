@@ -2,15 +2,32 @@
 
 import { revalidatePath } from 'next/cache'
 import { getDepartmentHeadContext } from '@/control/controllers/department-head-context'
-import { createSectionSchema, type CreateSectionInput } from '@/control/validation/section.schema'
+import {
+  createSectionSchema,
+  sectionIdSchema,
+  updateSectionSchema,
+  type CreateSectionInput,
+  type UpdateSectionInput,
+} from '@/control/validation/section.schema'
 import {
   createSection as insertSection,
+  deleteSectionWithLock,
+  findDepartmentSection,
   findSubjectInDepartment,
   findTermById,
   findUserRole,
   isUniqueViolation,
+  updateSectionWithLock,
 } from '@/data-access/repositories/section-management.repository'
-import { nextSectionNumber, validateProfessor, validateSectionCapacity, validateSubjectInDepartment, validateTermEditable } from '@/domain/sections/section-rules'
+import {
+  nextSectionNumber,
+  validateProfessor,
+  validateSectionCapacity,
+  validateSectionDeletable,
+  validateSectionFound,
+  validateSubjectInDepartment,
+  validateTermEditable,
+} from '@/domain/sections/section-rules'
 import { DomainError } from '@/domain/shared/domain-error'
 
 export interface SectionActionResult {
@@ -73,5 +90,50 @@ export async function createSection(input: CreateSectionInput): Promise<SectionA
       }
       throw error
     }
+  })
+}
+
+// Loads a section of the head's department in an editable term.
+async function requireEditableSection(sectionId: string) {
+  const department = await requireDepartment()
+  const section = await findDepartmentSection(sectionId, department.id)
+  validateSectionFound(section)
+  validateTermEditable(section!.term, new Date())
+  return section!
+}
+
+// Updates professor, capacity and number of a section; capacity can never drop below the enrolled students.
+export async function updateSection(input: UpdateSectionInput): Promise<SectionActionResult> {
+  const parsed = updateSectionSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0].message }
+  const data = parsed.data
+
+  return runSectionUseCase(async () => {
+    const section = await requireEditableSection(data.sectionId)
+    validateProfessor(await findUserRole(data.professorId))
+
+    try {
+      const updated = await updateSectionWithLock({ ...data, assertCapacity: validateSectionCapacity })
+      validateSectionFound(updated)
+      return { ok: true, sectionId: section.id, message: `Se guardaron los cambios de la sección ${updated!.number} de ${section.subject.name}.` }
+    } catch (error) {
+      if (isUniqueViolation(error)) {
+        throw new DomainError(`Ya existe la sección ${data.number} de ${section.subject.name} en el período ${section.term.name}. Usa otro número.`)
+      }
+      throw error
+    }
+  })
+}
+
+// Deletes a section without enrolled students or grades; its schedule blocks are removed with it.
+export async function deleteSection(rawSectionId: string): Promise<SectionActionResult> {
+  const parsed = sectionIdSchema.safeParse(rawSectionId)
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0].message }
+
+  return runSectionUseCase(async () => {
+    const section = await requireEditableSection(parsed.data)
+    const deleted = await deleteSectionWithLock(section.id, validateSectionDeletable)
+    validateSectionFound(deleted || null)
+    return { ok: true, message: `Se eliminó la sección ${section.number} de ${section.subject.name} del período ${section.term.name}.` }
   })
 }

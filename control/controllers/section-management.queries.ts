@@ -67,3 +67,14 @@ export async function getSectionFormOptions() {
 }
 
 export type SectionFormOptions = NonNullable<Awaited<ReturnType<typeof getSectionFormOptions>>>
+
+// One section of the head's department with the options needed to edit it; null when it does not exist.
+export async function getManagedSection(sectionId: string) {
+  const { department } = await getDepartmentHeadContext()
+  if (!department || !/^[0-9a-f-]{36}$/i.test(sectionId)) return null
+  const [section, professors] = await Promise.all([findDepartmentSection(sectionId, department.id), listActiveProfessors()])
+  if (!section) return null
+  return { section: toManagedSectionView(section, new Date()), professors }
+}
+
+export type ManagedSectionDetail = NonNullable<Awaited<ReturnType<typeof getManagedSection>>>

@@ -6,11 +6,11 @@ import { SectionsTable } from '@/presentation/portals/department-head/sections/s
 import { TermFilter } from '@/presentation/portals/department-head/sections/term-filter'
 
 interface SectionsPageProps {
-  searchParams: Promise<{ term?: string; created?: string }>
+  searchParams: Promise<{ term?: string; created?: string; deleted?: string }>
 }
 
 export default async function SectionsPage({ searchParams }: SectionsPageProps) {
-  const { term: requestedTerm, created } = await searchParams
+  const { term: requestedTerm, created, deleted } = await searchParams
   const { department, terms, term, sections } = await listManagedSections(requestedTerm)
   const createdSection = sections.find((section) => section.id === created)
 
@@ -53,6 +53,13 @@ export default async function SectionsPage({ searchParams }: SectionsPageProps) 
           <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
           Sección {createdSection.number} de {createdSection.subject.name} creada con cupo de {createdSection.capacity} y profesor{' '}
           {createdSection.professor.name}.
+        </p>
+      )}
+
+      {deleted && (
+        <p className="reveal mb-5 flex items-start gap-2 rounded-2xl bg-[var(--status-passed-bg)] p-4 text-sm font-semibold text-[var(--status-passed)]" role="status">
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
+          La sección se eliminó junto con su horario.
         </p>
       )}
 
