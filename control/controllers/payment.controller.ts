@@ -1,12 +1,13 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { confirmEnrollmentSeats } from '@/control/controllers/enrollment-seats'
+import { getEnrollmentAmount } from '@/control/controllers/enrollment-summary.controller'
 import { getStudentContext } from '@/control/controllers/student-context'
 import { simulatePaymentSchema, type SimulatePaymentInput } from '@/control/validation/payment.schema'
 import { findEnrollment } from '@/data-access/repositories/enrollment.repository'
 import { recordSimulatedPayment } from '@/data-access/repositories/payment.repository'
 import { findOpenTerm } from '@/data-access/repositories/term.repository'
-import { calculateAmount } from '@/domain/billing/amount-calculator'
 import { paymentReference, statusAfterPayment, validatePayable } from '@/domain/billing/payment-simulator'
 import { validateTermOpen } from '@/domain/enrollment/enrollment-validator'
 import { DomainError } from '@/domain/shared/domain-error'
@@ -35,7 +36,8 @@ export async function simulatePayment(input: SimulatePaymentInput): Promise<Paym
       enrollmentId: enrollment!.id,
       reference: paymentReference(term!.name, parsed.data.attemptId),
       outcome: parsed.data.outcome,
-      computeAmount: (credits) => calculateAmount(credits, Number(term!.ratePerCredit)),
+      computeAmount: (tx) => getEnrollmentAmount(enrollment!.id, tx),
+      takeSeats: (tx) => confirmEnrollmentSeats(enrollment!.id, tx),
       assertPayable: validatePayable,
       statusAfter: statusAfterPayment,
     })
@@ -44,7 +46,7 @@ export async function simulatePayment(input: SimulatePaymentInput): Promise<Paym
 
     const { payment } = result
     if (payment.status === 'APPROVED') {
-      return { ok: true, status: 'APPROVED', reference: payment.reference, message: `Pago aprobado. Tu inscripción del período ${term!.name} quedó confirmada.` }
+      return { ok: true, status: 'APPROVED', reference: payment.reference, message: 'Pago realizado correctamente' }
     }
     return {
       ok: false,

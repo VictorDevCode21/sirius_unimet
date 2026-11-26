@@ -1,8 +1,10 @@
 import { after, describe, it } from 'node:test'
 import assert from 'node:assert/strict'
 import { createPreEnrolledStudent, prisma, removeStudents } from './payment-db'
+import { confirmEnrollmentSeats } from '@/control/controllers/seat-confirmation'
+import { findEnrollmentCredits } from '@/data-access/repositories/enrollment.repository'
 import { recordSimulatedPayment } from '@/data-access/repositories/payment.repository'
-import { calculateAmount } from '@/domain/billing/amount-calculator'
+import { summarizeAmount } from '@/domain/billing/amount-calculator'
 import { paymentReference, statusAfterPayment, validatePayable, type PaymentOutcome } from '@/domain/billing/payment-simulator'
 
 const students: string[] = []
@@ -20,7 +22,11 @@ async function fixture() {
       enrollmentId: data.enrollment.id,
       reference: paymentReference(data.term.name, attemptId),
       outcome,
-      computeAmount: (credits) => calculateAmount(credits, Number(data.term.ratePerCredit)),
+      computeAmount: async (tx) => {
+        const { sections, ratePerCredit } = await findEnrollmentCredits(data.enrollment.id, tx)
+        return summarizeAmount(sections, ratePerCredit).amount
+      },
+      takeSeats: (tx) => confirmEnrollmentSeats(data.enrollment.id, tx),
       assertPayable: validatePayable,
       statusAfter: statusAfterPayment,
     })
