@@ -143,12 +143,10 @@ export function FlowchartBoard({ subjects, terms, branches, currentTerm, statusC
         )}
         <div className="flex items-start justify-between gap-2">
           <span className="subject-code">{subject.code}</span>
-          {subject.status === 'BLOCKED' && <LockKeyhole className="h-3.5 w-3.5 opacity-50" aria-label="Bloqueada" />}
-          {subject.status === 'AVAILABLE' && (
-            <LockKeyholeOpen className="h-3.5 w-3.5 text-[var(--status-available)]" aria-label="Disponible" />
-          )}
-          {subject.status === 'PASSED' && <span className="h-2 w-2 rounded-full bg-[var(--status-passed)]" aria-label="Aprobada" />}
-          {subject.status === 'IN_PROGRESS' && <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--status-progress)]" aria-label="En curso" />}
+          {subject.status === 'BLOCKED' && <LockKeyhole className="h-3.5 w-3.5 text-[var(--status-blocked)]" aria-hidden="true" />}
+          {subject.status === 'AVAILABLE' && <LockKeyholeOpen className="h-3.5 w-3.5 text-[var(--status-available)]" aria-hidden="true" />}
+          {subject.status === 'PASSED' && <span className="h-2 w-2 rounded-full bg-[var(--status-passed)]" aria-hidden="true" />}
+          {subject.status === 'IN_PROGRESS' && <span className="h-2 w-2 animate-pulse rounded-full bg-[var(--status-progress)]" aria-hidden="true" />}
         </div>
         {subject.failed && (
           <span className="subject-failed-badge mt-1.5">
@@ -156,16 +154,20 @@ export function FlowchartBoard({ subjects, terms, branches, currentTerm, statusC
           </span>
         )}
         <p className="mt-2 line-clamp-3 text-[0.8rem] font-semibold leading-tight">{subject.name}</p>
-        <div className="mt-auto flex items-center justify-between pt-3 text-[0.66rem] font-semibold opacity-70">
+        <div className="mt-auto flex items-center justify-between gap-1 pt-3 text-[0.66rem] font-semibold text-muted-foreground">
           <span>{subject.credits} UC</span>
-          <span>
+          <span className="text-right">
             {subject.passingGrade
               ? `${statusConfig.PASSED.label} · ${subject.passingGrade.value}`
               : subject.pendingRequirements.length
-                ? `Faltan ${subject.pendingRequirements.length}`
+                ? `${statusConfig[subject.status].label} · faltan ${subject.pendingRequirements.length}`
                 : statusConfig[subject.status].label}
           </span>
         </div>
+        <span className="sr-only">
+          . Estado: {statusConfig[subject.status].label}
+          {subject.failed ? `, ${failedConfig.label.toLowerCase()} en un intento anterior` : ''}.
+        </span>
       </button>
     )
   }
@@ -195,7 +197,7 @@ export function FlowchartBoard({ subjects, terms, branches, currentTerm, statusC
               {filters.map((item) => (
                 <button key={item.value} type="button" aria-pressed={filter === item.value} onClick={() => setFilter(item.value)}>
                   {item.label}
-                  <span className="ml-1.5 tabular-nums opacity-60">{item.value === 'ALL' ? subjects.length : item.value === 'FAILED' ? failedCount : statusCounts[item.value]}</span>
+                  <span className="ml-1.5 font-semibold tabular-nums">{item.value === 'ALL' ? subjects.length : item.value === 'FAILED' ? failedCount : statusCounts[item.value]}</span>
                 </button>
               ))}
             </div>
