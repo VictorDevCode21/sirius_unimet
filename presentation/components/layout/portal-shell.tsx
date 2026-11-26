@@ -5,12 +5,16 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import {
   BookOpen,
+  Building2,
   CalendarDays,
   ChevronDown,
+  ClipboardCheck,
   Clock3,
   ExternalLink,
   FileText,
+  GraduationCap,
   LayoutDashboard,
+  LayoutList,
   LogOut,
   Menu,
   Moon,
@@ -18,6 +22,7 @@ import {
   PanelLeftOpen,
   Settings,
   Sun,
+  UsersRound,
   X,
 } from 'lucide-react'
 import { UnimetLogo } from '@/presentation/components/brand/unimet-logo'
@@ -25,7 +30,7 @@ import { HelpPanel } from '@/presentation/components/shared/help-panel'
 import { logout } from '@/control/controllers/authentication.controller'
 import { cn } from '@/presentation/lib/utils'
 
-export type Portal = 'student' | 'admin'
+export type Portal = 'student' | 'admin' | 'professor' | 'department-head'
 
 const portals: Record<Portal, { home: string; roleLabel: string; navItems: { label: string; href: string; icon: typeof FileText }[] }> = {
   student: {
@@ -44,8 +49,22 @@ const portals: Record<Portal, { home: string; roleLabel: string; navItems: { lab
     roleLabel: 'Administrador',
     navItems: [
       { label: 'Periodos', href: '/admin/terms', icon: CalendarDays },
+      { label: 'Usuarios', href: '/admin/users', icon: UsersRound },
+      { label: 'Departamentos', href: '/admin/departments', icon: Building2 },
+      { label: 'Carreras', href: '/admin/careers', icon: GraduationCap },
+      { label: 'Notas', href: '/admin/grades', icon: ClipboardCheck },
       { label: 'Pensum', href: '/admin/curriculum', icon: BookOpen },
     ],
+  },
+  professor: {
+    home: '/professor',
+    roleLabel: 'Profesor',
+    navItems: [{ label: 'Mis secciones', href: '/professor/sections', icon: BookOpen }],
+  },
+  'department-head': {
+    home: '/department-head',
+    roleLabel: 'Jefe de departamento',
+    navItems: [{ label: 'Secciones', href: '/department-head/sections', icon: LayoutList }],
   },
 }
 
@@ -242,13 +261,13 @@ export function PortalShell({ portal = 'student', user, currentTermCode, preEnro
             <button type="button" className="icon-button lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Abrir menú">
               <Menu />
             </button>
-            <p className="flex flex-col text-xs leading-snug sm:flex-row sm:items-baseline sm:gap-2 sm:text-sm">
-              <span className="whitespace-nowrap">
+            <p className="flex min-w-0 flex-col text-xs leading-snug sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-2 sm:text-sm">
+              <span className="sm:whitespace-nowrap">
                 <span className="text-muted-foreground">Período en curso: </span>
                 <strong className="font-display text-sm font-extrabold sm:text-base">{currentTermCode ?? '—'}</strong>
               </span>
               {preEnrollmentTermCode && (
-                <span className="whitespace-nowrap">
+                <span className="sm:whitespace-nowrap">
                   <span className="hidden text-muted-foreground sm:inline">· </span>
                   <span className="text-muted-foreground">Pre-inscripción para: </span>
                   <strong className="font-display text-sm font-extrabold sm:text-base">{preEnrollmentTermCode}</strong>
