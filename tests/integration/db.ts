@@ -7,7 +7,11 @@ export { prisma }
 export async function findSeedFixtures() {
   const department = await prisma.department.findUniqueOrThrow({ where: { name: 'Ingeniería' } })
   const openTerm = await prisma.term.findFirstOrThrow({ where: { open: true } })
-  const professor = await prisma.user.findFirstOrThrow({ where: { role: 'PROFESSOR', active: true }, orderBy: { email: 'asc' } })
+  // Seeded professor only: other test files create and delete temporary professors (…@test.local) in parallel.
+  const professor = await prisma.user.findFirstOrThrow({
+    where: { role: 'PROFESSOR', active: true, NOT: { email: { endsWith: '@test.local' } } },
+    orderBy: { email: 'asc' },
+  })
   const student = await prisma.user.findUniqueOrThrow({ where: { email: 'r.victor@correo.unimet.edu.ve' } })
   return { department, openTerm, professor, student }
 }

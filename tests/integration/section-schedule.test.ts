@@ -17,6 +17,9 @@ let fixtures: Awaited<ReturnType<typeof findSeedFixtures>>
 let subjectId: string
 let professorId: string
 
+// Seeded professors only: other test files create and delete temporary professors while this one runs.
+const seededOnly = { NOT: { email: { endsWith: '@test.local' } } }
+
 // A professor with no blocks on Saturdays in the open term, so the tests own that day.
 const saturday = (start: number, end: number) => ({ weekday: 'SAT' as const, startMinutes: start * 60, endMinutes: end * 60 })
 
@@ -37,7 +40,7 @@ before(async () => {
   const career = await prisma.career.findUniqueOrThrow({ where: { name: 'Ingeniería en Sistemas' } })
   // Each section test file works on its own subject so parallel files never compete for section numbers.
   subjectId = (await prisma.subject.findFirstOrThrow({ where: { careerId: career.id, term: 1 }, orderBy: { code: 'asc' }, skip: 2 })).id
-  professorId = (await prisma.user.findFirstOrThrow({ where: { role: 'PROFESSOR' }, orderBy: { email: 'desc' } })).id
+  professorId = (await prisma.user.findFirstOrThrow({ where: { role: 'PROFESSOR', ...seededOnly }, orderBy: { email: 'desc' } })).id
 })
 
 after(async () => {
@@ -84,7 +87,7 @@ describe('HU-11 schedule blocks (database)', () => {
   })
 
   it('rejects moving a section to a professor who is busy at that time', async () => {
-    const otherProfessor = (await prisma.user.findFirstOrThrow({ where: { role: 'PROFESSOR', id: { not: professorId } }, orderBy: { email: 'asc' } })).id
+    const otherProfessor = (await prisma.user.findFirstOrThrow({ where: { role: 'PROFESSOR', id: { not: professorId }, ...seededOnly }, orderBy: { email: 'asc' } })).id
     const theirs = await newSection(otherProfessor)
     const block = saturday(19, 21)
     await addScheduleBlocksWithLock({ sectionId: theirs.id, blocks: [block], assertAllowed: assertFor(block) })

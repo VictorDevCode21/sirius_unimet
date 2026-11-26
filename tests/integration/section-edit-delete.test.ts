@@ -39,7 +39,7 @@ describe('HU-10B edit and delete sections', () => {
 
   it('persists professor, capacity and number changes', async () => {
     const section = await newSection()
-    const otherProfessor = await prisma.user.findFirstOrThrow({ where: { role: 'PROFESSOR', id: { not: fixtures.professor.id } } })
+    const otherProfessor = await prisma.user.findFirstOrThrow({ where: { role: 'PROFESSOR', id: { not: fixtures.professor.id }, NOT: { email: { endsWith: '@test.local' } } } })
     await updateSectionWithLock({ sectionId: section.id, professorId: otherProfessor.id, capacity: 42, number: 77, assertCapacity: validateSectionCapacity })
     const stored = await prisma.section.findUniqueOrThrow({ where: { id: section.id } })
     assert.deepEqual([stored.professorId, stored.capacity, stored.number], [otherProfessor.id, 42, 77])
