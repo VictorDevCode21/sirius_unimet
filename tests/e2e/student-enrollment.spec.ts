@@ -142,7 +142,7 @@ test.describe('HU-16A schedule clashes and credit limit', () => {
 
 const SUMMARY = '/student/pre-enrollment/summary'
 const summaryRows = (page: Page) => page.getByTestId('summary-row')
-const payButton = (page: Page) => page.getByRole('button', { name: 'Pagar' })
+const enrollButton = (page: Page) => page.getByRole('button', { name: 'Inscribir', exact: true })
 
 test.describe('HU-17 enrollment summary and amount', () => {
   test('lists each subject with its section, schedule and credits and charges credits × rate', async ({ page }) => {
@@ -172,27 +172,30 @@ test.describe('HU-17 enrollment summary and amount', () => {
     await expect(page.getByTestId('summary-amount')).toContainText('135,00')
   })
 
-  test('disables "Pagar" when the pre-enrollment is empty', async ({ page }) => {
+  test('disables "Inscribir" when the pre-enrollment is empty', async ({ page }) => {
     await page.goto(SUMMARY)
     await expect(page.getByText('Tu pre-inscripción está vacía.')).toBeVisible()
-    await expect(payButton(page)).toBeDisabled()
+    await expect(enrollButton(page)).toBeDisabled()
   })
 
-  test('"Pagar" checks the seats and opens the payment page', async ({ page }) => {
+  test('"Inscribir" checks the seats and opens the enrollment page with the pre-enrolled sections chosen', async ({ page }) => {
     await page.goto(PRE_ENROLLMENT)
     await addSection(page, 'FPTEN23', 1)
     await page.goto(SUMMARY)
-    await payButton(page).click()
-    await page.waitForURL('**/student/payment')
+    await enrollButton(page).click()
+    await page.waitForURL('**/student/enrollment')
+    const row = page.getByTestId('registration-sections').getByRole('listitem').filter({ hasText: 'FPTEN23' })
+    await expect(row.getByRole('checkbox')).toBeChecked()
+    await expect(page.getByTestId('turn-state')).toBeVisible()
   })
 
-  test('warns before payment when a selected section filled up and suggests another one (HU-16B)', async ({ page }) => {
+  test('warns before enrolling when a selected section filled up and suggests another one (HU-16B)', async ({ page }) => {
     await page.goto(PRE_ENROLLMENT)
     await addSection(page, 'FPTEN23', 1)
     e2eData('fill-section', 'FPTEN23', '1')
     try {
       await page.goto(SUMMARY)
-      await payButton(page).click()
+      await enrollButton(page).click()
       await expect(page.getByRole('alert').filter({ hasText: 'se llenó' })).toContainText(
         'La sección 1 de Sistemas de Redes se llenó. Te sugerimos la sección 2',
       )

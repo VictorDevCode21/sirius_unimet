@@ -79,7 +79,9 @@ Equivalence with the class names used in the architecture workshop document:
 - Prerequisite: subject → required subject; must come from an earlier term, no self-reference, no cycles.
 - A subject is PASSED with a published passing grade (≥ 10 on 0–20), IN_PROGRESS when it is in a CONFIRMED enrollment of the current term without a published grade.
 - The current term is the one whose date range contains today; the open term (`open = true`) receives pre-enrollments.
-- Enrollment status: `PRE_ENROLLED` (saved selection, unpaid) → `PENDING` (payment attempted/rejected) → `CONFIRMED` (payment approved).
+- Enrollment status: `PRE_ENROLLED` (saved selection, no seats) → `CONFIRMED` (enrolled at the student's turn: seats taken, certificate issued). `PENDING` remains only for legacy unpaid selections. Only `CONFIRMED` enrollments hold seats (`domain/enrollment/seat-rules.ts`).
+- Enrollment turns: a term's `enrollmentStartsAt` opens two enrollment days, 7:00–17:00 Caracas time, split in hourly turns ordered by IAA and last term average; first trimester students enroll in the first hour (`domain/enrollment/enrollment-turn.ts`).
+- Payments come after enrolling and can be partial: the balance of a term is its amount minus approved `SimulatedPayment`s. A balance in an earlier term is a financial hold that blocks enrolling (`domain/billing/account-balance.ts`). Bolívar methods (Mercantil) are converted at the BCV rate read from bcv.org.ve (`data-access/external/bcv-rate.ts`).
 
 ## Stack
 

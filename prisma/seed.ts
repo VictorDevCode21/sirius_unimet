@@ -328,7 +328,14 @@ async function seedPublishedGrades() {
   for (const [index, value] of samplePublishedGrades.entries()) {
     const student = await prisma.user.findUniqueOrThrow({ where: { email: `estudiante${index + 1}@correo.unimet.edu.ve` } })
     await prisma.enrollment.create({
-      data: { studentId: student.id, termId: term.id, status: 'CONFIRMED', amount, details: { create: { sectionId: section.id } } },
+      data: {
+        studentId: student.id,
+        termId: term.id,
+        status: 'CONFIRMED',
+        amount,
+        details: { create: { sectionId: section.id } },
+        payments: { create: { reference: `SIM-${FINISHED_TERM}-${student.id.slice(0, 8)}`.toUpperCase(), amount, status: 'APPROVED', method: 'ZELLE' } },
+      },
     })
     await prisma.grade.create({
       data: { sectionId: section.id, studentId: student.id, value, status: resolveGradeStatus(value), published: true },
@@ -339,6 +346,12 @@ async function seedPublishedGrades() {
 const cohortFirstNames = ['Valentina', 'Santiago', 'Camila', 'Sebastián', 'Isabella', 'Mateo', 'Lucía', 'Diego', 'Mariana', 'Daniel', 'Paula', 'Andrés', 'Gabriela', 'Alejandro', 'Daniela']
 const cohortLastNames = ['Ramírez', 'Morales', 'Castillo', 'Rojas', 'Mendoza', 'Silva', 'Vargas', 'Herrera', 'Medina', 'Guerrero', 'Ortiz', 'Romero', 'Paredes', 'Acosta', 'Rivero']
 const COHORT_SIZE = 30
+// Foreign currency methods only: bolívar payments need the BCV rate of the day they were made.
+const sampleMethods = [
+  { method: 'ZELLE', currency: 'USD' },
+  { method: 'US_BANK_TRANSFER', currency: 'USD' },
+  { method: 'BINANCE_PAY', currency: 'USDT' },
+] as const
 const CURRICULUM_LENGTH = 12
 
 // Deterministic pseudo-random number in [0, 1) so every seed run builds the same sample data.
@@ -351,9 +364,10 @@ function seeded(...parts: (string | number)[]) {
  * Sample students of several cohorts in Ingeniería en Sistemas (alumno01…alumno30@correo.unimet.edu.ve, password
  * Test123**). Each one takes one flowchart term per trimester from its starting term:
  * - finished terms get published grades; about a third fail one subject in their last finished term;
- * - students without a failed subject are enrolled and paid in the current term (grades not published yet);
- * - students with a failed subject skip the current term and pre-enroll in the open term to retake it, some with a
- *   rejected payment (PENDING). Unpaid enrollments never take seats, so the open term offer keeps its seats.
+ * - students without a failed subject are enrolled in the current term (grades not published yet); every fifth one has
+ *   paid only half, so they get a financial hold when they try to enroll in the open term;
+ * - students with a failed subject skip the current term and pre-enroll in the open term to retake it. Pre-enrollments
+ *   never take seats, so the open term offer keeps its seats.
  */
 async function seedSampleCohorts(careerId: string, professorIds: string[]) {
   const passwordHash = await bcrypt.hash(SAMPLE_PASSWORD, 10)
@@ -406,7 +420,14 @@ async function seedSampleCohorts(careerId: string, professorIds: string[]) {
     return section
   }
 
-  async function enroll(studentId: string, term: (typeof allTerms)[number], subjectIds: string[], status: 'CONFIRMED' | 'PRE_ENROLLED' | 'PENDING') {
+  // `paidShare` is the part of the amount already paid (1 = paid in full) for confirmed enrollments.
+  async function enroll(
+    studentId: string,
+    term: (typeof allTerms)[number],
+    subjectIds: string[],
+    status: 'CONFIRMED' | 'PRE_ENROLLED' | 'PENDING',
+    paidShare = 1,
+  ) {
     const chosen = subjects.filter((subject) => subjectIds.includes(subject.id))
     const sections: { id: string }[] = []
     for (const subject of chosen) sections.push(await sectionFor(subject.id, term.id))
@@ -414,7 +435,7 @@ async function seedSampleCohorts(careerId: string, professorIds: string[]) {
     const reference = `SIM-${term.name}-${studentId.slice(0, 8)}`.toUpperCase()
     const payments =
       status === 'CONFIRMED'
-        ? { create: { reference, amount, status: 'APPROVED' as const } }
+        ? { create: { reference, amount: Math.round(amount * paidShare * 100) / 100, status: 'APPROVED' as const, ...sampleMethods[(term.name.charCodeAt(5) + studentId.charCodeAt(0)) % sampleMethods.length] } }
         : status === 'PENDING'
           ? { create: { reference: `${reference}-R`, amount, status: 'REJECTED' as const } }
           : undefined
@@ -424,7 +445,7 @@ async function seedSampleCohorts(careerId: string, professorIds: string[]) {
     return chosen.map((subject, index) => ({ subject, section: sections[index] }))
   }
 
-  const summary = { students: 0, graduated: 0, current: 0, retaking: 0, grades: 0 }
+  const summary = { students: 0, graduated: 0, current: 0, owing: 0, retaking: 0, grades: 0 }
   for (let index = 0; index < COHORT_SIZE; index++) {
     const name = `${cohortFirstNames[index % cohortFirstNames.length]} ${cohortLastNames[(index * 7) % cohortLastNames.length]}`
     const email = `alumno${String(index + 1).padStart(2, '0')}@correo.unimet.edu.ve`
@@ -459,21 +480,33 @@ async function seedSampleCohorts(careerId: string, professorIds: string[]) {
     if (reached >= CURRICULUM_LENGTH && !failedSubjectId) {
       summary.graduated++
     } else if (!failedSubjectId) {
-      await enroll(student.id, currentTerm, subjects.filter((subject) => subject.term === reached + 1).map((subject) => subject.id), 'CONFIRMED')
+      // Every fifth student still owes half of the current term, so they have a financial hold for the open term.
+      const owes = summary.current % 5 === 4
+      await enroll(student.id, currentTerm, subjects.filter((subject) => subject.term === reached + 1).map((subject) => subject.id), 'CONFIRMED', owes ? 0.5 : 1)
+      if (owes) summary.owing++
       summary.current++
     } else {
       const failed = subjects.find((subject) => subject.id === failedSubjectId)!
       const offered = await prisma.section.findFirst({ where: { termId: openTerm.id, subjectId: failed.id } })
       if (offered) {
-        await enroll(student.id, openTerm, [failed.id], seeded(email, 'pending') < 0.5 ? 'PENDING' : 'PRE_ENROLLED')
+        await enroll(student.id, openTerm, [failed.id], 'PRE_ENROLLED')
         summary.retaking++
       }
     }
   }
   console.log(
     `Sample cohorts: ${summary.students} students, ${summary.grades} grades, ${summary.current} enrolled in ${CURRENT_TERM}, ` +
-      `${summary.retaking} retaking in ${OPEN_TERM}, ${summary.graduated} with the whole flowchart`,
+      `${summary.owing} owing part of it, ${summary.retaking} retaking in ${OPEN_TERM}, ${summary.graduated} with the whole flowchart`,
   )
+}
+
+// The open term enrolls by turns starting today (Caracas date), so the enrollment page can be tried right after seeding;
+// enrollments created by the seed are marked as enrolled when they were created.
+async function seedEnrollmentDay() {
+  const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Caracas' }).format(new Date())
+  await prisma.term.update({ where: { name: OPEN_TERM }, data: { enrollmentStartsAt: new Date(`${today}T00:00:00.000Z`) } })
+  await prisma.$executeRaw`UPDATE "Enrollment" SET "enrolledAt" = "createdAt" WHERE "status" = 'CONFIRMED' AND "enrolledAt" IS NULL`
+  console.log(`Enrollment of ${OPEN_TERM}: ${today} and the next day, 7:00 to 17:00`)
 }
 
 async function main() {
@@ -488,6 +521,7 @@ async function main() {
   await seedProfessorSections()
   await seedPublishedGrades()
   await seedSampleCohorts(career.id, professorIds)
+  await seedEnrollmentDay()
   console.log('Seed completed')
 }
 
