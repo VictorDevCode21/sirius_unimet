@@ -5,6 +5,10 @@ import { ROLE_LABELS } from '@/presentation/lib/roles'
 
 // List of users with their role, career and status.
 export function UsersList({ users }: { users: UserRow[] }) {
+  if (!users.length) {
+    return <p className="surface card-pad text-center text-sm text-muted-foreground">No se encontraron usuarios</p>
+  }
+
   return (
     <ul className="flex flex-col gap-3">
       {users.map((user) => (

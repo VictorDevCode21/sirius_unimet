@@ -2,10 +2,11 @@ import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import { getUsers } from '@/control/controllers/user.queries'
 import { PageHeading } from '@/presentation/components/shared/page-heading'
+import { UserFilters } from '@/presentation/portals/admin/users/user-filters'
 import { UsersList } from '@/presentation/portals/admin/users/users-list'
 
-export default async function UsersPage() {
-  const users = await getUsers()
+export default async function UsersPage({ searchParams }: { searchParams: Promise<{ q?: string; role?: string }> }) {
+  const { users, filters } = await getUsers(await searchParams)
 
   return (
     <div className="content-container">
@@ -19,6 +20,7 @@ export default async function UsersPage() {
           </Link>
         }
       />
+      <UserFilters search={filters.search ?? ''} role={filters.role ?? ''} />
       <UsersList users={users} />
     </div>
   )

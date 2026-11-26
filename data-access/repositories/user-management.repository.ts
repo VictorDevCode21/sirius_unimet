@@ -2,8 +2,16 @@ import { prisma } from '@/data-access/prisma'
 import { isUniqueViolation } from '@/data-access/unique-violation'
 import type { UserRole } from '@/domain/users/user-rules'
 
-export function listUsers() {
+// Lists users matching the search text (name or email) and the role, when given.
+export function listUsers(filters: { search?: string; role?: UserRole } = {}) {
+  const { search, role } = filters
   return prisma.user.findMany({
+    where: {
+      ...(role && { role }),
+      ...(search && {
+        OR: [{ name: { contains: search, mode: 'insensitive' as const } }, { email: { contains: search, mode: 'insensitive' as const } }],
+      }),
+    },
     select: { id: true, name: true, email: true, role: true, active: true, career: { select: { name: true } } },
     orderBy: { name: 'asc' },
   })

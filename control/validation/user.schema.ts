@@ -22,3 +22,9 @@ export const createUserSchema = z.object({
 export const userIdSchema = z.string().uuid('Usuario inválido.')
 
 export const updateUserSchema = z.object({ userId: userIdSchema, name, email, role, careerId })
+
+// Filters come from the URL, so anything invalid is ignored instead of reported.
+export const userFilterSchema = z.object({
+  search: z.string().trim().max(100).optional().catch(undefined),
+  role: role.optional().catch(undefined),
+})
