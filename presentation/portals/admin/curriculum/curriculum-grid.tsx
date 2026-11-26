@@ -3,7 +3,8 @@
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { GraduationCap, Plus } from 'lucide-react'
-import type { CurriculumEditor, EditorSubject } from '@/control/controllers/curriculum.queries'
+import type { CurriculumEditor } from '@/control/controllers/curriculum.queries'
+import { RequirementsForm } from '@/presentation/portals/admin/curriculum/requirements-form'
 import { SubjectForm } from '@/presentation/portals/admin/curriculum/subject-form'
 import { toRoman } from '@/presentation/lib/format'
 
@@ -16,7 +17,13 @@ interface CurriculumGridProps extends CurriculumEditor {
 export function CurriculumGrid({ careers, career, subjects, terms, branches }: CurriculumGridProps) {
   const router = useRouter()
   const [cell, setCell] = useState<{ term: number; branch: number } | null>(null)
-  const [editing, setEditing] = useState<EditorSubject | null>(null)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [showRequirements, setShowRequirements] = useState(false)
+  const editing = subjects.find((subject) => subject.id === editingId) ?? null
+  const closeEditor = () => {
+    setEditingId(null)
+    setShowRequirements(false)
+  }
   const cellMap = new Map(subjects.map((subject) => [`${subject.term}-${subject.branch}`, subject]))
   const totalCredits = subjects.reduce((sum, subject) => sum + subject.credits, 0)
 
@@ -75,11 +82,20 @@ export function CurriculumGrid({ careers, career, subjects, terms, branches }: C
                       type="button"
                       className="subject-card border-border bg-card hover:border-[var(--brand-sky)]"
                       aria-label={`Editar ${subject.name} (${subject.code})`}
-                      onClick={() => setEditing(subject)}
+                      onClick={() => setEditingId(subject.id)}
                     >
                       <span className="subject-code">{subject.code}</span>
                       <p className="mt-2 line-clamp-3 text-[0.8rem] font-semibold leading-tight">{subject.name}</p>
-                      <span className="mt-auto pt-3 text-[0.66rem] font-semibold opacity-70">{subject.credits} UC</span>
+                      <span className="mt-auto flex justify-between gap-2 pt-3 text-[0.66rem] font-semibold opacity-70">
+                        <span>{subject.credits} UC</span>
+                        {(subject.prerequisiteIds.length > 0 || subject.minCredits) && (
+                          <span>
+                            {[subject.prerequisiteIds.length ? `${subject.prerequisiteIds.length} prel.` : null, subject.minCredits ? `${subject.minCredits} UC mín.` : null]
+                              .filter(Boolean)
+                              .join(' · ')}
+                          </span>
+                        )}
+                      </span>
                     </button>
                   )
                 }
@@ -101,14 +117,18 @@ export function CurriculumGrid({ careers, career, subjects, terms, branches }: C
       </section>
 
       {cell && <SubjectForm careerId={career.id} cell={cell} onClose={() => setCell(null)} />}
-      {editing && (
+      {editing && !showRequirements && (
         <SubjectForm
           key={editing.id}
           careerId={career.id}
           cell={{ term: editing.term, branch: editing.branch }}
           subject={editing}
-          onClose={() => setEditing(null)}
+          onShowRequirements={() => setShowRequirements(true)}
+          onClose={closeEditor}
         />
+      )}
+      {editing && showRequirements && (
+        <RequirementsForm key={editing.id} subject={editing} subjects={subjects} onBack={() => setShowRequirements(false)} onClose={closeEditor} />
       )}
     </>
   )

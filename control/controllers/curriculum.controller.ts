@@ -2,12 +2,20 @@
 
 import { requireRole } from '@/control/auth/session'
 import { runAction, type ActionResult } from '@/control/controllers/action-result'
-import { subjectSchema, subjectUpdateSchema, type SubjectInput, type SubjectUpdateInput } from '@/control/validation/subject.schema'
+import {
+  requirementsSchema,
+  subjectSchema,
+  subjectUpdateSchema,
+  type RequirementsInput,
+  type SubjectInput,
+  type SubjectUpdateInput,
+} from '@/control/validation/subject.schema'
 import {
   createSubject,
   findCareer,
   findCareerSubjects,
   findSubject,
+  replaceSubjectRequirements,
   updateSubject,
   type SubjectWriteConflict,
 } from '@/data-access/repositories/curriculum-management.repository'
@@ -63,5 +71,26 @@ export async function editSubject(input: SubjectUpdateInput): Promise<ActionResu
     return moved
       ? `La materia ${subject.code} se movió al trimestre ${subject.term}, rama ${subject.branch}.`
       : `La materia ${subject.code} se actualizó.`
+  }, ['/admin/curriculum'])
+}
+
+// Defines the subjects a subject requires, the minimum passed credits and the credit alternative that replaces them.
+export async function defineRequirements(input: RequirementsInput): Promise<ActionResult> {
+  await requireRole('ADMIN')
+  const parsed = requirementsSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0].message }
+  const { subjectId, ...requirements } = parsed.data
+
+  return runAction(async () => {
+    const subject = await findSubject(subjectId)
+    if (!subject) throw new DomainError('La materia ya no existe.')
+    const careerSubjectIds = new Set((await findCareerSubjects(subject.careerId)).map((other) => other.id))
+    if (requirements.requirementIds.some((id) => !careerSubjectIds.has(id))) {
+      throw new DomainError('Las prelaciones deben ser materias de la misma carrera.')
+    }
+
+    await replaceSubjectRequirements(subjectId, requirements)
+    const count = requirements.requirementIds.length
+    return `Se guardaron ${count} ${count === 1 ? 'prelación' : 'prelaciones'} de ${subject.code}.`
   }, ['/admin/curriculum'])
 }
