@@ -1,8 +1,11 @@
+import type { Metadata } from 'next'
 import { CURRICULUM_BRANCHES, CURRICULUM_TERMS, getFlowchart } from '@/control/controllers/flowchart.controller'
 import { GlossaryTerm } from '@/presentation/components/shared/glossary'
 import { PageHeading } from '@/presentation/components/shared/page-heading'
 import { FlowchartBoard } from '@/presentation/portals/student/flowchart/flowchart-board'
 import { PendingPrerequisites } from '@/presentation/portals/student/flowchart/pending-prerequisites'
+
+export const metadata: Metadata = { title: 'Mi flujograma | Sirius UNIMET' }
 
 export default async function FlowchartPage() {
   const { career, stats, subjects, nextBlocked } = await getFlowchart()

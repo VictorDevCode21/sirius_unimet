@@ -1,7 +1,10 @@
+import type { Metadata } from 'next'
 import { getSettingsProfile } from '@/control/controllers/settings.controller'
 import { PageHeading } from '@/presentation/components/shared/page-heading'
 import { ProfileSection } from '@/presentation/portals/student/settings/profile-section'
 import { ZoomSetting } from '@/presentation/portals/student/settings/zoom-setting'
+
+export const metadata: Metadata = { title: 'Ajustes | Sirius UNIMET' }
 
 export default async function SettingsPage() {
   const profile = await getSettingsProfile()

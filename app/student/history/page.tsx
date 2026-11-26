@@ -1,8 +1,11 @@
+import type { Metadata } from 'next'
 import { getAcademicRecord } from '@/control/controllers/academic-record.controller'
 import { getFlowchart } from '@/control/controllers/flowchart.controller'
 import { PageHeading } from '@/presentation/components/shared/page-heading'
 import { formatGrade } from '@/presentation/lib/format'
 import { cn } from '@/presentation/lib/utils'
+
+export const metadata: Metadata = { title: 'Histórico académico | Sirius UNIMET' }
 
 export default async function HistoryPage() {
   const [{ history, average }, { stats }] = await Promise.all([getAcademicRecord(), getFlowchart()])

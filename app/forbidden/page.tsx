@@ -1,5 +1,8 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ShieldAlert } from 'lucide-react'
+
+export const metadata: Metadata = { title: 'Acceso denegado | Sirius UNIMET' }
 
 export default function ForbiddenPage() {
   return (

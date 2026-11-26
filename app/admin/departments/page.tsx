@@ -1,7 +1,10 @@
+import type { Metadata } from 'next'
 import { getDepartments } from '@/control/controllers/department.queries'
 import { PageHeading } from '@/presentation/components/shared/page-heading'
 import { DepartmentCard } from '@/presentation/portals/admin/departments/department-card'
 import { DepartmentForm } from '@/presentation/portals/admin/departments/department-form'
+
+export const metadata: Metadata = { title: 'Departamentos | Sirius UNIMET' }
 
 export default async function DepartmentsPage() {
   const departments = await getDepartments()

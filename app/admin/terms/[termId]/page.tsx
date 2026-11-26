@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
@@ -5,6 +6,8 @@ import { getTerm } from '@/control/controllers/term.queries'
 import { PageHeading } from '@/presentation/components/shared/page-heading'
 import { formatDateOnly } from '@/presentation/lib/format'
 import { TermSettings } from '@/presentation/portals/admin/terms/term-settings'
+
+export const metadata: Metadata = { title: 'Configurar periodo | Sirius UNIMET' }
 
 export default async function TermSettingsPage({ params }: { params: Promise<{ termId: string }> }) {
   const { termId } = await params

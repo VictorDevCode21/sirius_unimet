@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowLeft, CalendarX2 } from 'lucide-react'
 import { getEnrollmentSummary } from '@/control/controllers/enrollment-summary.controller'
@@ -6,6 +7,8 @@ import { PageHeading } from '@/presentation/components/shared/page-heading'
 import { formatCurrency, formatSchedule } from '@/presentation/lib/format'
 import { ROUTES } from '@/presentation/lib/routes'
 import { EnrollButton } from '@/presentation/portals/student/pre-enrollment/enroll-button'
+
+export const metadata: Metadata = { title: 'Resumen de pre-inscripción | Sirius UNIMET' }
 
 export default async function EnrollmentSummaryPage() {
   const summary = await getEnrollmentSummary()

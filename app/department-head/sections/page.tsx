@@ -1,9 +1,12 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { CheckCircle2, Info, Plus, Search } from 'lucide-react'
 import { listManagedSections } from '@/control/controllers/section-management.queries'
 import { PageHeading } from '@/presentation/components/shared/page-heading'
 import { SectionsTable } from '@/presentation/portals/department-head/sections/sections-table'
 import { TermFilter } from '@/presentation/portals/department-head/sections/term-filter'
+
+export const metadata: Metadata = { title: 'Secciones | Sirius UNIMET' }
 
 interface SectionsPageProps {
   searchParams: Promise<{ term?: string; q?: string; created?: string; deleted?: string }>

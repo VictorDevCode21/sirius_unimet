@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
@@ -5,6 +6,8 @@ import { getAssignableCareers, getUserForEdit } from '@/control/controllers/user
 import { PageHeading } from '@/presentation/components/shared/page-heading'
 import { UserForm } from '@/presentation/portals/admin/users/user-form'
 import { UserStatusToggle } from '@/presentation/portals/admin/users/user-status-toggle'
+
+export const metadata: Metadata = { title: 'Editar usuario | Sirius UNIMET' }
 
 export default async function EditUserPage({ params }: { params: Promise<{ userId: string }> }) {
   const { userId } = await params

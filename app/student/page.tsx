@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowRight, BookOpen, CalendarClock, CalendarDays, GraduationCap, Sparkles, Trophy } from 'lucide-react'
 import { getAcademicRecord } from '@/control/controllers/academic-record.controller'
@@ -5,6 +6,8 @@ import { getEnrollmentAvailability } from '@/control/controllers/enrollment-avai
 import { listOffer } from '@/control/controllers/enrollment.controller'
 import { getFlowchart } from '@/control/controllers/flowchart.controller'
 import { firstName, formatDateOnly, formatGrade, formatLongDate, toRoman } from '@/presentation/lib/format'
+
+export const metadata: Metadata = { title: 'Resumen | Sirius UNIMET' }
 
 const courseColors = ['bg-[#003087]', 'bg-[#f68629] text-[var(--on-orange)]', 'bg-[#1859a9]', 'bg-[#0b7a55]', 'bg-[#ff8200] text-[var(--on-orange)]', 'bg-[#5b4bd6]']
 
