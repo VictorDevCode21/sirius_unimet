@@ -11,10 +11,10 @@ export function TermFilter({ terms, selected }: { terms: TermOption[]; selected:
   return (
     <label className="flex flex-col gap-1.5 text-xs font-bold text-muted-foreground">
       Período
-      <span className="field !rounded-full !px-4">
+      <span className="field">
         <CalendarDays aria-hidden="true" />
         <select
-          className="min-w-0 flex-1 cursor-pointer border-0 bg-transparent py-2.5 text-sm font-semibold text-foreground outline-0"
+          className="min-w-0 flex-1 cursor-pointer border-0 bg-transparent py-3.5 text-[0.95rem] text-foreground outline-0"
           value={selected ?? ''}
           onChange={(event) => router.push(`/department-head/sections?term=${encodeURIComponent(event.target.value)}`)}
         >
