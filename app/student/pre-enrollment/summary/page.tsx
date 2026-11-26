@@ -5,7 +5,7 @@ import { GlossaryTerm } from '@/presentation/components/shared/glossary'
 import { PageHeading } from '@/presentation/components/shared/page-heading'
 import { formatCurrency, formatSchedule } from '@/presentation/lib/format'
 import { ROUTES } from '@/presentation/lib/routes'
-import { PayButton } from '@/presentation/portals/student/pre-enrollment/pay-button'
+import { EnrollButton } from '@/presentation/portals/student/pre-enrollment/enroll-button'
 
 export default async function EnrollmentSummaryPage() {
   const summary = await getEnrollmentSummary()
@@ -26,9 +26,9 @@ export default async function EnrollmentSummaryPage() {
 
   const { term, sections, totalCredits, amount, status } = summary
   const disabledReason = !sections.length
-    ? 'Agrega al menos una sección a tu pre-inscripción para poder pagar.'
+    ? 'Agrega al menos una sección a tu pre-inscripción para poder inscribir.'
     : status === 'CONFIRMED'
-      ? 'Tu inscripción ya está pagada y confirmada.'
+      ? 'Ya estás inscrito en este período. Revisa tu constancia y tus pagos.'
       : null
 
   return (
@@ -36,7 +36,7 @@ export default async function EnrollmentSummaryPage() {
       <PageHeading
         eyebrow={`Período ${term.name}`}
         title="Resumen de inscripción"
-        description="Revisa tus materias, el total de UC y el monto antes de pagar. El monto se calcula en el servidor con la tarifa del período."
+        description="Revisa tus materias, el total de UC y el monto antes de inscribir. La pre-inscripción no reserva cupos: los cupos se toman al inscribir en tu turno, y el pago se hace después en Pagos."
         actions={backLink}
       />
 
@@ -72,7 +72,7 @@ export default async function EnrollmentSummaryPage() {
 
         <aside className="surface card-pad reveal reveal-2 h-fit xl:sticky xl:top-24" aria-labelledby="summary-total">
           <h2 id="summary-total" className="text-lg font-bold">
-            Total a pagar
+            Monto de la inscripción
           </h2>
           <dl className="mt-4 flex flex-col gap-2 text-sm">
             <div className="flex items-baseline justify-between gap-3">
@@ -98,7 +98,7 @@ export default async function EnrollmentSummaryPage() {
             {totalCredits} UC × {formatCurrency(term.ratePerCredit)}
           </p>
           <div className="mt-5">
-            <PayButton disabledReason={disabledReason} />
+            <EnrollButton disabledReason={disabledReason} />
           </div>
         </aside>
       </div>

@@ -2,17 +2,18 @@
 
 import { requireRole } from '@/control/auth/session'
 import { runAction, type ActionResult } from '@/control/controllers/action-result'
-import { createTermSchema, maxCreditsSchema, ratePerCreditSchema, termIdSchema } from '@/control/validation/term.schema'
+import { createTermSchema, enrollmentStartSchema, maxCreditsSchema, ratePerCreditSchema, termIdSchema } from '@/control/validation/term.schema'
 import {
   closeTerm as markTermClosed,
   createTerm as insertTerm,
   openTerm as markTermOpen,
+  updateEnrollmentStart,
   updateMaxCredits,
   updateRatePerCredit,
 } from '@/data-access/repositories/term-management.repository'
 import { repriceEnrollment } from '@/domain/billing/repricing'
 import { DomainError } from '@/domain/shared/domain-error'
-import { validateCanOpenTerm, validateMaxCreditsChange, validateTermDates } from '@/domain/terms/term-rules'
+import { validateCanOpenTerm, validateEnrollmentStart, validateMaxCreditsChange, validateTermDates } from '@/domain/terms/term-rules'
 
 // Creates an academic period, closed by default.
 export async function createTerm(input: { name: string; startsAt: string; endsAt: string }): Promise<ActionResult> {
@@ -83,5 +84,19 @@ export async function saveMaxCredits(input: { termId: string; maxCredits: string
     const term = await updateMaxCredits(termId, maxCredits, (enrollmentCredits) => validateMaxCreditsChange(maxCredits, enrollmentCredits))
     if (!term) throw new DomainError(TERM_NOT_FOUND)
     return `El máximo de UC del periodo ${term.name} se guardó.`
+  }, ['/admin', '/student'])
+}
+
+// Sets the first enrollment day of a period; students enroll during that day and the next one, by turns.
+export async function saveEnrollmentStart(input: { termId: string; enrollmentStartsAt: string }): Promise<ActionResult> {
+  await requireRole('ADMIN')
+  const parsed = enrollmentStartSchema.safeParse(input)
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0].message }
+
+  return runAction(async () => {
+    const { termId, enrollmentStartsAt } = parsed.data
+    const term = await updateEnrollmentStart(termId, enrollmentStartsAt, (current) => validateEnrollmentStart(enrollmentStartsAt, current))
+    if (!term) throw new DomainError(TERM_NOT_FOUND)
+    return `La inscripción del periodo ${term.name} se hará por turnos el ${parsed.data.enrollmentStartsAt.toISOString().slice(0, 10).split('-').reverse().join('/')} y el día siguiente, de 7:00 a 17:00.`
   }, ['/admin', '/student'])
 }

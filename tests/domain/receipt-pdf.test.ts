@@ -22,7 +22,8 @@ const receipt = {
   })),
   totalCredits: 42,
   amount: 1890,
-  payment: { reference: 'SIM-2627-1-ABCDEF12', amount: 1890, paidAt: new Date(Date.UTC(2026, 8, 10)) },
+  enrolledAt: new Date(Date.UTC(2026, 8, 1)),
+  payment: { paid: 1000, balance: 890, settled: false, lastPaidAt: new Date(Date.UTC(2026, 8, 10)) },
 }
 
 const hasPdftotext = (() => {
@@ -40,20 +41,20 @@ describe('HU-19 receipt PDF', () => {
     assert.equal(Buffer.from(bytes.slice(0, 5)).toString(), '%PDF-')
     const reopened = await PDFDocument.load(bytes)
     assert.ok(reopened.getPageCount() >= 1)
-    assert.equal(reopened.getTitle(), 'Comprobante de inscripción 2627-1')
+    assert.equal(reopened.getTitle(), 'Constancia de inscripción 2627-1')
   })
 
-  it('contains the student, sections, totals and the simulated payment seal', { skip: !hasPdftotext && 'pdftotext not installed' }, async () => {
+  it('contains the student, sections, totals and the payment state', { skip: !hasPdftotext && 'pdftotext not installed' }, async () => {
     const file = path.join(mkdtempSync(path.join(tmpdir(), 'receipt-')), 'receipt.pdf')
     writeFileSync(file, await buildReceiptPdf(receipt))
     const content = execFileSync('pdftotext', [file, '-']).toString()
-    for (const expected of ['Victor Rivas', 'Ingeniería en Sistemas', 'PERÍODO 2627-1', 'FBTMM013', 'Lun/Mié 07:00–08:30', '42 UC', 'PAGO SIMULADO', 'SIM-2627-1-ABCDEF12']) {
+    for (const expected of ['Victor Rivas', 'Ingeniería en Sistemas', 'PERÍODO 2627-1', 'FBTMM013', 'Lun/Mié 07:00–08:30', '42 UC', 'INSCRIPCIÓN CONFIRMADA', 'SALDO PENDIENTE']) {
       assert.ok(content.includes(expected), `missing "${expected}"`)
     }
   })
 
   it('builds a safe file name', () => {
-    assert.equal(receiptFileName('2627-1'), 'comprobante-inscripcion-2627-1.pdf')
-    assert.equal(receiptFileName('../x"y'), 'comprobante-inscripcion-xy.pdf')
+    assert.equal(receiptFileName('2627-1'), 'constancia-inscripcion-2627-1.pdf')
+    assert.equal(receiptFileName('../x"y'), 'constancia-inscripcion-xy.pdf')
   })
 })

@@ -31,3 +31,25 @@ export { formatSchedule, formatTime } from '@/domain/shared/schedule-format'
 export function formatCurrency(value: number) {
   return new Intl.NumberFormat('es-VE', { style: 'currency', currency: 'USD', minimumFractionDigits: 2 }).format(value)
 }
+
+export function formatBolivares(value: number) {
+  return `Bs. ${new Intl.NumberFormat('es-VE', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value)}`
+}
+
+// Exchange rate in bolívares per dollar, with the four decimals the BCV publishes.
+export function formatRate(value: number) {
+  return new Intl.NumberFormat('es-VE', { minimumFractionDigits: 4, maximumFractionDigits: 4 }).format(value)
+}
+
+// Date and time in Caracas, where enrollment turns are scheduled.
+export function formatCaracasDateTime(date: Date) {
+  const text = new Intl.DateTimeFormat('es-VE', {
+    timeZone: 'America/Caracas',
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    hour: 'numeric',
+    minute: '2-digit',
+  }).format(date)
+  return text.charAt(0).toUpperCase() + text.slice(1)
+}

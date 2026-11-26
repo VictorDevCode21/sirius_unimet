@@ -1,7 +1,7 @@
 'use client'
 
 import type { TermView } from '@/control/controllers/term.queries'
-import { saveMaxCredits, saveRatePerCredit } from '@/control/controllers/term.controller'
+import { saveEnrollmentStart, saveMaxCredits, saveRatePerCredit } from '@/control/controllers/term.controller'
 import { TermSettingForm } from '@/presentation/portals/admin/terms/term-setting-form'
 
 // Editable settings of a period.
@@ -23,6 +23,15 @@ export function TermSettings({ term }: { term: TermView }) {
         initialValue={term.maxCredits > 0 ? String(term.maxCredits) : ''}
         inputMode="numeric"
         save={(maxCredits) => saveMaxCredits({ termId: term.id, maxCredits })}
+      />
+      <TermSettingForm
+        title="Inscripción por turnos"
+        description="Primer día de inscripción. La inscripción dura dos días, de 7:00 a 17:00 (hora de Caracas); cada estudiante inscribe desde la hora de su turno, asignada por IAA y promedio del último trimestre. Los estudiantes de primer trimestre inscriben en la primera hora."
+        label="Primer día de inscripción"
+        initialValue={term.enrollmentStartsAt ? new Date(term.enrollmentStartsAt).toISOString().slice(0, 10) : ''}
+        inputMode="numeric"
+        type="date"
+        save={(enrollmentStartsAt) => saveEnrollmentStart({ termId: term.id, enrollmentStartsAt })}
       />
     </div>
   )

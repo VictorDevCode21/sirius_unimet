@@ -12,11 +12,12 @@ interface TermSettingFormProps {
   label: string
   initialValue: string
   inputMode: 'decimal' | 'numeric'
+  type?: 'text' | 'date'
   save: (value: string) => Promise<ActionResult>
 }
 
 // Single-value form used for the settings of a period. The value travels as text so the server validates it.
-export function TermSettingForm({ title, description, label, initialValue, inputMode, save }: TermSettingFormProps) {
+export function TermSettingForm({ title, description, label, initialValue, inputMode, type = 'text', save }: TermSettingFormProps) {
   const [value, setValue] = useState(initialValue)
   const { pending, result, run } = useAction()
 
@@ -36,6 +37,7 @@ export function TermSettingForm({ title, description, label, initialValue, input
         <span className="field">
           <input
             className="min-w-0 flex-1 border-0 bg-transparent py-3.5 text-[0.95rem] text-foreground outline-0"
+            type={type}
             inputMode={inputMode}
             value={value}
             onChange={(event) => setValue(event.target.value)}

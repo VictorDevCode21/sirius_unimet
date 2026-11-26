@@ -3,25 +3,26 @@
 import { useState, useTransition } from 'react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { AlertTriangle, CreditCard, LoaderCircle } from 'lucide-react'
+import { AlertTriangle, ListChecks, LoaderCircle } from 'lucide-react'
 import { validateSeats, type SeatValidationResult } from '@/control/controllers/enrollment.controller'
 import { ROUTES } from '@/presentation/lib/routes'
 
-interface PayButtonProps {
+interface EnrollButtonProps {
   disabledReason: string | null
 }
 
-// "Pagar" action of the summary: checks the seats of the selection on the server and then opens the payment page.
-export function PayButton({ disabledReason }: PayButtonProps) {
+// "Inscribir" action of the summary: checks the seats of the selection on the server and then opens the enrollment
+// page, where the student enrolls at their turn.
+export function EnrollButton({ disabledReason }: EnrollButtonProps) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
   const [result, setResult] = useState<SeatValidationResult | null>(null)
 
-  const pay = () =>
+  const goToEnrollment = () =>
     startTransition(async () => {
       const validation = await validateSeats()
       setResult(validation)
-      if (validation.ok) router.push(ROUTES.studentPayment)
+      if (validation.ok) router.push(ROUTES.studentEnrollment)
     })
 
   return (
@@ -30,13 +31,13 @@ export function PayButton({ disabledReason }: PayButtonProps) {
         type="button"
         className="primary-button w-full"
         disabled={Boolean(disabledReason) || isPending}
-        aria-describedby={disabledReason ? 'pay-disabled-reason' : undefined}
-        onClick={pay}
+        aria-describedby={disabledReason ? 'enroll-disabled-reason' : undefined}
+        onClick={goToEnrollment}
       >
-        {isPending ? <LoaderCircle className="animate-spin" /> : <CreditCard />} Pagar
+        {isPending ? <LoaderCircle className="animate-spin" /> : <ListChecks />} Inscribir
       </button>
       {disabledReason && (
-        <p id="pay-disabled-reason" className="mt-2 text-center text-xs text-muted-foreground">
+        <p id="enroll-disabled-reason" className="mt-2 text-center text-xs text-muted-foreground">
           {disabledReason}
         </p>
       )}
