@@ -1,14 +1,24 @@
 import Link from 'next/link'
-import { ArrowRight, BookOpen, CalendarDays, GraduationCap, Sparkles, Trophy } from 'lucide-react'
+import { ArrowRight, BookOpen, CalendarClock, CalendarDays, GraduationCap, Sparkles, Trophy } from 'lucide-react'
 import { getAcademicRecord } from '@/control/controllers/academic-record.controller'
+import { getEnrollmentAvailability } from '@/control/controllers/enrollment-availability'
 import { listOffer } from '@/control/controllers/enrollment.controller'
 import { getFlowchart } from '@/control/controllers/flowchart.controller'
-import { firstName, formatGrade, formatLongDate, toRoman } from '@/presentation/lib/format'
+import { firstName, formatDateOnly, formatGrade, formatLongDate, toRoman } from '@/presentation/lib/format'
 
 const courseColors = ['bg-[#003087]', 'bg-[#f68629] text-[var(--on-orange)]', 'bg-[#1859a9]', 'bg-[#0b7a55]', 'bg-[#ff8200] text-[var(--on-orange)]', 'bg-[#5b4bd6]']
 
 export default async function SummaryPage() {
-  const [{ stats, career, subjects, currentTerm }, record, offer] = await Promise.all([getFlowchart(), getAcademicRecord(), listOffer()])
+  const [{ stats, career, subjects, currentTerm }, record, offer, availability] = await Promise.all([
+    getFlowchart(),
+    getAcademicRecord(),
+    listOffer(),
+    getEnrollmentAvailability(),
+  ])
+  const { nextTerm } = availability
+  const nextTermText = nextTerm
+    ? `El período ${nextTerm.name} va del ${formatDateOnly(nextTerm.startsAt)} al ${formatDateOnly(nextTerm.endsAt)}.`
+    : 'Todavía no hay un próximo período programado.'
   const currentEnrollments = subjects.filter((subject) => subject.status === 'IN_PROGRESS')
   const availableCount = offer?.subjects.filter((subject) => subject.status === 'AVAILABLE' && subject.sections.length).length ?? 0
   const selectedCount = offer?.enrollment?.sections.length ?? 0
@@ -30,16 +40,19 @@ export default async function SummaryPage() {
               Hola, <span className="text-[#ffb36b]">{firstName(record.student.name)}</span>
             </h1>
             <p className="mt-2 max-w-xl text-sm leading-relaxed text-white/75">
-              Tienes {availableCount} materias disponibles para pre-inscribir{' '}
-              {offer ? `en el período ${offer.term.name}` : 'próximamente'}.
+              {availability.isOpen
+                ? `Tienes ${availableCount} materias disponibles para pre-inscribir en el período ${availability.termName}.`
+                : `La inscripción no está abierta. ${nextTermText}`}
             </p>
             <div className="mt-4 flex flex-wrap gap-2.5">
-              <Link
-                href="/student/pre-enrollment"
-                className="inline-flex items-center gap-2 rounded-full bg-[#f68629] px-5 py-2.5 text-sm font-bold text-[var(--on-orange)] shadow-lg shadow-orange-950/30 transition hover:-translate-y-0.5 hover:bg-[#ff8200]"
-              >
-                Pre-inscribir materias <ArrowRight className="h-4 w-4" />
-              </Link>
+              {availability.isOpen && (
+                <Link
+                  href="/student/pre-enrollment"
+                  className="inline-flex items-center gap-2 rounded-full bg-[#f68629] px-5 py-2.5 text-sm font-bold text-[var(--on-orange)] shadow-lg shadow-orange-950/30 transition hover:-translate-y-0.5 hover:bg-[#ff8200]"
+                >
+                  Pre-inscribir materias <ArrowRight className="h-4 w-4" />
+                </Link>
+              )}
               <Link
                 href="/student/flowchart"
                 className="inline-flex items-center gap-2 rounded-full border border-white/25 bg-white/10 px-5 py-2.5 text-sm font-bold text-white backdrop-blur transition hover:bg-white/20"
@@ -162,20 +175,31 @@ export default async function SummaryPage() {
 
         <section className="surface card-pad reveal reveal-4 flex flex-col">
           <p className="eyebrow">Pre-inscripción</p>
-          <h3 className="mt-1 text-xl font-bold">{offer ? `Período ${offer.term.name}` : 'Sin período abierto'}</h3>
-          <div className="mt-5 grid grid-cols-2 gap-3">
-            <div className="rounded-2xl bg-[#f68629]/10 p-4">
-              <p className="font-display text-3xl font-extrabold text-[var(--orange-text)]">{availableCount}</p>
-              <p className="mt-1 text-xs font-semibold text-muted-foreground">Disponibles</p>
+          <h3 className="mt-1 text-xl font-bold">
+            {availability.isOpen ? `Período ${availability.termName}` : 'La inscripción no está abierta'}
+          </h3>
+          {availability.isOpen ? (
+            <>
+              <div className="mt-5 grid grid-cols-2 gap-3">
+                <div className="rounded-2xl bg-[#f68629]/10 p-4">
+                  <p className="font-display text-3xl font-extrabold text-[var(--orange-text)]">{availableCount}</p>
+                  <p className="mt-1 text-xs font-semibold text-muted-foreground">Disponibles</p>
+                </div>
+                <div className="rounded-2xl bg-[#003087]/8 p-4 dark:bg-white/5">
+                  <p className="font-display text-3xl font-extrabold text-[#003087] dark:text-[#8fb8ff]">{selectedCount}</p>
+                  <p className="mt-1 text-xs font-semibold text-muted-foreground">Seleccionadas</p>
+                </div>
+              </div>
+              <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
+                Solo podrás seleccionar secciones de materias cuyas prelaciones ya aprobaste.
+              </p>
+            </>
+          ) : (
+            <div className="mt-5 flex items-start gap-3 rounded-2xl bg-muted p-4 text-sm leading-relaxed text-muted-foreground">
+              <CalendarClock className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" />
+              <p>{nextTermText} Podrás pre-inscribir tus materias cuando Control de Estudios abra la inscripción.</p>
             </div>
-            <div className="rounded-2xl bg-[#003087]/8 p-4 dark:bg-white/5">
-              <p className="font-display text-3xl font-extrabold text-[#003087] dark:text-[#8fb8ff]">{selectedCount}</p>
-              <p className="mt-1 text-xs font-semibold text-muted-foreground">Seleccionadas</p>
-            </div>
-          </div>
-          <p className="mt-4 text-xs leading-relaxed text-muted-foreground">
-            Solo podrás seleccionar secciones de materias cuyas prelaciones ya aprobaste.
-          </p>
+          )}
         </section>
       </div>
     </div>

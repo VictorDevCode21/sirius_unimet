@@ -1,12 +1,18 @@
 import 'server-only'
 import { getStudentContext } from '@/control/controllers/student-context'
+import { markFailedSubjects } from '@/domain/grades/course-outcome'
 
 export const CURRICULUM_TERMS = 12
 export const CURRICULUM_BRANCHES = 5
 
-// Flowchart controller: student flowchart with the status and prerequisites of every subject.
+// Flowchart controller: student flowchart with the status and prerequisites of every subject, and whether its published
+// attempts are all failed.
 export async function getFlowchart() {
-  const { profile, subjects, progress, currentTerm } = await getStudentContext()
+  const { profile, subjects: states, progress, currentTerm, grades } = await getStudentContext()
+  const subjects = markFailedSubjects(
+    states,
+    grades.map((grade) => ({ subjectId: grade.section.subjectId, passed: grade.status === 'PASSED' })),
+  )
   const planCredits = subjects.reduce((sum, subject) => sum + subject.credits, 0)
   const passed = subjects.filter((subject) => subject.status === 'PASSED')
   const inProgressTerms = subjects.filter((subject) => subject.status === 'IN_PROGRESS').map((subject) => subject.term)
