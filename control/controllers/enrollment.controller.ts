@@ -20,6 +20,7 @@ import {
   validateTermOpen,
   type SectionCandidate,
 } from '@/domain/enrollment/enrollment-validator'
+import { isOfferable, isSectionFull, seatsLeft } from '@/domain/enrollment/offer-rules'
 import { DomainError } from '@/domain/shared/domain-error'
 
 export interface ActionResult {
@@ -46,12 +47,15 @@ function toCandidate(section: SectionRecord): SectionCandidate {
 }
 
 function toSectionView(section: SectionRecord) {
+  const occupied = section._count.enrollmentDetails
   return {
     id: section.id,
     number: section.number,
     professor: section.professor.name,
     capacity: section.capacity,
-    occupied: section._count.enrollmentDetails,
+    occupied,
+    seatsLeft: seatsLeft(section.capacity, occupied),
+    isFull: isSectionFull(section.capacity, occupied),
     blocks: section.scheduleBlocks.map((block) => ({
       weekday: block.weekday,
       startMinutes: toMinutes(block.startTime),
@@ -64,6 +68,7 @@ function toSectionView(section: SectionRecord) {
 export type SectionView = ReturnType<typeof toSectionView>
 
 // Lists the open term offer for the student's career, grouped by subject, with the current selection.
+// Only subjects the student can take carry their sections; the rest are listed with the reason they are not offered.
 export async function listOffer() {
   const { profile, subjects } = await getStudentContext()
   const term = await findOpenTerm()
@@ -79,7 +84,7 @@ export async function listOffer() {
     term: { id: term.id, name: term.name, maxCredits: term.maxCredits, ratePerCredit: Number(term.ratePerCredit) },
     subjects: subjects
       .filter((subject) => subject.status !== 'PASSED' && subject.status !== 'IN_PROGRESS')
-      .map((subject) => ({ ...subject, sections: sectionsBySubject.get(subject.id) ?? [] })),
+      .map((subject) => ({ ...subject, sections: isOfferable(subject.status) ? (sectionsBySubject.get(subject.id) ?? []) : [] })),
     enrollment: enrollment
       ? {
           status: enrollment.status,
@@ -92,9 +97,9 @@ export async function listOffer() {
 
 export type Offer = NonNullable<Awaited<ReturnType<typeof listOffer>>>
 
-async function runUseCase(useCase: () => Promise<string>): Promise<ActionResult> {
+async function runUseCase(execute: () => Promise<string>): Promise<ActionResult> {
   try {
-    const message = await useCase()
+    const message = await execute()
     revalidatePath('/student', 'layout')
     return { ok: true, message }
   } catch (error) {
