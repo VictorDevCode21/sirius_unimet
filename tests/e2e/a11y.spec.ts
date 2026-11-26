@@ -23,6 +23,10 @@ const VIEWS: { account: Account | 'e2eStudent'; paths: string[] }[] = [
 // Runs axe with the WCAG 2.2 A/AA tags, saves the full report and returns the violations.
 async function audit(page: Page, name: string) {
   await page.waitForLoadState('networkidle')
+  // Entrance animations fade content in; measure contrast once every finite animation has ended.
+  await page.waitForFunction(() =>
+    document.getAnimations().every((animation) => animation.playState !== 'running' || animation.effect?.getTiming().iterations === Infinity),
+  )
   const { violations } = await new AxeBuilder({ page }).withTags(WCAG_TAGS).analyze()
   mkdirSync(REPORT_DIR, { recursive: true })
   const summary = violations.map((violation) => ({
