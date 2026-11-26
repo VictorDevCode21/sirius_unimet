@@ -8,6 +8,7 @@ import type { ManagedSectionView } from '@/control/controllers/section-managemen
 import { SCHEDULE_DAY_END, SCHEDULE_DAY_START, describeBlock } from '@/domain/sections/schedule-rules'
 import { formatTime } from '@/presentation/lib/format'
 import { ActionMessage } from '@/presentation/portals/department-head/sections/section-editor'
+import { runWithErrorToast } from '@/presentation/lib/notify'
 
 const weekdays = [
   { value: 'MON', label: 'Lunes', short: 'Lun' },
@@ -37,9 +38,9 @@ export function ScheduleEditor({ section }: { section: ManagedSectionView }) {
     setPending(key)
     setResult(null)
     try {
-      const response = await action()
+      const response = await runWithErrorToast(action)
       setResult(response)
-      if (response.ok) router.refresh()
+      if (response?.ok) router.refresh()
     } finally {
       setPending(null)
     }

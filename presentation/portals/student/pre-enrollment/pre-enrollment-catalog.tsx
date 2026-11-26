@@ -19,7 +19,6 @@ import {
   UserRound,
   UsersRound,
   X,
-  XCircle,
 } from 'lucide-react'
 import {
   addSection,
@@ -36,6 +35,7 @@ import { ROUTES } from '@/presentation/lib/routes'
 import { SubjectDrawer } from '@/presentation/portals/student/flowchart/subject-drawer'
 import { WeeklySchedule } from '@/presentation/portals/student/pre-enrollment/weekly-schedule'
 import { cn } from '@/presentation/lib/utils'
+import { runWithErrorToast } from '@/presentation/lib/notify'
 
 type View = 'AVAILABLE' | 'UNAVAILABLE'
 type SortKey = 'TERM' | 'SEATS' | 'NAME'
@@ -120,7 +120,8 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
   const run = async (sectionId: string, action: (id: string) => Promise<ActionResult>) => {
     setPendingId(sectionId)
     try {
-      setToast(await action(sectionId))
+      const result = await runWithErrorToast(() => action(sectionId))
+      if (result?.ok) setToast(result)
     } finally {
       setPendingId(null)
     }
@@ -129,8 +130,8 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
   const removeWithUndo = async (sectionId: string) => {
     setPendingId(sectionId)
     try {
-      const result = await removeSection(sectionId)
-      setToast(result.ok ? { ...result, undoSectionId: sectionId } : result)
+      const result = await runWithErrorToast(() => removeSection(sectionId))
+      if (result?.ok) setToast({ ...result, undoSectionId: sectionId })
     } finally {
       setPendingId(null)
     }
@@ -139,7 +140,8 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
   const confirmReplacement = async (replacedSectionId: string, sectionId: string) => {
     setPendingId(sectionId)
     try {
-      setToast(await replaceSection({ replacedSectionId, sectionId }))
+      const result = await runWithErrorToast(() => replaceSection({ replacedSectionId, sectionId }))
+      if (result?.ok) setToast(result)
       setReplaceTarget(null)
     } finally {
       setPendingId(null)
@@ -466,11 +468,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
           role="status"
           className="reveal fixed bottom-5 left-1/2 z-[70] flex w-[min(calc(100%-2rem),26rem)] -translate-x-1/2 items-center gap-3 rounded-[1.25rem] border border-border bg-card p-4 shadow-[var(--shadow-lift)]"
         >
-          {toast.ok ? (
-            <CheckCircle2 className="h-5 w-5 shrink-0 text-[var(--status-passed)]" />
-          ) : (
-            <XCircle className="h-5 w-5 shrink-0 text-red-500" />
-          )}
+          <CheckCircle2 className="h-5 w-5 shrink-0 text-[var(--status-passed)]" />
           <p className="flex-1 text-sm font-semibold">{toast.message}</p>
           {toast.undoSectionId && (
             <button

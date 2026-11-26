@@ -2,11 +2,12 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { BookOpen, CalendarDays, CheckCircle2, Hash, LoaderCircle, Save, UserRound, UsersRound, XCircle } from 'lucide-react'
+import { BookOpen, CalendarDays, CheckCircle2, Hash, LoaderCircle, Save, UserRound, UsersRound } from 'lucide-react'
 import { createSection, type SectionActionResult } from '@/control/controllers/section-management.controller'
 import type { SectionFormOptions } from '@/control/controllers/section-management.queries'
 import { MAX_SECTION_CAPACITY } from '@/domain/sections/section-rules'
 import { toRoman } from '@/presentation/lib/format'
+import { runWithErrorToast } from '@/presentation/lib/notify'
 
 const selectClass = 'min-w-0 flex-1 cursor-pointer border-0 bg-transparent py-3.5 text-[0.95rem] text-foreground outline-0'
 const inputClass = 'min-w-0 flex-1 border-0 bg-transparent py-3.5 text-[0.95rem] text-foreground outline-0'
@@ -31,9 +32,9 @@ export function SectionForm({ options, defaultTermName }: { options: SectionForm
     setPending(true)
     setResult(null)
     try {
-      const response = await createSection({ termId, subjectId, professorId, capacity, number })
+      const response = await runWithErrorToast(() => createSection({ termId, subjectId, professorId, capacity, number }))
       setResult(response)
-      if (response.ok) {
+      if (response?.ok) {
         const termName = options.terms.find((term) => term.id === termId)?.name ?? ''
         router.push(`/department-head/sections?term=${encodeURIComponent(termName)}&created=${response.sectionId}`)
       }
@@ -145,12 +146,9 @@ export function SectionForm({ options, defaultTermName }: { options: SectionForm
         </label>
       </div>
 
-      {result && (
-        <p
-          role={result.ok ? 'status' : 'alert'}
-          className={`flex items-start gap-2 rounded-2xl p-4 text-sm font-semibold ${result.ok ? 'bg-[var(--status-passed-bg)] text-[var(--status-passed)]' : 'bg-red-500/10 text-red-700 dark:text-red-300'}`}
-        >
-          {result.ok ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" /> : <XCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />}
+      {result?.ok && (
+        <p role="status" className="flex items-start gap-2 rounded-2xl bg-[var(--status-passed-bg)] p-4 text-sm font-semibold text-[var(--status-passed)]">
+          <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
           {result.message}
         </p>
       )}

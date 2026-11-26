@@ -5,6 +5,7 @@ import { useDropzone, type FileRejection } from 'react-dropzone'
 import { Download, FileSpreadsheet, GraduationCap, UploadCloud, X } from 'lucide-react'
 import { CURRICULUM_CSV_HEADERS, CURRICULUM_CSV_MAX_BYTES, inspectCurriculumCsv } from '@/domain/curriculum/csv-importer'
 import { cn } from '@/presentation/lib/utils'
+import { notifyError } from '@/presentation/lib/notify'
 
 export interface UploadedCsv {
   careerId: string
@@ -33,7 +34,6 @@ function rejectionMessage(rejection: FileRejection) {
 export function CsvUpload({ careers, initialCareerId, onUploaded }: CsvUploadProps) {
   const [careerId, setCareerId] = useState(initialCareerId ?? careers[0]?.id ?? '')
   const [file, setFile] = useState<UploadedCsv | null>(null)
-  const [error, setError] = useState<string | null>(null)
 
   const select = (next: UploadedCsv | null) => {
     setFile(next)
@@ -41,14 +41,13 @@ export function CsvUpload({ careers, initialCareerId, onUploaded }: CsvUploadPro
   }
 
   const onDrop = async (accepted: File[], rejected: FileRejection[]) => {
-    setError(null)
     select(null)
-    if (rejected.length) return setError(rejectionMessage(rejected[0]))
+    if (rejected.length) return notifyError(rejectionMessage(rejected[0]))
     const [upload] = accepted
     if (!upload) return
     const text = await upload.text()
     const inspection = inspectCurriculumCsv(text)
-    if (inspection.error) return setError(inspection.error)
+    if (inspection.error) return notifyError(inspection.error)
     select({ careerId, fileName: upload.name, text, records: inspection.records })
   }
 
@@ -110,12 +109,6 @@ export function CsvUpload({ careers, initialCareerId, onUploaded }: CsvUploadPro
         <p className="font-semibold">{isDragActive ? 'Suelta el archivo aquí' : 'Arrastra el archivo CSV o haz clic para elegirlo'}</p>
         <p className="text-xs text-muted-foreground">Un archivo .csv de hasta 1 MB</p>
       </div>
-
-      {error && (
-        <p role="alert" className="text-sm font-semibold text-red-600 dark:text-red-400">
-          {error}
-        </p>
-      )}
 
       {file && (
         <div role="status" className="flex items-center gap-3 rounded-[1.25rem] border border-border px-4 py-3">

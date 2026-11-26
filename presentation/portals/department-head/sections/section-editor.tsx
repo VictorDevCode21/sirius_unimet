@@ -2,21 +2,20 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { CheckCircle2, Hash, LoaderCircle, Save, Trash2, UserRound, UsersRound, XCircle } from 'lucide-react'
+import { CheckCircle2, Hash, LoaderCircle, Save, Trash2, UserRound, UsersRound } from 'lucide-react'
 import { deleteSection, updateSection, type SectionActionResult } from '@/control/controllers/section-management.controller'
 import type { ManagedSectionDetail } from '@/control/controllers/section-management.queries'
 import { MAX_SECTION_CAPACITY } from '@/domain/sections/section-rules'
+import { runWithErrorToast } from '@/presentation/lib/notify'
 
 const fieldClass = 'min-w-0 flex-1 border-0 bg-transparent py-3.5 text-[0.95rem] text-foreground outline-0 disabled:cursor-not-allowed'
 
+// Success message of a section action; failures are shown as error toasts.
 export function ActionMessage({ result }: { result: SectionActionResult | null }) {
-  if (!result) return null
+  if (!result?.ok) return null
   return (
-    <p
-      role={result.ok ? 'status' : 'alert'}
-      className={`flex items-start gap-2 rounded-2xl p-4 text-sm font-semibold ${result.ok ? 'bg-[var(--status-passed-bg)] text-[var(--status-passed)]' : 'bg-red-500/10 text-red-700 dark:text-red-300'}`}
-    >
-      {result.ok ? <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" /> : <XCircle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />}
+    <p role="status" className="flex items-start gap-2 rounded-2xl bg-[var(--status-passed-bg)] p-4 text-sm font-semibold text-[var(--status-passed)]">
+      <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0" aria-hidden="true" />
       {result.message}
     </p>
   )
@@ -41,9 +40,9 @@ export function SectionEditor({ detail, backHref }: { detail: ManagedSectionDeta
     setPending('save')
     setResult(null)
     try {
-      const response = await updateSection({ sectionId: section.id, professorId, capacity, number })
+      const response = await runWithErrorToast(() => updateSection({ sectionId: section.id, professorId, capacity, number }))
       setResult(response)
-      if (response.ok) router.refresh()
+      if (response?.ok) router.refresh()
     } finally {
       setPending(null)
     }
@@ -54,10 +53,10 @@ export function SectionEditor({ detail, backHref }: { detail: ManagedSectionDeta
     setPending('delete')
     setResult(null)
     try {
-      const response = await deleteSection(section.id)
+      const response = await runWithErrorToast(() => deleteSection(section.id))
       setResult(response)
       setConfirmingDelete(false)
-      if (response.ok) router.push(`${backHref}&deleted=1`)
+      if (response?.ok) router.push(`${backHref}&deleted=1`)
     } finally {
       setPending(null)
     }
