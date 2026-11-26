@@ -53,6 +53,7 @@ const portals: Record<Portal, { home: string; roleLabel: string; navItems: { lab
       { label: 'Departamentos', href: '/admin/departments', icon: Building2 },
       { label: 'Carreras', href: '/admin/careers', icon: GraduationCap },
       { label: 'Notas', href: '/admin/grades', icon: ClipboardCheck },
+      { label: 'Pensum', href: '/admin/curriculum', icon: BookOpen },
     ],
   },
   professor: {
