@@ -137,13 +137,7 @@ export async function confirmCurriculumImport(input: CurriculumCsvInput): Promis
   return runAction(async () => {
     const career = await findCareer(parsed.data.careerId)
     if (!career) throw new DomainError('La carrera ya no existe.')
-    const { rows } = previewCurriculumCsv(parsed.data.text)
-    const diff = compareCurriculum(
-      rows.map((row) => row.code),
-      await findCareerSubjectSections(career.id),
-    )
-    if (diff.blocked.length) throw new DomainError(blockedRemovalMessage(diff.blocked))
-
+    // The import checks, inside its transaction, that no subject with sections leaves the curriculum.
     const result = await importCurriculum(career.id, parsed.data.text, createCurriculumRepository())
     if (!result.ok) throw new DomainError(`El archivo tiene errores. ${result.errors.slice(0, 3).join(' ')}`)
     return `Se importó el pensum de ${career.name}: ${result.subjects} materias y ${result.prerequisites} prelaciones.`

@@ -55,4 +55,37 @@ describe('curriculum import confirmation', () => {
     const withSections = current.map((subject) => (subject.code === 'TST04' ? { ...subject, sections: 1 } : subject))
     assert.deepEqual(compareCurriculum(['TST01'], withSections).blocked, ['TST04'])
   })
+
+  it('imports a file that swaps the cells of two existing subjects', async () => {
+    await importCurriculum(temporary.career.id, csv('TST01,Uno,3,1,1,,,', 'TST04,Cuatro,3,2,2,,TST01,'), writer)
+    const before = await findCareerSubjects(temporary.career.id)
+    const result = await importCurriculum(temporary.career.id, csv('TST01,Uno,3,2,2,,,', 'TST04,Cuatro,3,1,1,,,'), writer)
+    assert.deepEqual(result, { ok: true, subjects: 2, prerequisites: 0 })
+    const after = await findCareerSubjects(temporary.career.id)
+    assert.deepEqual(
+      after.map(({ code, term, branch }) => ({ code, term, branch })),
+      [
+        { code: 'TST04', term: 1, branch: 1 },
+        { code: 'TST01', term: 2, branch: 2 },
+      ],
+    )
+    // Kept subjects keep their ids, so their sections stay attached.
+    assert.deepEqual(
+      after.map((subject) => subject.id).sort(),
+      before.map((subject) => subject.id).sort(),
+    )
+  })
+
+  it('refuses, inside the import, to drop a subject that has sections', async () => {
+    const term = await prisma.term.findFirstOrThrow({ where: { open: true } })
+    const professor = await prisma.user.findFirstOrThrow({ where: { role: 'PROFESSOR', NOT: { email: { endsWith: '@test.local' } } } })
+    const subject = await prisma.subject.findFirstOrThrow({ where: { careerId: temporary.career.id, code: 'TST04' } })
+    const section = await prisma.section.create({ data: { number: 1, capacity: 10, termId: term.id, subjectId: subject.id, professorId: professor.id } })
+    try {
+      await assert.rejects(importCurriculum(temporary.career.id, csv('TST01,Uno,3,1,1,,,'), writer), /TST04 tiene secciones/)
+      assert.equal((await findCareerSubjects(temporary.career.id)).length, 2)
+    } finally {
+      await prisma.section.delete({ where: { id: section.id } })
+    }
+  })
 })
