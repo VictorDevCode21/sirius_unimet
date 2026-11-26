@@ -15,7 +15,8 @@ import { findOfferByTerm, findSectionById } from '@/data-access/repositories/sec
 import { findOpenTerm } from '@/data-access/repositories/term.repository'
 import { calculateAmount } from '@/domain/billing/amount-calculator'
 import {
-  validateCapacity,
+  isEnrollmentEditable,
+  validateEnrollmentEditable,
   validateMaxCredits,
   validatePrerequisites,
   validateReplacement,
@@ -25,7 +26,7 @@ import {
   type SectionCandidate,
 } from '@/domain/enrollment/enrollment-validator'
 import { isOfferable, isSectionFull, seatsLeft } from '@/domain/enrollment/offer-rules'
-import { fullSectionMessage, type FullSection } from '@/domain/enrollment/seat-rules'
+import { assertSeatAvailable, countTakenSeats, fullSectionMessage, type FullSection } from '@/domain/enrollment/seat-rules'
 import { DomainError } from '@/domain/shared/domain-error'
 
 export interface ActionResult {
@@ -57,7 +58,7 @@ function toCandidate(section: SectionRecord): SectionCandidate {
 }
 
 function toSectionView(section: SectionRecord) {
-  const occupied = section._count.enrollmentDetails
+  const occupied = countTakenSeats(section.enrollmentDetails.map((detail) => detail.enrollment.status))
   return {
     id: section.id,
     number: section.number,
@@ -98,6 +99,7 @@ export async function listOffer() {
     enrollment: enrollment
       ? {
           status: enrollment.status,
+          editable: isEnrollmentEditable(enrollment.status),
           amount: Number(enrollment.amount),
           sections: enrollment.details.map((detail) => toSectionView(detail.section)),
         }
@@ -134,9 +136,7 @@ export async function addSection(rawSectionId: string): Promise<ActionResult> {
     }
 
     const enrollment = await findEnrollment(profile.id, term!.id)
-    if (enrollment && enrollment.status !== 'PRE_ENROLLED') {
-      throw new DomainError('Tu inscripción ya no admite cambios porque está en proceso de pago o confirmada.')
-    }
+    validateEnrollmentEditable(enrollment)
 
     const selected = (enrollment?.details ?? []).map((detail) => toCandidate(detail.section))
     const candidate = toCandidate(section)
@@ -149,7 +149,7 @@ export async function addSection(rawSectionId: string): Promise<ActionResult> {
       studentId: profile.id,
       termId: term!.id,
       sectionId: section.id,
-      assertSeatAvailable: validateCapacity,
+      assertSeatAvailable,
       computeAmount: (credits) => calculateAmount(credits, Number(term!.ratePerCredit)),
     })
     return `${section.subject.name} (sección ${section.number}) se agregó a tu pre-inscripción.`
@@ -174,9 +174,7 @@ export async function replaceSection(input: ReplaceSectionInput): Promise<Action
 
     const enrollment = await findEnrollment(profile.id, term!.id)
     if (!enrollment) throw new DomainError('No tienes una pre-inscripción que modificar. Recarga la página.')
-    if (enrollment.status !== 'PRE_ENROLLED') {
-      throw new DomainError('Tu inscripción ya no admite cambios porque está en proceso de pago o confirmada.')
-    }
+    validateEnrollmentEditable(enrollment)
 
     const selected = enrollment.details.map((detail) => toCandidate(detail.section))
     const candidate = toCandidate(section)
@@ -190,7 +188,7 @@ export async function replaceSection(input: ReplaceSectionInput): Promise<Action
       enrollmentId: enrollment.id,
       replacedSectionId: parsed.data.replacedSectionId,
       sectionId: section.id,
-      assertSeatAvailable: validateCapacity,
+      assertSeatAvailable,
       computeAmount: (credits) => calculateAmount(credits, Number(term!.ratePerCredit)),
     })
     return `Reemplazaste la sección ${replaced.number} de ${section.subject.name} por la sección ${section.number}.`
@@ -211,9 +209,7 @@ export async function removeSection(rawSectionId: string): Promise<ActionResult>
     if (!enrollment || !detail) {
       throw new DomainError('La sección no está en tu pre-inscripción. Recarga la página para ver tu selección actual.')
     }
-    if (enrollment.status !== 'PRE_ENROLLED') {
-      throw new DomainError('Tu inscripción ya no admite cambios porque está en proceso de pago o confirmada.')
-    }
+    validateEnrollmentEditable(enrollment)
 
     await removeEnrollmentSection(enrollment.id, parsed.data, (credits) => calculateAmount(credits, Number(term!.ratePerCredit)))
     return `${detail.section.subject.name} se retiró de tu pre-inscripción.`

@@ -23,6 +23,20 @@ export function validateTermOpen(term: { open: boolean } | null) {
   if (!term?.open) throw new DomainError('No hay un período de pre-inscripción abierto. Revisa el calendario académico y vuelve a intentarlo cuando se abra.')
 }
 
+// Enrollment statuses whose selection the student can still change: saved but unpaid, including after a rejected
+// payment. A confirmed enrollment is final.
+export const EDITABLE_ENROLLMENT_STATUSES: readonly string[] = ['PRE_ENROLLED', 'PENDING']
+
+export function isEnrollmentEditable(status: string) {
+  return EDITABLE_ENROLLMENT_STATUSES.includes(status)
+}
+
+export function validateEnrollmentEditable(enrollment: { status: string } | null) {
+  if (enrollment && !isEnrollmentEditable(enrollment.status)) {
+    throw new DomainError('Tu inscripción ya está confirmada y no admite cambios.')
+  }
+}
+
 // Joins items as a Spanish list: "a", "a y b", "a, b y c".
 export function joinList(items: string[]) {
   if (items.length <= 1) return items[0] ?? ''

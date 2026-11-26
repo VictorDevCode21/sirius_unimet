@@ -1,12 +1,11 @@
 import { prisma } from '@/data-access/prisma'
-import { SEAT_HOLDING_STATUS } from '@/data-access/repositories/seat.repository'
 
 export const sectionInclude = {
   subject: true,
   professor: { select: { name: true } },
   scheduleBlocks: { orderBy: [{ weekday: 'asc' as const }, { startTime: 'asc' as const }] },
-  // Seats taken: only confirmed enrollments hold a seat.
-  _count: { select: { enrollmentDetails: { where: { enrollment: { status: SEAT_HOLDING_STATUS } } } } },
+  // Enrollment status of every detail; the seat rules decide which ones take a seat.
+  enrollmentDetails: { select: { enrollment: { select: { status: true } } } },
 }
 
 export function findOfferByTerm(termId: string, careerId: string) {

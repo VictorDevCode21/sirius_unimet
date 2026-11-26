@@ -1,7 +1,9 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import {
+  assertSeatAvailable,
   assertSeatsAvailable,
+  countTakenSeats,
   evaluateSeats,
   findFullSeats,
   fullSectionMessage,
@@ -65,5 +67,17 @@ describe('seat rules', () => {
   it('rejects a confirmation with a full section and accepts one without', () => {
     assert.throws(() => assertSeatsAvailable(evaluateSeats([seat({ capacity: 1, taken: 1 })], new Map())), /se llenó/)
     assert.doesNotThrow(() => assertSeatsAvailable(evaluateSeats([seat({ capacity: 2, taken: 1 })], new Map())))
+  })
+})
+
+describe('seat-holding rule', () => {
+  it('counts only confirmed enrollments as taken seats', () => {
+    assert.equal(countTakenSeats(['CONFIRMED', 'PRE_ENROLLED', 'PENDING', 'CONFIRMED']), 2)
+    assert.equal(countTakenSeats([]), 0)
+  })
+
+  it('lets a student into a section filled only by unpaid enrollments', () => {
+    assert.doesNotThrow(() => assertSeatAvailable(['PRE_ENROLLED', 'PENDING'], 2))
+    assert.throws(() => assertSeatAvailable(['CONFIRMED', 'CONFIRMED', 'PENDING'], 2), /La sección está llena/)
   })
 })

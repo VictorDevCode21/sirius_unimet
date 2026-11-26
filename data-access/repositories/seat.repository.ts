@@ -2,8 +2,11 @@ import type { Prisma, PrismaClient } from '@/data-access/generated/prisma/client
 import { prisma } from '@/data-access/prisma'
 import type { AlternativeSection, SelectedSeat } from '@/domain/enrollment/seat-rules'
 
-// Enrollment status whose sections hold a seat; pre-enrolled and pending enrollments do not.
-export const SEAT_HOLDING_STATUS = 'CONFIRMED' as const
+// Seat data as stored: the enrollment status of every detail that may hold a seat, counted by the seat rules.
+export type SeatRecord = Omit<SelectedSeat, 'taken'> & { holderStatuses: string[] }
+export type AlternativeRecord = Omit<AlternativeSection, 'taken'> & { holderStatuses: string[] }
+
+const holderStatuses = (details: { enrollment: { status: string } }[]) => details.map((detail) => detail.enrollment.status)
 
 export type DbClient = PrismaClient | Prisma.TransactionClient
 
@@ -19,7 +22,7 @@ const toMinutes = (time: Date) => time.getUTCHours() * 60 + time.getUTCMinutes()
 const toBlocks = (blocks: { weekday: string; startTime: Date; endTime: Date }[]) =>
   blocks.map((block) => ({ weekday: block.weekday, startMinutes: toMinutes(block.startTime), endMinutes: toMinutes(block.endTime) }))
 
-// Seats of every section in an enrollment, counting the confirmed enrollments of other students.
+// Seats of every section in an enrollment, with the enrollment status of every other student's detail.
 // With `lock`, the section rows are locked (FOR UPDATE, in id order to avoid deadlocks) until the caller's
 // transaction ends, so two confirmations can never take the same last seat.
 export async function loadSelectedSeats(client: DbClient, enrollmentId: string, options: { lock: boolean }) {
@@ -37,47 +40,43 @@ export async function loadSelectedSeats(client: DbClient, enrollmentId: string, 
     include: {
       subject: { select: { id: true, name: true } },
       scheduleBlocks: true,
-      _count: {
-        select: {
-          enrollmentDetails: { where: { enrollmentId: { not: enrollmentId }, enrollment: { status: SEAT_HOLDING_STATUS } } },
-        },
-      },
+      enrollmentDetails: { where: { enrollmentId: { not: enrollmentId } }, select: { enrollment: { select: { status: true } } } },
     },
     orderBy: { id: 'asc' },
   })
 
-  const seats: SelectedSeat[] = sections.map((section) => ({
+  const seats: SeatRecord[] = sections.map((section) => ({
     sectionId: section.id,
     sectionNumber: section.number,
     subjectId: section.subject.id,
     subjectName: section.subject.name,
     capacity: section.capacity,
-    taken: section._count.enrollmentDetails,
+    holderStatuses: holderStatuses(section.enrollmentDetails),
     blocks: toBlocks(section.scheduleBlocks),
   }))
   return { termId: enrollment.termId, seats }
 }
 
-// Other sections of the given subjects in a term, with their confirmed seats, grouped by subject.
+// Other sections of the given subjects in a term, with the enrollment status of each detail, grouped by subject.
 export async function loadAlternativeSections(client: DbClient, termId: string, subjectIds: string[], excludeSectionIds: string[]) {
   const sections = await client.section.findMany({
     where: { termId, subjectId: { in: subjectIds }, id: { notIn: excludeSectionIds } },
     include: {
       professor: { select: { name: true } },
       scheduleBlocks: true,
-      _count: { select: { enrollmentDetails: { where: { enrollment: { status: SEAT_HOLDING_STATUS } } } } },
+      enrollmentDetails: { select: { enrollment: { select: { status: true } } } },
     },
     orderBy: { number: 'asc' },
   })
 
-  const bySubject = new Map<string, AlternativeSection[]>()
+  const bySubject = new Map<string, AlternativeRecord[]>()
   for (const section of sections) {
-    const alternative: AlternativeSection = {
+    const alternative: AlternativeRecord = {
       sectionId: section.id,
       number: section.number,
       professor: section.professor.name,
       capacity: section.capacity,
-      taken: section._count.enrollmentDetails,
+      holderStatuses: holderStatuses(section.enrollmentDetails),
       blocks: toBlocks(section.scheduleBlocks),
     }
     bySubject.set(section.subjectId, [...(bySubject.get(section.subjectId) ?? []), alternative])
