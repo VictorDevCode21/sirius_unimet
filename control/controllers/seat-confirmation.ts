@@ -1,8 +1,7 @@
 // Seat checks shared by the enrollment and payment controllers. Kept free of `server-only` so integration tests can
 // import it directly; server code imports it through enrollment-seats.ts.
 import type { Prisma } from '@/data-access/generated/prisma/client'
-import { prisma } from '@/data-access/prisma'
-import { loadAlternativeSections, loadSelectedSeats, type DbClient } from '@/data-access/repositories/seat.repository'
+import { inTransaction, loadAlternativeSections, loadSelectedSeats, type DbClient } from '@/data-access/repositories/seat.repository'
 import { assertSeatsAvailable, countTakenSeats, evaluateSeats, type FullSection } from '@/domain/enrollment/seat-rules'
 
 const withTakenSeats = <T extends { holderStatuses: string[] }>({ holderStatuses, ...record }: T) => ({
@@ -39,5 +38,5 @@ export async function checkEnrollmentSeats(client: DbClient, enrollmentId: strin
 export async function confirmEnrollmentSeats(enrollmentId: string, tx?: Prisma.TransactionClient): Promise<void> {
   const take = async (client: DbClient) => assertSeatsAvailable(await checkEnrollmentSeats(client, enrollmentId, { lock: true }))
   if (tx) return take(tx)
-  await prisma.$transaction(take)
+  await inTransaction(take)
 }

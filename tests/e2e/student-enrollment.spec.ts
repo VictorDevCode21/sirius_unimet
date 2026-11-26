@@ -139,3 +139,66 @@ test.describe('HU-16A schedule clashes and credit limit', () => {
     await expect(sectionRow(page, 'FPTSP18', 2).getByRole('button', { name: 'Agregar' })).toBeEnabled()
   })
 })
+
+const SUMMARY = '/student/pre-enrollment/summary'
+const summaryRows = (page: Page) => page.getByTestId('summary-row')
+const payButton = (page: Page) => page.getByRole('button', { name: 'Pagar' })
+
+test.describe('HU-17 enrollment summary and amount', () => {
+  test('lists each subject with its section, schedule and credits and charges credits × rate', async ({ page }) => {
+    await page.goto(PRE_ENROLLMENT)
+    await addSection(page, 'FPTEN23', 1)
+    await addSection(page, 'FPTSP27', 1)
+    await page.getByRole('link', { name: 'Ver resumen' }).click()
+    await page.waitForURL(`**${SUMMARY}`)
+
+    await expect(summaryRows(page)).toHaveCount(2)
+    await expect(summaryRows(page).filter({ hasText: 'Sistemas de Redes' })).toContainText('Sección 1')
+    await expect(summaryRows(page).filter({ hasText: 'Sistemas de Redes' })).toContainText('Lun/Mié 14:00–15:30')
+    await expect(summaryRows(page).filter({ hasText: 'Sistemas de Redes' })).toContainText('3UC')
+    await expect(page.getByTestId('summary-credits')).toHaveText('6 / 21')
+    await expect(page.getByTestId('summary-amount')).toContainText('270,00')
+  })
+
+  test('recalculates the credits and the amount after removing a section', async ({ page }) => {
+    await page.goto(PRE_ENROLLMENT)
+    await addSection(page, 'FPTEN23', 1)
+    await addSection(page, 'FPTSP27', 1)
+    await selectionPanel(page).getByRole('button', { name: 'Quitar Análisis de Datos' }).click()
+    await expect(toast(page)).toContainText('se retiró de tu pre-inscripción')
+    await page.goto(SUMMARY)
+    await expect(summaryRows(page)).toHaveCount(1)
+    await expect(page.getByTestId('summary-credits')).toHaveText('3 / 21')
+    await expect(page.getByTestId('summary-amount')).toContainText('135,00')
+  })
+
+  test('disables "Pagar" when the pre-enrollment is empty', async ({ page }) => {
+    await page.goto(SUMMARY)
+    await expect(page.getByText('Tu pre-inscripción está vacía.')).toBeVisible()
+    await expect(payButton(page)).toBeDisabled()
+  })
+
+  test('"Pagar" checks the seats and opens the payment page', async ({ page }) => {
+    await page.goto(PRE_ENROLLMENT)
+    await addSection(page, 'FPTEN23', 1)
+    await page.goto(SUMMARY)
+    await payButton(page).click()
+    await page.waitForURL('**/student/payment')
+  })
+
+  test('warns before payment when a selected section filled up and suggests another one (HU-16B)', async ({ page }) => {
+    await page.goto(PRE_ENROLLMENT)
+    await addSection(page, 'FPTEN23', 1)
+    e2eData('fill-section', 'FPTEN23', '1')
+    try {
+      await page.goto(SUMMARY)
+      await payButton(page).click()
+      await expect(page.getByRole('alert').filter({ hasText: 'se llenó' })).toContainText(
+        'La sección 1 de Sistemas de Redes se llenó. Te sugerimos la sección 2',
+      )
+      await expect(page).toHaveURL(new RegExp(`${SUMMARY}$`))
+    } finally {
+      e2eData('restore-section', 'FPTEN23', '1')
+    }
+  })
+})

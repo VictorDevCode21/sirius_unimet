@@ -1,4 +1,5 @@
 import type { Prisma, PrismaClient } from '@/data-access/generated/prisma/client'
+import { prisma } from '@/data-access/prisma'
 import type { AlternativeSection, SelectedSeat } from '@/domain/enrollment/seat-rules'
 
 // Seat data as stored: the enrollment status of every detail that may hold a seat, counted by the seat rules.
@@ -8,6 +9,13 @@ export type AlternativeRecord = Omit<AlternativeSection, 'taken'> & { holderStat
 const holderStatuses = (details: { enrollment: { status: string } }[]) => details.map((detail) => detail.enrollment.status)
 
 export type DbClient = PrismaClient | Prisma.TransactionClient
+
+export const defaultClient: DbClient = prisma
+
+// Runs work inside a database transaction; row locks taken inside it last until it commits.
+export function inTransaction<T>(work: (tx: Prisma.TransactionClient) => Promise<T>) {
+  return prisma.$transaction(work)
+}
 
 const toMinutes = (time: Date) => time.getUTCHours() * 60 + time.getUTCMinutes()
 
