@@ -14,6 +14,7 @@ import {
   FileText,
   GraduationCap,
   LayoutDashboard,
+  LayoutList,
   LogOut,
   Menu,
   Moon,
@@ -29,7 +30,7 @@ import { HelpPanel } from '@/presentation/components/shared/help-panel'
 import { logout } from '@/control/controllers/authentication.controller'
 import { cn } from '@/presentation/lib/utils'
 
-export type Portal = 'student' | 'admin' | 'professor'
+export type Portal = 'student' | 'admin' | 'professor' | 'department-head'
 
 const portals: Record<Portal, { home: string; roleLabel: string; navItems: { label: string; href: string; icon: typeof FileText }[] }> = {
   student: {
@@ -58,6 +59,11 @@ const portals: Record<Portal, { home: string; roleLabel: string; navItems: { lab
     home: '/professor',
     roleLabel: 'Profesor',
     navItems: [{ label: 'Mis secciones', href: '/professor/sections', icon: BookOpen }],
+  },
+  'department-head': {
+    home: '/department-head',
+    roleLabel: 'Jefe de departamento',
+    navItems: [{ label: 'Secciones', href: '/department-head/sections', icon: LayoutList }],
   },
 }
 
