@@ -1,15 +1,16 @@
 import { CalendarClock } from 'lucide-react'
-import { getUpcomingTerm, listOffer } from '@/control/controllers/enrollment.controller'
+import { getEnrollmentAvailability } from '@/control/controllers/enrollment-availability'
+import { listOffer } from '@/control/controllers/enrollment.controller'
 import { GlossaryTerm } from '@/presentation/components/shared/glossary'
 import { PageHeading } from '@/presentation/components/shared/page-heading'
-import { formatCalendarDate } from '@/presentation/lib/format'
+import { formatDateOnly } from '@/presentation/lib/format'
 import { PreEnrollmentCatalog } from '@/presentation/portals/student/pre-enrollment/pre-enrollment-catalog'
 
 export default async function PreEnrollmentPage() {
   const offer = await listOffer()
 
   if (!offer) {
-    const upcoming = await getUpcomingTerm()
+    const { nextTerm: upcoming } = await getEnrollmentAvailability()
     return (
       <div className="content-container">
         <PageHeading eyebrow="Pre-inscripción" title="La inscripción no está abierta" />
@@ -22,8 +23,8 @@ export default async function PreEnrollmentPage() {
             {upcoming ? (
               <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
                 El período <strong className="text-foreground">{upcoming.name}</strong> va del{' '}
-                <strong className="text-foreground">{formatCalendarDate(upcoming.startsAt)}</strong> al{' '}
-                <strong className="text-foreground">{formatCalendarDate(upcoming.endsAt)}</strong>. Podrás pre-inscribir tus
+                <strong className="text-foreground">{formatDateOnly(upcoming.startsAt)}</strong> al{' '}
+                <strong className="text-foreground">{formatDateOnly(upcoming.endsAt)}</strong>. Podrás pre-inscribir tus
                 materias cuando Control de Estudios abra la inscripción.
               </p>
             ) : (
