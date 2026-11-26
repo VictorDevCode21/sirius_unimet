@@ -18,3 +18,7 @@ export const createUserSchema = z.object({
   password: z.string({ error: 'Ingresa la contraseña inicial.' }).min(8, 'La contraseña inicial debe tener al menos 8 caracteres.'),
   careerId,
 })
+
+export const userIdSchema = z.string().uuid('Usuario inválido.')
+
+export const updateUserSchema = z.object({ userId: userIdSchema, name, email, role, careerId })

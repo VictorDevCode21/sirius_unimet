@@ -27,3 +27,34 @@ export async function createUser(data: { name: string; email: string; passwordHa
     throw error
   }
 }
+
+export function findUserForEdit(userId: string) {
+  return prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      role: true,
+      active: true,
+      careerId: true,
+      headedDepartment: { select: { id: true } },
+      _count: { select: { taughtSections: true, enrollments: true } },
+    },
+  })
+}
+
+// Updates a user; returns null when the email belongs to another user.
+export async function updateUser(userId: string, data: { name: string; email: string; role: UserRole; careerId: string | null }) {
+  try {
+    return await prisma.user.update({ where: { id: userId }, data })
+  } catch (error) {
+    if (isUniqueViolation(error)) return null
+    throw error
+  }
+}
+
+// Soft delete: the row and its history stay, and the login rejects inactive users.
+export function setUserActive(userId: string, active: boolean) {
+  return prisma.user.update({ where: { id: userId }, data: { active } })
+}
