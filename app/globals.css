@@ -1401,6 +1401,31 @@ select.field:disabled {
   animation: shake 0.4s ease;
 }
 
+/* ---------- Skip link ---------- */
+
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 100;
+  transform: translateY(-200%);
+  border-radius: 999px;
+  background: var(--brand-blue);
+  padding: 0.75rem 1.25rem;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  box-shadow: var(--shadow-lift);
+  transition: transform 0.15s ease;
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  transform: none;
+  outline: 3px solid var(--brand-orange);
+  outline-offset: 2px;
+}
+
 /* ---------- Toasts ---------- */
 
 .app-toast {
