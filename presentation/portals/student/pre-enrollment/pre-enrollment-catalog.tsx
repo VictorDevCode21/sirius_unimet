@@ -248,7 +248,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
           )}
         </div>
         {canReplace && !confirmingReplace && (
-          <p className="mt-2 flex items-start gap-1.5 text-[0.72rem] font-semibold leading-snug text-muted-foreground">
+          <p className="mt-2 flex items-start gap-1.5 text-[0.72rem] font-semibold leading-normal text-muted-foreground">
             <Info className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden="true" /> Ya tienes la sección {otherSection!.number} de esta materia.
           </p>
         )}
@@ -259,7 +259,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
             aria-label="Confirmar reemplazo"
             className="mt-3 rounded-xl border border-[var(--brand-orange)] bg-card p-3"
           >
-            <p className="text-xs font-semibold leading-snug">
+            <p className="text-xs font-semibold leading-normal">
               Ya tienes la sección {otherSection!.number} de {subject.name}. ¿Quieres reemplazarla por la sección{' '}
               {section.number}?
             </p>
@@ -409,7 +409,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
             {selected.map((section) => (
               <li key={section.id} className="flex items-center gap-3 rounded-2xl bg-muted p-3">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">{section.subject.name}</p>
+                  <p className="[overflow-wrap:anywhere] text-sm font-semibold">{section.subject.name}</p>
                   <p className="text-[0.68rem] text-muted-foreground">
                     Secc. {section.number} · {formatSchedule(section.blocks)}
                   </p>

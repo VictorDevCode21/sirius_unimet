@@ -5,6 +5,10 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* Body text sizes keep a line height of at least 1.5 (WCAG 1.4.12). */
+  --text-xs--line-height: 1.5;
+  --text-sm--line-height: 1.5;
+  --text-base--line-height: 1.5;
   --font-sans: var(--font-roboto-flex), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-roboto-condensed), var(--font-roboto-flex), ui-sans-serif, sans-serif;
   --color-border: var(--border);
@@ -141,6 +145,7 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
+    line-height: 1.5;
     font-optical-sizing: auto;
     transition: background-color 0.3s ease;
   }

@@ -153,7 +153,7 @@ export function FlowchartBoard({ subjects, terms, branches, currentTerm, statusC
             <CircleX aria-hidden="true" /> {failedConfig.label}
           </span>
         )}
-        <p className="mt-2 line-clamp-3 text-[0.8rem] font-semibold leading-tight">{subject.name}</p>
+        <p className="mt-2 text-[0.8rem] [overflow-wrap:anywhere] font-semibold leading-tight">{subject.name}</p>
         <div className="mt-auto flex items-center justify-between gap-1 pt-3 text-[0.66rem] font-semibold text-muted-foreground">
           <span>{subject.credits} UC</span>
           <span className="text-right">

@@ -163,7 +163,7 @@ export default async function SummaryPage() {
                 <div className="course-row" key={course.id}>
                   <div className={`course-mark ${courseColors[index % courseColors.length]}`}>{course.name[0]}</div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold">{course.name}</p>
+                    <p className="[overflow-wrap:anywhere] text-sm font-bold">{course.name}</p>
                     <p className="mt-0.5 font-mono text-xs text-muted-foreground">
                       {course.code} · {course.credits} UC
                     </p>

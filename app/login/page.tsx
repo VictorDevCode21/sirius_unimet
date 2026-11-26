@@ -75,7 +75,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           ].map((item) => (
             <div key={item.label} className="glass-card px-4 py-3.5">
               <p className="font-display text-2xl font-extrabold">{item.value}</p>
-              <p className="mt-0.5 text-[0.72rem] leading-snug text-white/70">{item.label}</p>
+              <p className="mt-0.5 text-[0.72rem] leading-normal text-white/70">{item.label}</p>
             </div>
           ))}
         </div>

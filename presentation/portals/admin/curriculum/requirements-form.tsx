@@ -114,7 +114,7 @@ export function RequirementsForm({ subject, subjects, onBack, onClose }: Require
                   <label className="flex cursor-pointer items-center gap-3 rounded-xl px-2 py-2 text-sm hover:bg-muted">
                     <input type="checkbox" className="h-4 w-4 accent-[var(--brand-blue)]" checked={selected.has(other.id)} onChange={() => toggle(other.id)} />
                     <span className="font-mono text-[0.7rem] font-bold text-muted-foreground">{toRoman(other.term)}</span>
-                    <span className="min-w-0 flex-1 truncate">
+                    <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">
                       {other.name} <span className="text-muted-foreground">({other.code})</span>
                     </span>
                   </label>

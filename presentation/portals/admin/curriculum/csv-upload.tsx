@@ -114,7 +114,7 @@ export function CsvUpload({ careers, initialCareerId, onUploaded }: CsvUploadPro
         <div role="status" className="flex items-center gap-3 rounded-[1.25rem] border border-border px-4 py-3">
           <FileSpreadsheet className="h-5 w-5 shrink-0 text-[var(--status-passed)]" aria-hidden="true" />
           <div className="min-w-0 flex-1">
-            <p className="truncate text-sm font-semibold">{file.fileName}</p>
+            <p className="[overflow-wrap:anywhere] text-sm font-semibold">{file.fileName}</p>
             <p className="text-xs text-muted-foreground">
               {file.records} {file.records === 1 ? 'materia' : 'materias'} en el archivo
             </p>

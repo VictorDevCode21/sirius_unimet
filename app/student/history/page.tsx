@@ -52,7 +52,7 @@ export default async function HistoryPage() {
               {term.records.map((record) => (
                 <div key={record.code} className="flex items-center justify-between gap-4 border-b border-border py-3.5 last:border-0">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold">{record.name}</p>
+                    <p className="[overflow-wrap:anywhere] text-sm font-semibold">{record.name}</p>
                     <p className="font-mono text-[0.7rem] text-muted-foreground">
                       {record.code} · {record.credits} UC · {record.passed ? 'Aprobada' : 'Reprobada'}
                     </p>

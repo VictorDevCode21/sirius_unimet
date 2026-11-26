@@ -85,7 +85,7 @@ export function RegistrationPanel({ registration }: { registration: Registration
                     />
                   )}
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-semibold">{section.subject.name}</p>
+                    <p className="[overflow-wrap:anywhere] text-sm font-semibold">{section.subject.name}</p>
                     <p className="text-[0.7rem] text-muted-foreground">
                       {section.subject.code} · Secc. {section.number} · {section.professor} · {formatSchedule(section.blocks) || 'Sin horario'}
                     </p>

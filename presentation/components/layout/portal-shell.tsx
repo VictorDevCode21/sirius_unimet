@@ -152,8 +152,8 @@ function ProfileMenu({ user, roleLabel, showSettings }: { user: PortalShellProps
               {initialsOf(user.name)}
             </span>
             <div className="min-w-0">
-              <strong className="block truncate text-sm">{user.name}</strong>
-              <small className="block truncate text-xs text-muted-foreground">{user.email}</small>
+              <strong className="block [overflow-wrap:anywhere] text-sm">{user.name}</strong>
+              <small className="block [overflow-wrap:anywhere] text-xs text-muted-foreground">{user.email}</small>
             </div>
           </div>
           <div className="pt-1.5">
@@ -276,7 +276,7 @@ export function PortalShell({ portal = 'student', user, currentTermCode, preEnro
             <button type="button" className="icon-button lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Abrir menú">
               <Menu aria-hidden="true" />
             </button>
-            <p className="flex min-w-0 flex-col text-xs leading-snug sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-2 sm:text-sm">
+            <p className="flex min-w-0 flex-col text-xs leading-normal sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-2 sm:text-sm">
               <span className="sm:whitespace-nowrap">
                 <span className="text-muted-foreground">Período en curso: </span>
                 <strong className="font-display text-sm font-extrabold sm:text-base">{currentTermCode ?? '—'}</strong>
