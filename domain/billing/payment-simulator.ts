@@ -1,10 +1,11 @@
 // Simulated payment rules: which enrollments can be paid, the status each outcome leads to and the payment reference.
+// A rejected payment leaves the enrollment PENDING and can be retried; an approved one confirms it for good.
 import { DomainError } from '@/domain/shared/domain-error'
 
-export type PaymentOutcome = 'APPROVED'
+export type PaymentOutcome = 'APPROVED' | 'REJECTED'
 export type EnrollmentStatusName = 'PRE_ENROLLED' | 'PENDING' | 'CONFIRMED'
 
-export const PAYABLE_STATUSES: EnrollmentStatusName[] = ['PRE_ENROLLED']
+export const PAYABLE_STATUSES: EnrollmentStatusName[] = ['PRE_ENROLLED', 'PENDING']
 
 export function validatePayable(enrollment: { status: EnrollmentStatusName; sections: number; amount: number } | null) {
   if (!enrollment) throw new DomainError('No tienes una pre-inscripción en el período abierto. Pre-inscribe tus materias antes de pagar.')
@@ -14,7 +15,7 @@ export function validatePayable(enrollment: { status: EnrollmentStatusName; sect
   if (enrollment.amount <= 0) throw new DomainError('El monto a pagar no es válido. Revisa tu pre-inscripción.')
 }
 
-export function statusAfterPayment(outcome: 'APPROVED' | 'REJECTED'): EnrollmentStatusName {
+export function statusAfterPayment(outcome: PaymentOutcome): EnrollmentStatusName {
   return outcome === 'APPROVED' ? 'CONFIRMED' : 'PENDING'
 }
 

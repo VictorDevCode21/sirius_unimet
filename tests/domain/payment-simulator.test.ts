@@ -32,3 +32,11 @@ describe('HU-18A payment simulator rules', () => {
     assert.equal(simulatePaymentSchema.safeParse({ outcome: 'APPROVED', attemptId: '1' }).success, false)
   })
 })
+
+describe('HU-18B rejected payments', () => {
+  it('leaves the enrollment pending after a rejection and lets it be paid again', () => {
+    assert.equal(statusAfterPayment('REJECTED'), 'PENDING')
+    assert.doesNotThrow(() => validatePayable({ status: 'PENDING', sections: 2, amount: 270 }))
+    assert.equal(simulatePaymentSchema.safeParse({ outcome: 'REJECTED', attemptId: crypto.randomUUID() }).success, true)
+  })
+})
