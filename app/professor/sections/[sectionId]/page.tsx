@@ -21,7 +21,7 @@ export default async function ProfessorSectionPage({ params }: { params: Promise
         title={section.subject.name}
         description={`Sección ${section.number} · ${section.blocks.length ? formatSchedule(section.blocks) : 'Horario sin asignar'}`}
       />
-      <StudentRoster students={section.students} />
+      <StudentRoster sectionId={section.id} students={section.students} />
     </div>
   )
 }

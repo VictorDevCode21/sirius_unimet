@@ -31,6 +31,7 @@ export function findSectionRoster(sectionId: string) {
       subject: { select: { code: true, name: true } },
       term: { select: { name: true } },
       scheduleBlocks: { orderBy: scheduleOrder },
+      grades: { select: { studentId: true, value: true, published: true } },
       enrollmentDetails: {
         where: confirmedDetail,
         select: {

@@ -41,6 +41,7 @@ export async function getMySectionRoster(rawSectionId: string) {
   if (!section) return null
   if (!ownsSection(section, user.id)) redirect('/forbidden')
 
+  const gradeByStudent = new Map(section.grades.map((grade) => [grade.studentId, grade]))
   return {
     id: section.id,
     number: section.number,
@@ -52,6 +53,8 @@ export async function getMySectionRoster(rawSectionId: string) {
       name: student.name,
       email: student.email,
       career: student.career?.name ?? null,
+      grade: gradeByStudent.get(student.id)?.value ?? null,
+      published: gradeByStudent.get(student.id)?.published ?? false,
     })),
   }
 }
