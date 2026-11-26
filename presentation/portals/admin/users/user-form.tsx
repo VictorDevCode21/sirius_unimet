@@ -92,7 +92,7 @@ export function UserForm({ careers, user }: { careers: CareerOption[]; user?: Ed
       </div>
       <div className="flex flex-wrap items-center gap-4">
         <button type="submit" className="primary-button" disabled={pending}>
-          {pending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+          {pending ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Save className="h-4 w-4" aria-hidden="true" />}
           {user ? 'Guardar cambios' : 'Crear usuario'}
         </button>
         <FormMessage result={result} />

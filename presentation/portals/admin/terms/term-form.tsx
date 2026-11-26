@@ -51,7 +51,7 @@ export function TermForm() {
       </div>
       <div className="flex flex-wrap items-center gap-4">
         <button type="submit" className="primary-button" disabled={pending}>
-          {pending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Plus className="h-4 w-4" />}
+          {pending ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Plus className="h-4 w-4" aria-hidden="true" />}
           Crear periodo
         </button>
         <FormMessage result={result} />

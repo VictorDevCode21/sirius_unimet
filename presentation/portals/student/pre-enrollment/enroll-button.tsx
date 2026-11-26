@@ -51,7 +51,7 @@ export function EnrollButton({ disabledReason }: EnrollButtonProps) {
         aria-describedby={disabledReason ? 'enroll-disabled-reason' : undefined}
         onClick={goToEnrollment}
       >
-        {isPending ? <LoaderCircle className="animate-spin" /> : <ListChecks />} Inscribir
+        {isPending ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <ListChecks aria-hidden="true" />} Inscribir
       </button>
       {disabledReason && (
         <p id="enroll-disabled-reason" className="mt-2 text-center text-xs text-muted-foreground">

@@ -9,7 +9,7 @@ export default function ForbiddenPage() {
     <main className="flex min-h-dvh items-center justify-center p-6">
       <div className="surface card-pad reveal w-full max-w-md text-center">
         <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-[1.25rem] bg-[#f68629]/15 text-[var(--orange-text)]">
-          <ShieldAlert className="h-6 w-6" />
+          <ShieldAlert className="h-6 w-6" aria-hidden="true" />
         </span>
         <p className="eyebrow mt-6">Error 403</p>
         <h1 className="page-title mt-2">Acceso denegado</h1>

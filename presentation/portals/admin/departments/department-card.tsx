@@ -40,7 +40,7 @@ export function DepartmentCard({ department }: { department: DepartmentView }) {
           ))}
         </select>
         <button type="submit" className="secondary-button" disabled={pending}>
-          {pending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <UserRoundCheck className="h-4 w-4" aria-hidden="true" />}
+          {pending ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <UserRoundCheck className="h-4 w-4" aria-hidden="true" />}
           Guardar jefe
         </button>
       </form>

@@ -90,7 +90,7 @@ export function SubjectForm({ careerId, cell, subject, onShowRequirements, onClo
             </h2>
           </div>
           <button type="button" className="icon-button" onClick={onClose} aria-label="Cerrar">
-            <X />
+            <X aria-hidden="true" />
           </button>
         </div>
 
@@ -164,7 +164,7 @@ export function SubjectForm({ careerId, cell, subject, onShowRequirements, onClo
         <div className="mt-auto flex flex-col gap-3 pt-4">
           <FormMessage result={result} />
           <button type="submit" className="primary-button w-full" disabled={pending}>
-            {pending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : subject ? <Save className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+            {pending ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : subject ? <Save className="h-4 w-4" aria-hidden="true" /> : <Plus className="h-4 w-4" aria-hidden="true" />}
             {subject ? 'Guardar cambios' : 'Registrar materia'}
           </button>
         </div>

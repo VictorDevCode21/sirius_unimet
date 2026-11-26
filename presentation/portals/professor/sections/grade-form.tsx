@@ -40,7 +40,7 @@ export function GradeForm({ sectionId, studentId, studentName, grade, mode = 'pr
           />
         </span>
         <button type="submit" className="secondary-button" disabled={pending}>
-          {pending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" aria-hidden="true" />}
+          {pending ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Save className="h-4 w-4" aria-hidden="true" />}
           Guardar
         </button>
       </div>

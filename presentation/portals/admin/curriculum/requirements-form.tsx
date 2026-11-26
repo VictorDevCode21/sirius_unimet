@@ -91,10 +91,10 @@ export function RequirementsForm({ subject, subjects, onBack, onClose }: Require
           </div>
           <div className="flex gap-2">
             <button type="button" className="icon-button" onClick={onBack} aria-label="Volver a los datos de la materia">
-              <ArrowLeft />
+              <ArrowLeft aria-hidden="true" />
             </button>
             <button type="button" className="icon-button" onClick={onClose} aria-label="Cerrar">
-              <X />
+              <X aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -157,7 +157,7 @@ export function RequirementsForm({ subject, subjects, onBack, onClose }: Require
         <div className="mt-auto flex flex-col gap-3 pt-2">
           <FormMessage result={result} />
           <button type="submit" className="primary-button w-full" disabled={pending}>
-            {pending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
+            {pending ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Save className="h-4 w-4" aria-hidden="true" />}
             Guardar prelaciones
           </button>
         </div>

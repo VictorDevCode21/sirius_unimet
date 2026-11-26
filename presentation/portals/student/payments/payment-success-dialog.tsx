@@ -38,7 +38,7 @@ export function PaymentSuccessDialog({ receipt, onClose }: { receipt: PaymentRec
       >
         <div className="success-hero">
           <span className="success-check" aria-hidden="true">
-            <Check strokeWidth={3.25} />
+            <Check strokeWidth={3.25} aria-hidden="true" />
           </span>
           <h2 id="payment-success-title" className="mt-5 font-display text-2xl font-extrabold uppercase tracking-tight sm:text-3xl">
             ¡Pago registrado con éxito!

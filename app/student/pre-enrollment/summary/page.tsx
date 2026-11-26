@@ -15,7 +15,7 @@ export default async function EnrollmentSummaryPage() {
 
   const backLink = (
     <Link href={ROUTES.studentPreEnrollment} className="secondary-button">
-      <ArrowLeft /> Volver a la pre-inscripción
+      <ArrowLeft aria-hidden="true" /> Volver a la pre-inscripción
     </Link>
   )
 

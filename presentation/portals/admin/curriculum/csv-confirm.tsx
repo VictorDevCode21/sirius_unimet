@@ -26,7 +26,7 @@ export function CsvConfirm({ file, preview }: CsvConfirmProps) {
           <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" aria-hidden="true" /> {result.message}
         </p>
         <Link href={`/admin/curriculum?career=${file.careerId}`} className="primary-button shrink-0">
-          Ver pensum <ArrowRight className="h-4 w-4" />
+          Ver pensum <ArrowRight className="h-4 w-4" aria-hidden="true" />
         </Link>
       </section>
     )
@@ -57,7 +57,7 @@ export function CsvConfirm({ file, preview }: CsvConfirmProps) {
           disabled={!acknowledged || pending}
           onClick={() => run(() => confirmCurriculumImport({ careerId: file.careerId, text: file.text }))}
         >
-          {pending && <LoaderCircle className="h-4 w-4 animate-spin" />}
+          {pending && <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" />}
           Confirmar importación
         </button>
         <FormMessage result={result} />

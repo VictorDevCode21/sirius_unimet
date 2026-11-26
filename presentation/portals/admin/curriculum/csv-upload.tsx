@@ -120,7 +120,7 @@ export function CsvUpload({ careers, initialCareerId, onUploaded }: CsvUploadPro
             </p>
           </div>
           <button type="button" className="icon-button" onClick={() => select(null)} aria-label="Quitar archivo">
-            <X />
+            <X aria-hidden="true" />
           </button>
         </div>
       )}
