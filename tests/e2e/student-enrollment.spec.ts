@@ -115,8 +115,8 @@ test.describe('HU-15B remove sections and keep the pre-enrollment', () => {
   test('the selection is stored on the server and survives logging out', async ({ page, browser }) => {
     await page.goto(PRE_ENROLLMENT)
     await addSection(page, 'FPTSP23', 1)
-    await page.click('button[aria-haspopup="menu"]')
-    await page.getByRole('menuitem', { name: 'Cerrar sesión' }).click()
+    await page.click('button[aria-controls="profile-menu"]')
+    await page.getByRole('button', { name: 'Cerrar sesión' }).click()
     await page.waitForURL('**/login')
 
     const freshContext = await browser.newContext()
