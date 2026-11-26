@@ -2,7 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { GraduationCap, Plus } from 'lucide-react'
+import Link from 'next/link'
+import { FileUp, GraduationCap, Plus } from 'lucide-react'
 import type { CurriculumEditor } from '@/control/controllers/curriculum.queries'
 import { RequirementsForm } from '@/presentation/portals/admin/curriculum/requirements-form'
 import { SubjectForm } from '@/presentation/portals/admin/curriculum/subject-form'
@@ -43,23 +44,28 @@ export function CurriculumGrid({ careers, career, subjects, terms, branches }: C
               {subjects.length} materias · {totalCredits} UC. Selecciona una celda vacía para registrar una materia o una materia para editarla y moverla.
             </p>
           </div>
-          <label className="flex min-w-0 flex-col gap-1.5 text-sm font-bold lg:w-80">
-            Carrera
-            <span className="field">
-              <GraduationCap aria-hidden="true" />
-              <select
-                className="min-w-0 flex-1 border-0 bg-transparent py-3.5 text-[0.95rem] text-foreground outline-0"
-                value={career.id}
-                onChange={(event) => router.push(`/admin/curriculum?career=${event.target.value}`)}
-              >
-                {careers.map((option) => (
-                  <option key={option.id} value={option.id}>
-                    {option.name}
-                  </option>
-                ))}
-              </select>
-            </span>
-          </label>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <Link href={`/admin/curriculum/import?career=${career.id}`} className="secondary-button shrink-0">
+              <FileUp aria-hidden="true" /> Importar CSV
+            </Link>
+            <label className="flex min-w-0 flex-col gap-1.5 text-sm font-bold lg:w-80">
+              Carrera
+              <span className="field">
+                <GraduationCap aria-hidden="true" />
+                <select
+                  className="min-w-0 flex-1 border-0 bg-transparent py-3.5 text-[0.95rem] text-foreground outline-0"
+                  value={career.id}
+                  onChange={(event) => router.push(`/admin/curriculum?career=${event.target.value}`)}
+                >
+                  {careers.map((option) => (
+                    <option key={option.id} value={option.id}>
+                      {option.name}
+                    </option>
+                  ))}
+                </select>
+              </span>
+            </label>
+          </div>
         </div>
 
         <div className="overflow-x-auto p-4 sm:p-6" style={{ scrollbarWidth: 'thin' }}>
