@@ -21,6 +21,7 @@ import {
   validatePrerequisites,
   validateReplacement,
   validateScheduleClash,
+  validateSectionHasSchedule,
   validateSingleSectionPerSubject,
   validateTermOpen,
   type SectionCandidate,
@@ -140,6 +141,7 @@ export async function addSection(rawSectionId: string): Promise<ActionResult> {
 
     const selected = (enrollment?.details ?? []).map((detail) => toCandidate(detail.section))
     const candidate = toCandidate(section)
+    validateSectionHasSchedule(candidate)
     validatePrerequisites(subjects.find((subject) => subject.id === section.subjectId))
     validateSingleSectionPerSubject(selected, candidate)
     validateScheduleClash(selected, candidate)
@@ -178,6 +180,7 @@ export async function replaceSection(input: ReplaceSectionInput): Promise<Action
 
     const selected = enrollment.details.map((detail) => toCandidate(detail.section))
     const candidate = toCandidate(section)
+    validateSectionHasSchedule(candidate)
     const remaining = validateReplacement(selected, parsed.data.replacedSectionId, candidate)
     const replaced = selected.find((item) => item.id === parsed.data.replacedSectionId)!
     validatePrerequisites(subjects.find((subject) => subject.id === section.subjectId))

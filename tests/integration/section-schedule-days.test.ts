@@ -30,7 +30,8 @@ before(async () => {
   const fixtures = await findSeedFixtures()
   termId = fixtures.openTerm.id
   const career = await prisma.career.findUniqueOrThrow({ where: { name: 'Ingeniería en Sistemas' } })
-  subjectId = (await prisma.subject.findFirstOrThrow({ where: { careerId: career.id, term: 1 }, orderBy: { code: 'asc' } })).id
+  // Each section test file works on its own subject so parallel files never compete for section numbers.
+  subjectId = (await prisma.subject.findFirstOrThrow({ where: { careerId: career.id, term: 1 }, orderBy: { code: 'asc' }, skip: 1 })).id
   const professor = await prisma.user.create({
     data: { name: 'Profesor días', email: `prof-days-${Date.now()}@test.local`, passwordHash: 'x', role: 'PROFESSOR' },
   })

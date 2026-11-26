@@ -43,7 +43,8 @@ async function newSection(professor = professorId) {
 before(async () => {
   fixtures = await findSeedFixtures()
   const career = await prisma.career.findUniqueOrThrow({ where: { name: 'Ingeniería en Sistemas' } })
-  subjectId = (await prisma.subject.findFirstOrThrow({ where: { careerId: career.id, term: 1 }, orderBy: { code: 'asc' } })).id
+  // Each section test file works on its own subject so parallel files never compete for section numbers.
+  subjectId = (await prisma.subject.findFirstOrThrow({ where: { careerId: career.id, term: 1 }, orderBy: { code: 'asc' }, skip: 2 })).id
   professorId = await temporaryProfessor('a')
   otherProfessorId = await temporaryProfessor('b')
 })
@@ -68,6 +69,12 @@ describe('HU-11 schedule blocks (database)', () => {
     assert.equal(offered.scheduleBlocks[0].weekday, 'SAT')
     assert.equal(offered.scheduleBlocks[0].startTime.getUTCHours(), 8)
     assert.equal(offered.scheduleBlocks[0].endTime.getUTCHours(), 10)
+  })
+
+  it('leaves a section without schedule blocks out of the student offer', async () => {
+    const section = await newSection()
+    const offer = await findOfferByTerm(fixtures.openTerm.id, (await prisma.subject.findUniqueOrThrow({ where: { id: subjectId } })).careerId)
+    assert.equal(offer.some((item) => item.id === section.id), false)
   })
 
   it('rejects an overlapping block in the same section', async () => {
