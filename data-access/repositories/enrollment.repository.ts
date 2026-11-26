@@ -111,3 +111,30 @@ async function refreshAmount(tx: TransactionClient, enrollmentId: string, comput
   const totalCredits = details.reduce((sum, detail) => sum + detail.section.subject.credits, 0)
   await tx.enrollment.update({ where: { id: enrollmentId }, data: { amount: computeAmount(totalCredits) } })
 }
+
+// Turns a pre-enrollment into an enrollment with seats in one transaction: locks the enrollment, keeps only the chosen
+// sections, takes their seats (`takeSeats` locks the sections until the commit and throws when one is full), stores
+// the amount and sets the status to CONFIRMED. Returns null when the enrollment no longer exists. `assertEnrollable`
+// receives the locked status and throws when the enrollment cannot be confirmed.
+export async function confirmPreEnrollment(params: {
+  enrollmentId: string
+  keepSectionIds: string[]
+  assertEnrollable: (status: string) => void
+  takeSeats: (tx: TransactionClient) => Promise<void>
+  computeAmount: (tx: TransactionClient) => Promise<number>
+}) {
+  return prisma.$transaction(async (tx) => {
+    const [locked] = await tx.$queryRaw<{ status: string }[]>`
+      SELECT "status" FROM "Enrollment" WHERE "id" = ${params.enrollmentId}::uuid FOR UPDATE`
+    if (!locked) return null
+    params.assertEnrollable(locked.status)
+    await tx.enrollmentDetail.deleteMany({ where: { enrollmentId: params.enrollmentId, sectionId: { notIn: params.keepSectionIds } } })
+    await params.takeSeats(tx)
+    const amount = await params.computeAmount(tx)
+    return tx.enrollment.update({
+      where: { id: params.enrollmentId },
+      data: { status: 'CONFIRMED', amount, enrolledAt: new Date() },
+      include: { details: { select: { sectionId: true } } },
+    })
+  })
+}

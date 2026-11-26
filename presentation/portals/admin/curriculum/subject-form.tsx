@@ -9,6 +9,7 @@ import { SUBJECT_CREDITS, SUBJECT_NAME_LENGTH, validateSubjectFields } from '@/d
 import { FormMessage } from '@/presentation/components/shared/form-message'
 import { toRoman } from '@/presentation/lib/format'
 import { useAction } from '@/presentation/lib/use-action'
+import { notifyErrors } from '@/presentation/lib/notify'
 
 const inputClass = 'min-w-0 flex-1 border-0 bg-transparent py-3.5 text-[0.95rem] text-foreground outline-0'
 
@@ -31,7 +32,6 @@ export function SubjectForm({ careerId, cell, subject, onShowRequirements, onClo
     term: String(cell.term),
     branch: String(cell.branch),
   })
-  const [errors, setErrors] = useState<string[]>([])
   // Cell picked in the form; while editing, a different cell means the subject is being moved there.
   const targetTerm = Number(form.term) || cell.term
   const targetBranch = Number(form.branch) || cell.branch
@@ -53,8 +53,7 @@ export function SubjectForm({ careerId, cell, subject, onShowRequirements, onClo
       term: Number(form.term),
       branch: Number(form.branch),
     })
-    setErrors(fieldErrors)
-    if (fieldErrors.length) return
+    if (fieldErrors.length) return notifyErrors(fieldErrors)
     const response = await run(() => (subject ? editSubject({ subjectId: subject.id, ...form }) : registerSubject({ careerId, ...form })))
     if (response?.ok) onClose()
   }
@@ -163,13 +162,6 @@ export function SubjectForm({ careerId, cell, subject, onShowRequirements, onClo
         )}
 
         <div className="mt-auto flex flex-col gap-3 pt-4">
-          {errors.length > 0 && (
-            <ul role="alert" className="flex flex-col gap-1 text-sm font-semibold text-red-600 dark:text-red-400">
-              {errors.map((error) => (
-                <li key={error}>{error}</li>
-              ))}
-            </ul>
-          )}
           <FormMessage result={result} />
           <button type="submit" className="primary-button w-full" disabled={pending}>
             {pending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : subject ? <Save className="h-4 w-4" /> : <Plus className="h-4 w-4" />}

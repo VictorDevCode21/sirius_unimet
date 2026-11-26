@@ -5,7 +5,7 @@ import { findEnrollment } from '@/data-access/repositories/enrollment.repository
 import { findConfirmedEnrollments } from '@/data-access/repositories/receipt.repository'
 import { findOpenTerm } from '@/data-access/repositories/term.repository'
 import { findStudentProfile } from '@/data-access/repositories/user.repository'
-import { isAwaitingPayment } from '@/domain/enrollment/enrollment-validator'
+import { isAwaitingEnrollment } from '@/domain/enrollment/enrollment-validator'
 
 const toMinutes = (time: Date) => time.getUTCHours() * 60 + time.getUTCMinutes()
 
@@ -19,14 +19,12 @@ function toReceiptView(enrollment: ConfirmedEnrollment, student: { name: string;
     blocks: section.scheduleBlocks.map((block) => ({ weekday: block.weekday, startMinutes: toMinutes(block.startTime), endMinutes: toMinutes(block.endTime) })),
     subject: { code: section.subject.code, name: section.subject.name, credits: section.subject.credits },
   }))
-  const payment = enrollment.payments[0]
   return {
     term: enrollment.term.name,
     student,
     sections,
     totalCredits: sections.reduce((sum, section) => sum + section.subject.credits, 0),
-    amount: Number(enrollment.amount),
-    payment: payment ? { reference: payment.reference, amount: Number(payment.amount), paidAt: payment.createdAt } : null,
+    enrolledAt: enrollment.enrolledAt ?? enrollment.updatedAt,
   }
 }
 
@@ -38,23 +36,22 @@ async function receiptsFor(studentId: string) {
   return (await findConfirmedEnrollments(studentId)).map((enrollment) => toReceiptView(enrollment, student))
 }
 
-// Term name of the open term's enrollment when it still has to be paid, so the receipt page asks for the payment
-// before showing any receipt.
-async function pendingPaymentTerm(studentId: string) {
+// Term name of the open term when the student pre-enrolled but has not enrolled yet, so the page asks them to enroll.
+async function pendingEnrollmentTerm(studentId: string) {
   const openTerm = await findOpenTerm()
   if (!openTerm) return null
   const enrollment = await findEnrollment(studentId, openTerm.id)
-  const awaiting = isAwaitingPayment(enrollment && { status: enrollment.status, sectionCount: enrollment.details.length })
+  const awaiting = isAwaitingEnrollment(enrollment && { status: enrollment.status, sectionCount: enrollment.details.length })
   return awaiting ? openTerm.name : null
 }
 
-// Receipts of the signed-in student: the requested term, or the newest confirmed enrollment. `pendingPayment` names
-// the open term when its enrollment is not paid yet.
+// Enrollment certificates of the signed-in student: the requested term, or the newest enrollment. `pendingEnrollment`
+// names the open term when the student still has to enroll its pre-enrollment.
 export async function getStudentReceipts(requestedTerm?: string) {
   const { profile } = await getStudentContext()
-  const [receipts, pendingPayment] = await Promise.all([receiptsFor(profile.id), pendingPaymentTerm(profile.id)])
+  const [receipts, pendingEnrollment] = await Promise.all([receiptsFor(profile.id), pendingEnrollmentTerm(profile.id)])
   const selected = receipts.find((receipt) => receipt.term === requestedTerm) ?? receipts[0] ?? null
-  return { terms: receipts.map((receipt) => receipt.term), selected, pendingPayment }
+  return { terms: receipts.map((receipt) => receipt.term), selected, pendingEnrollment }
 }
 
 // Receipt used by the PDF download. Only the owner of the enrollment can get it: the student id comes from the

@@ -88,3 +88,13 @@ export async function updateMaxCredits(termId: string, maxCredits: number, asser
     return tx.term.update({ where: { id: termId }, data: { maxCredits } })
   })
 }
+
+// Sets the first of the two enrollment days of a term; returns null when the term does not exist.
+export async function updateEnrollmentStart(termId: string, enrollmentStartsAt: Date, assertValid: (term: { endsAt: Date }) => void) {
+  return prisma.$transaction(async (tx) => {
+    const term = await tx.term.findUnique({ where: { id: termId } })
+    if (!term) return null
+    assertValid(term)
+    return tx.term.update({ where: { id: termId }, data: { enrollmentStartsAt } })
+  })
+}

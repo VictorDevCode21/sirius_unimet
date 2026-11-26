@@ -55,3 +55,9 @@ export function validateMaxCreditsChange(maxCredits: number, enrollmentCredits: 
     `No puedes bajar el máximo a ${maxCredits} UC: ${subject} más créditos. Pide que ajusten su selección o usa un máximo mayor.`,
   )
 }
+
+// Enrollment takes two days that must end before the term does.
+export function validateEnrollmentStart(enrollmentStartsAt: Date, term: { endsAt: Date }) {
+  const lastDay = enrollmentStartsAt.getTime() + 86_400_000
+  if (lastDay > term.endsAt.getTime()) throw new DomainError('Los dos días de inscripción deben terminar antes del último día del periodo.')
+}

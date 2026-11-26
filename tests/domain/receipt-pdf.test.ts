@@ -21,8 +21,7 @@ const receipt = {
     subject: { code: `FBTMM0${index}`, name: index === 0 ? 'Diseño de Sistemas de Información y Programación Orientada a Objetos' : `Materia ${index}`, credits: 3 },
   })),
   totalCredits: 42,
-  amount: 1890,
-  payment: { reference: 'SIM-2627-1-ABCDEF12', amount: 1890, paidAt: new Date(Date.UTC(2026, 8, 10)) },
+  enrolledAt: new Date(Date.UTC(2026, 8, 1)),
 }
 
 const hasPdftotext = (() => {
@@ -40,20 +39,21 @@ describe('HU-19 receipt PDF', () => {
     assert.equal(Buffer.from(bytes.slice(0, 5)).toString(), '%PDF-')
     const reopened = await PDFDocument.load(bytes)
     assert.ok(reopened.getPageCount() >= 1)
-    assert.equal(reopened.getTitle(), 'Comprobante de inscripción 2627-1')
+    assert.equal(reopened.getTitle(), 'Certificado de inscripción 2627-1')
   })
 
-  it('contains the student, sections, totals and the simulated payment seal', { skip: !hasPdftotext && 'pdftotext not installed' }, async () => {
+  it('certifies the enrollment: student, sections and credits, without payment data', { skip: !hasPdftotext && 'pdftotext not installed' }, async () => {
     const file = path.join(mkdtempSync(path.join(tmpdir(), 'receipt-')), 'receipt.pdf')
     writeFileSync(file, await buildReceiptPdf(receipt))
     const content = execFileSync('pdftotext', [file, '-']).toString()
-    for (const expected of ['Victor Rivas', 'Ingeniería en Sistemas', 'PERÍODO 2627-1', 'FBTMM013', 'Lun/Mié 07:00–08:30', '42 UC', 'PAGO SIMULADO', 'SIM-2627-1-ABCDEF12']) {
+    for (const expected of ['Victor Rivas', 'Ingeniería en Sistemas', 'PERÍODO 2627-1', 'FBTMM013', 'Lun/Mié 07:00–08:30', '42 UC', 'CERTIFICADO DE INSCRIPCIÓN', 'INSCRIPCIÓN CONFIRMADA']) {
       assert.ok(content.includes(expected), `missing "${expected}"`)
     }
+    for (const unexpected of ['Pagado', 'SALDO', 'USD']) assert.ok(!content.includes(unexpected), `unexpected "${unexpected}"`)
   })
 
   it('builds a safe file name', () => {
-    assert.equal(receiptFileName('2627-1'), 'comprobante-inscripcion-2627-1.pdf')
-    assert.equal(receiptFileName('../x"y'), 'comprobante-inscripcion-xy.pdf')
+    assert.equal(receiptFileName('2627-1'), 'certificado-inscripcion-2627-1.pdf')
+    assert.equal(receiptFileName('../x"y'), 'certificado-inscripcion-xy.pdf')
   })
 })

@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from 'next'
 import { Roboto_Condensed, Roboto_Flex } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { AppToaster } from '@/presentation/components/shared/app-toaster'
 import { UI_ZOOM_OPTIONS, UI_ZOOM_STORAGE_KEY } from '@/presentation/lib/ui-zoom'
 import './globals.css'
 
@@ -45,6 +46,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
       </head>
       <body className="antialiased">
         {children}
+        <AppToaster />
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
     </html>

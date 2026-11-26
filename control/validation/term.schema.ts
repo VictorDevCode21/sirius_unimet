@@ -52,3 +52,8 @@ export const maxCreditsSchema = z.object({
     .transform(Number)
     .refine((value) => value >= 1 && value <= MAX_CREDITS_LIMIT, INVALID_MAX_CREDITS),
 })
+
+export const enrollmentStartSchema = z.object({
+  termId: termIdSchema,
+  enrollmentStartsAt: dateOnly('Ingresa el primer día de inscripción.'),
+})

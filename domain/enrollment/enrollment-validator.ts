@@ -36,8 +36,8 @@ export function isEnrollmentEditable(status: string) {
   return EDITABLE_ENROLLMENT_STATUSES.includes(status)
 }
 
-// A saved selection that still has to be paid: pre-enrolled or with a rejected payment attempt.
-export function isAwaitingPayment(enrollment: { status: string; sectionCount: number } | null) {
+// A saved selection that has not been enrolled yet: pre-enrolled, or pending from an earlier payment attempt.
+export function isAwaitingEnrollment(enrollment: { status: string; sectionCount: number } | null) {
   return Boolean(enrollment && enrollment.sectionCount > 0 && isEnrollmentEditable(enrollment.status))
 }
 

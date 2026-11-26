@@ -24,6 +24,9 @@ export function TermsList({ terms }: { terms: TermView[] }) {
                 Monto por UC: {term.ratePerCredit > 0 ? formatCurrency(term.ratePerCredit) : 'sin configurar'} · Máximo:{' '}
                 {term.maxCredits > 0 ? `${term.maxCredits} UC` : 'sin configurar'}
               </p>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                Inscripción: {term.enrollmentStartsAt ? `desde el ${formatDateOnly(term.enrollmentStartsAt)} (2 días, por turnos)` : 'sin fecha'}
+              </p>
             </div>
             <span className="pill self-start sm:self-auto">{term.open ? 'Abierto' : 'Cerrado'}</span>
           </div>

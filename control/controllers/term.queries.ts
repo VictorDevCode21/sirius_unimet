@@ -15,6 +15,7 @@ function toTermView(term: TermRecord) {
     open: term.open,
     ratePerCredit: Number(term.ratePerCredit),
     maxCredits: term.maxCredits,
+    enrollmentStartsAt: term.enrollmentStartsAt,
   }
 }
 

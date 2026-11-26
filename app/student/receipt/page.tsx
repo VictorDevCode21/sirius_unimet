@@ -1,9 +1,9 @@
 import Link from 'next/link'
-import { CreditCard, Download, ShieldCheck } from 'lucide-react'
+import { Download, ListChecks, ShieldCheck } from 'lucide-react'
 import { getStudentReceipts } from '@/control/controllers/receipt.controller'
 import { UnimetLogo } from '@/presentation/components/brand/unimet-logo'
 import { PageHeading } from '@/presentation/components/shared/page-heading'
-import { formatCurrency, formatSchedule, formatShortDate } from '@/presentation/lib/format'
+import { formatSchedule, formatShortDate } from '@/presentation/lib/format'
 import { ROUTES } from '@/presentation/lib/routes'
 
 interface ReceiptPageProps {
@@ -12,26 +12,26 @@ interface ReceiptPageProps {
 
 export default async function ReceiptPage({ searchParams }: ReceiptPageProps) {
   const { term } = await searchParams
-  const { terms, selected: enrollment, pendingPayment } = await getStudentReceipts(term)
+  const { terms, selected: enrollment, pendingEnrollment } = await getStudentReceipts(term)
 
-  if (pendingPayment && !term) {
+  if (pendingEnrollment && !term) {
     return (
       <div className="content-container">
-        <PageHeading eyebrow="Comprobante" title="Primero debes completar el pago para ver tu comprobante." />
+        <PageHeading eyebrow="Certificado" title="Debes inscribir tus materias para obtener tu certificado de inscripción." />
         <section className="surface card-pad reveal reveal-1 flex flex-wrap items-center justify-between gap-4" aria-live="polite">
           <p className="text-sm leading-relaxed text-muted-foreground">
-            Tu inscripción del período <strong className="text-foreground">{pendingPayment}</strong> todavía no está pagada. El comprobante
-            aparece cuando el pago queda aprobado.
+            Tienes materias pre-inscritas en el período <strong className="text-foreground">{pendingEnrollment}</strong>. El certificado
+            de inscripción estará disponible una vez que formalices la inscripción en tu turno.
           </p>
-          <Link href={ROUTES.studentPayment} className="primary-button">
-            <CreditCard aria-hidden="true" /> Ir a pagar
+          <Link href={ROUTES.studentEnrollment} className="primary-button">
+            <ListChecks aria-hidden="true" /> Ir a Inscripción
           </Link>
         </section>
         {terms.length > 0 && (
-          <nav className="reveal reveal-2 mt-5 flex flex-wrap gap-2" aria-label="Comprobantes de períodos anteriores">
+          <nav className="reveal reveal-2 mt-5 flex flex-wrap gap-2" aria-label="Certificados de períodos anteriores">
             {terms.map((name) => (
               <Link key={name} href={`/student/receipt?term=${encodeURIComponent(name)}`} className="pill text-muted-foreground hover:text-foreground">
-                Comprobante {name}
+                Certificado {name}
               </Link>
             ))}
           </nav>
@@ -44,9 +44,9 @@ export default async function ReceiptPage({ searchParams }: ReceiptPageProps) {
     return (
       <div className="content-container">
         <PageHeading
-          eyebrow="Comprobante"
-          title="Sin inscripción confirmada"
-          description="Aún no tienes una inscripción pagada. El comprobante aparece aquí cuando el pago de tu pre-inscripción queda aprobado."
+          eyebrow="Certificado"
+          title="Sin inscripción"
+          description="Aún no tienes materias inscritas. El certificado estará disponible aquí una vez que formalices tu inscripción en tu turno."
         />
       </div>
     )
@@ -57,9 +57,9 @@ export default async function ReceiptPage({ searchParams }: ReceiptPageProps) {
   return (
     <div className="content-container">
       <PageHeading
-        eyebrow="Comprobante"
-        title="Comprobante de inscripción"
-        description="Constancia de las secciones inscritas y pagadas en el período seleccionado."
+        eyebrow="Certificado"
+        title="Certificado de inscripción"
+        description="Certifica las asignaturas en las que te inscribiste en el período seleccionado."
         actions={
           <a href={downloadHref} download className="primary-button">
             <Download aria-hidden="true" /> Descargar PDF
@@ -94,7 +94,7 @@ export default async function ReceiptPage({ searchParams }: ReceiptPageProps) {
           </div>
           <p className="mt-14 text-[0.68rem] font-bold uppercase tracking-[0.18em] text-[#b34700]">Universidad Metropolitana</p>
           <h2 className="mt-2 font-display text-[clamp(1.8rem,calc(3vw*var(--ui-scale)),2.6rem)] font-extrabold uppercase leading-none text-[#003087]">
-            Comprobante de inscripción
+            Certificado de inscripción
           </h2>
           <p className="mt-4 max-w-2xl text-[0.92rem] leading-relaxed text-[#48617e]">
             Se certifica que <strong>{enrollment.student.name}</strong> se encuentra inscrito como estudiante de{' '}
@@ -119,7 +119,7 @@ export default async function ReceiptPage({ searchParams }: ReceiptPageProps) {
               </div>
             ))}
             <div className="font-bold">
-              <span>Total pagado: {formatCurrency(enrollment.amount)}</span>
+              <span>Total de unidades de crédito</span>
               <span />
               <span>{enrollment.totalCredits}</span>
             </div>
@@ -127,9 +127,9 @@ export default async function ReceiptPage({ searchParams }: ReceiptPageProps) {
           <div className="mt-8 flex flex-wrap items-center gap-3 rounded-2xl border-2 border-dashed border-[#f68629] bg-[#fff7ee] px-4 py-3 text-[#00143d]">
             <ShieldCheck className="h-5 w-5 shrink-0" aria-hidden="true" />
             <div className="text-[0.78rem]">
-              <strong className="block uppercase tracking-wider">Pago simulado · Aprobado</strong>
-              Referencia {enrollment.payment?.reference ?? 'no registrada'}
-              {enrollment.payment && ` · ${formatShortDate(enrollment.payment.paidAt)}`}. No corresponde a un cobro real.
+              <strong className="block uppercase tracking-wider">Inscripción confirmada</strong>
+              Inscripción formalizada el {formatShortDate(enrollment.enrolledAt)} en el período {enrollment.term} · {enrollment.sections.length}{' '}
+              {enrollment.sections.length === 1 ? 'asignatura' : 'asignaturas'}, {enrollment.totalCredits} UC.
             </div>
           </div>
           <div className="mt-8 flex flex-wrap items-center justify-between gap-2 border-t border-[#e2d2b4] pt-4 text-[0.7rem] text-[#5d6b80]">
@@ -144,7 +144,7 @@ export default async function ReceiptPage({ searchParams }: ReceiptPageProps) {
           </div>
           <h3 className="mt-4 text-xl font-bold">Inscripción confirmada</h3>
           <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-            Este comprobante refleja tu inscripción pagada en el período {enrollment.term}. Descárgalo en PDF para guardarlo o imprimirlo.
+            Este certificado acredita tu inscripción en el período {enrollment.term}. Puedes descargarlo en PDF para guardarlo o imprimirlo.
           </p>
           <a href={downloadHref} download className="secondary-button mt-4 w-full">
             <Download aria-hidden="true" /> Descargar PDF

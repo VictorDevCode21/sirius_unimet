@@ -8,6 +8,7 @@ import { validateRequirements } from '@/domain/curriculum/prerequisite-rules'
 import { FormMessage } from '@/presentation/components/shared/form-message'
 import { toRoman } from '@/presentation/lib/format'
 import { useAction } from '@/presentation/lib/use-action'
+import { notifyErrors } from '@/presentation/lib/notify'
 
 const inputClass = 'min-w-0 flex-1 border-0 bg-transparent py-3 text-[0.95rem] text-foreground outline-0'
 
@@ -27,7 +28,6 @@ export function RequirementsForm({ subject, subjects, onBack, onClose }: Require
     alternativeCredits: subject.alternativeCredits === null ? '' : String(subject.alternativeCredits),
     alternativeCreditBlock: subject.alternativeCreditBlock ?? '',
   })
-  const [errors, setErrors] = useState<string[]>([])
   const { pending, result, run } = useAction()
 
   useEffect(() => {
@@ -64,8 +64,7 @@ export function RequirementsForm({ subject, subjects, onBack, onClose }: Require
       alternativeCredits: toNumber(form.alternativeCredits),
       alternativeCreditBlock: form.alternativeCreditBlock.trim().toUpperCase() || null,
     })
-    setErrors(draftErrors)
-    if (draftErrors.length) return
+    if (draftErrors.length) return notifyErrors(draftErrors)
     run(() => defineRequirements({ subjectId: subject.id, requirementIds: [...selected], ...form }))
   }
 
@@ -156,13 +155,6 @@ export function RequirementsForm({ subject, subjects, onBack, onClose }: Require
         </fieldset>
 
         <div className="mt-auto flex flex-col gap-3 pt-2">
-          {errors.length > 0 && (
-            <ul role="alert" className="flex flex-col gap-1 text-sm font-semibold text-red-600 dark:text-red-400">
-              {errors.map((error) => (
-                <li key={error}>{error}</li>
-              ))}
-            </ul>
-          )}
           <FormMessage result={result} />
           <button type="submit" className="primary-button w-full" disabled={pending}>
             {pending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}

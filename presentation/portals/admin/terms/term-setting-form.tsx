@@ -4,6 +4,8 @@ import { useState } from 'react'
 import { LoaderCircle, Save } from 'lucide-react'
 import type { ActionResult } from '@/control/controllers/action-result'
 import { FormMessage } from '@/presentation/components/shared/form-message'
+import { MoneyInput } from '@/presentation/components/shared/money-input'
+import { centsToDecimal, toCents } from '@/presentation/lib/money-entry'
 import { useAction } from '@/presentation/lib/use-action'
 
 interface TermSettingFormProps {
@@ -12,17 +14,23 @@ interface TermSettingFormProps {
   label: string
   initialValue: string
   inputMode: 'decimal' | 'numeric'
+  type?: 'text' | 'date'
   save: (value: string) => Promise<ActionResult>
 }
 
-// Single-value form used for the settings of a period. The value travels as text so the server validates it.
-export function TermSettingForm({ title, description, label, initialValue, inputMode, save }: TermSettingFormProps) {
+const fieldClass = 'min-w-0 flex-1 border-0 bg-transparent py-3.5 text-[0.95rem] text-foreground outline-0'
+
+// Single-value form used for the settings of a period. The value travels as text so the server validates it; decimal
+// values are amounts typed bank-style, with two fixed decimals.
+export function TermSettingForm({ title, description, label, initialValue, inputMode, type = 'text', save }: TermSettingFormProps) {
+  const money = inputMode === 'decimal'
   const [value, setValue] = useState(initialValue)
+  const [cents, setCents] = useState(() => toCents(Number(initialValue) || 0))
   const { pending, result, run } = useAction()
 
   const submit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-    run(() => save(value))
+    run(() => save(money ? centsToDecimal(cents) : value))
   }
 
   return (
@@ -34,12 +42,11 @@ export function TermSettingForm({ title, description, label, initialValue, input
       <label className="flex min-w-0 flex-col gap-1.5 text-sm font-bold">
         {label}
         <span className="field">
-          <input
-            className="min-w-0 flex-1 border-0 bg-transparent py-3.5 text-[0.95rem] text-foreground outline-0"
-            inputMode={inputMode}
-            value={value}
-            onChange={(event) => setValue(event.target.value)}
-          />
+          {money ? (
+            <MoneyInput className={fieldClass} cents={cents} onCentsChange={setCents} />
+          ) : (
+            <input className={fieldClass} type={type} inputMode={inputMode} value={value} onChange={(event) => setValue(event.target.value)} />
+          )}
         </span>
       </label>
       <div className="flex flex-wrap items-center gap-4">

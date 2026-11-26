@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import {
-  isAwaitingPayment,
+  isAwaitingEnrollment,
   isEnrollmentEditable,
   joinList,
   missingPrerequisitesMessage,
@@ -101,16 +101,16 @@ describe('editable enrollment', () => {
   })
 })
 
-describe('receipt availability', () => {
-  it('asks for the payment while the enrollment is pre-enrolled or pending', () => {
-    assert.equal(isAwaitingPayment({ status: 'PRE_ENROLLED', sectionCount: 2 }), true)
-    assert.equal(isAwaitingPayment({ status: 'PENDING', sectionCount: 1 }), true)
+describe('enrollment certificate availability', () => {
+  it('asks to enroll while the selection is pre-enrolled or pending', () => {
+    assert.equal(isAwaitingEnrollment({ status: 'PRE_ENROLLED', sectionCount: 2 }), true)
+    assert.equal(isAwaitingEnrollment({ status: 'PENDING', sectionCount: 1 }), true)
   })
 
-  it('does not ask once the enrollment is confirmed, empty or missing', () => {
-    assert.equal(isAwaitingPayment({ status: 'CONFIRMED', sectionCount: 2 }), false)
-    assert.equal(isAwaitingPayment({ status: 'PRE_ENROLLED', sectionCount: 0 }), false)
-    assert.equal(isAwaitingPayment(null), false)
+  it('does not ask once the student is enrolled, or without a selection', () => {
+    assert.equal(isAwaitingEnrollment({ status: 'CONFIRMED', sectionCount: 2 }), false)
+    assert.equal(isAwaitingEnrollment({ status: 'PRE_ENROLLED', sectionCount: 0 }), false)
+    assert.equal(isAwaitingEnrollment(null), false)
   })
 })
 
