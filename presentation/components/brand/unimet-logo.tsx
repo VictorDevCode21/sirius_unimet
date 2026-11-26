@@ -29,10 +29,10 @@ export function UnimetIsotype({ className }: { className?: string }) {
 
 export function UnimetLogo({ compact = false, inverted = false, className }: UnimetLogoProps) {
   return (
-    <div className={cn('flex items-center gap-3', className)} aria-label="Universidad Metropolitana">
+    <div className={cn('flex items-center gap-3', className)} role="img" aria-label="Universidad Metropolitana">
       <UnimetIsotype />
       {!compact && (
-        <div className={cn('font-display leading-[0.95]', inverted ? 'text-white' : 'text-[#0b1b3d] dark:text-white')}>
+        <div className={cn('font-display leading-[0.95]', inverted ? 'text-white' : 'text-[#0b1b3d] dark:text-white')} aria-hidden="true">
           <p className="text-[1.05rem] font-normal tracking-tight">Universidad</p>
           <p className="text-[1.05rem] font-extrabold tracking-tight">Metropolitana</p>
         </div>

@@ -40,13 +40,15 @@ export function PaymentsCenter({ overview }: { overview: PaymentsOverview }) {
           <dt className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">
             <TrendingUp className="h-4 w-4" aria-hidden="true" /> Tasa oficial BCV
           </dt>
-          <dd className="mt-1 font-display text-3xl font-extrabold">{bcv ? `Bs. ${formatRate(bcv.rate)}` : 'No disponible'}</dd>
-          {bcv && (
-            <p className="mt-1 text-xs text-muted-foreground">
-              Por dólar{bcv.valueDate ? ` · fecha valor ${bcv.valueDate.split('-').reverse().join('/')}` : ''}
-              {bcv.stale ? ' · última tasa leída, el BCV no respondió' : ''}
-            </p>
-          )}
+          <dd className="mt-1">
+            <span className="block font-display text-3xl font-extrabold">{bcv ? `Bs. ${formatRate(bcv.rate)}` : 'No disponible'}</span>
+            {bcv && (
+              <span className="mt-1 block text-xs text-muted-foreground">
+                Por dólar{bcv.valueDate ? ` · fecha valor ${bcv.valueDate.split('-').reverse().join('/')}` : ''}
+                {bcv.stale ? ' · última tasa leída, el BCV no respondió' : ''}
+              </span>
+            )}
+          </dd>
         </div>
         <div className="stat-card">
           <dt className="flex items-center gap-2 text-xs font-semibold text-muted-foreground">

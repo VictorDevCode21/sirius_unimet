@@ -1,8 +1,11 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { getCurriculumEditor } from '@/control/controllers/curriculum.queries'
 import { PageHeading } from '@/presentation/components/shared/page-heading'
 import { CsvImport } from '@/presentation/portals/admin/curriculum/csv-import'
+
+export const metadata: Metadata = { title: 'Importar pensum | Sirius UNIMET' }
 
 export default async function CurriculumImportPage({ searchParams }: { searchParams: Promise<{ career?: string }> }) {
   const { career } = await searchParams

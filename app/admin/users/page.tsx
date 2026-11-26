@@ -1,9 +1,12 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Plus } from 'lucide-react'
 import { getUsers } from '@/control/controllers/user.queries'
 import { PageHeading } from '@/presentation/components/shared/page-heading'
 import { UserFilters } from '@/presentation/portals/admin/users/user-filters'
 import { UsersList } from '@/presentation/portals/admin/users/users-list'
+
+export const metadata: Metadata = { title: 'Usuarios | Sirius UNIMET' }
 
 export default async function UsersPage({ searchParams }: { searchParams: Promise<{ q?: string; role?: string }> }) {
   const { users, filters } = await getUsers(await searchParams)

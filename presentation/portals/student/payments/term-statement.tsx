@@ -89,7 +89,7 @@ export function TermStatementCard({ term, methods }: { term: TermStatement; meth
                     <Icon className="h-5 w-5" aria-hidden="true" />
                   </span>
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-bold">{methodLabel(payment.method)}</p>
+                    <p className="[overflow-wrap:anywhere] text-sm font-bold">{methodLabel(payment.method)}</p>
                     <p className="flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground">
                       <span>{formatShortDate(new Date(payment.createdAt))}</span>
                       {payment.payerReference && <span className="font-mono">Ref. {payment.payerReference}</span>}

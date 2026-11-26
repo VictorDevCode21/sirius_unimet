@@ -1,8 +1,11 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { getAssignableCareers } from '@/control/controllers/user.queries'
 import { PageHeading } from '@/presentation/components/shared/page-heading'
 import { UserForm } from '@/presentation/portals/admin/users/user-form'
+
+export const metadata: Metadata = { title: 'Nuevo usuario | Sirius UNIMET' }
 
 export default async function NewUserPage() {
   const careers = await getAssignableCareers()

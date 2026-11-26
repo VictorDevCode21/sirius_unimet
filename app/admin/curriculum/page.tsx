@@ -1,7 +1,10 @@
+import type { Metadata } from 'next'
 import { getCurriculumEditor } from '@/control/controllers/curriculum.queries'
 import { CURRICULUM_BRANCHES, CURRICULUM_TERMS } from '@/domain/curriculum/curriculum-grid'
 import { PageHeading } from '@/presentation/components/shared/page-heading'
 import { CurriculumGrid } from '@/presentation/portals/admin/curriculum/curriculum-grid'
+
+export const metadata: Metadata = { title: 'Pensum | Sirius UNIMET' }
 
 export default async function CurriculumPage({ searchParams }: { searchParams: Promise<{ career?: string }> }) {
   const { career } = await searchParams

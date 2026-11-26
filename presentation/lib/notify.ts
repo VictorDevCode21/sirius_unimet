@@ -1,11 +1,14 @@
 import toast from 'react-hot-toast'
 
+// Error toasts are alerts, so screen readers announce them right away.
+export const ERROR_TOAST_ARIA = { role: 'alert', 'aria-live': 'assertive' } as const
+
 export const UNEXPECTED_ERROR = 'Ocurrió un error inesperado. Intenta de nuevo en unos segundos.'
 
 // Shows an error to the user. The message is also the toast id, so repeating the same failure does not stack copies.
 export function notifyError(message: string | null | undefined) {
   const text = message?.trim() || UNEXPECTED_ERROR
-  toast.error(text, { id: text })
+  toast.error(text, { id: text, ariaProps: ERROR_TOAST_ARIA })
 }
 
 // Error of several validation messages at once, one per line.

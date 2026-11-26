@@ -66,7 +66,7 @@ export function WeeklySchedule({ sections }: { sections: SectionView[] }) {
         ))}
       </div>
       {clashCount > 0 && (
-        <p className="mt-2 text-[0.7rem] font-semibold text-red-600 dark:text-red-400">
+        <p className="mt-2 text-[0.7rem] font-semibold text-[var(--status-failed)]">
           Hay bloques que se solapan (en rojo). Quita una de esas secciones o elige otra.
         </p>
       )}

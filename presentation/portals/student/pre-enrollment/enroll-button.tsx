@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import { ListChecks, LoaderCircle } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { validateSeats } from '@/control/controllers/enrollment.controller'
-import { isNavigationSignal, notifyError } from '@/presentation/lib/notify'
+import { ERROR_TOAST_ARIA, isNavigationSignal, notifyError } from '@/presentation/lib/notify'
 import { ROUTES } from '@/presentation/lib/routes'
 
 interface EnrollButtonProps {
@@ -38,7 +38,7 @@ export function EnrollButton({ disabledReason }: EnrollButtonProps) {
             </Link>
           </span>
         ),
-        { id: 'seat-validation' },
+        { id: 'seat-validation', ariaProps: ERROR_TOAST_ARIA },
       )
     })
 
@@ -51,7 +51,7 @@ export function EnrollButton({ disabledReason }: EnrollButtonProps) {
         aria-describedby={disabledReason ? 'enroll-disabled-reason' : undefined}
         onClick={goToEnrollment}
       >
-        {isPending ? <LoaderCircle className="animate-spin" /> : <ListChecks />} Inscribir
+        {isPending ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <ListChecks aria-hidden="true" />} Inscribir
       </button>
       {disabledReason && (
         <p id="enroll-disabled-reason" className="mt-2 text-center text-xs text-muted-foreground">

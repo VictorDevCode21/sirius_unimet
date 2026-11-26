@@ -48,7 +48,7 @@ export function TurnCard({ turn, hold }: { turn: Registration['turn']; hold: Reg
 
       {hold.length > 0 && (
         <section role="alert" className="surface card-pad reveal reveal-3 border border-red-500/30" aria-labelledby="hold-title">
-          <h2 id="hold-title" className="flex items-center gap-2 text-lg font-bold text-red-700 dark:text-red-300">
+          <h2 id="hold-title" className="flex items-center gap-2 text-lg font-bold text-[var(--status-failed)]">
             <LockKeyhole className="h-5 w-5" aria-hidden="true" /> Bloqueo financiero
           </h2>
           <p className="mt-2 text-sm text-muted-foreground">No puedes inscribir hasta pagar en su totalidad los períodos anteriores:</p>

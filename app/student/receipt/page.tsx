@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Download, ListChecks, ShieldCheck } from 'lucide-react'
 import { getStudentReceipts } from '@/control/controllers/receipt.controller'
@@ -5,6 +6,8 @@ import { UnimetLogo } from '@/presentation/components/brand/unimet-logo'
 import { PageHeading } from '@/presentation/components/shared/page-heading'
 import { formatSchedule, formatShortDate } from '@/presentation/lib/format'
 import { ROUTES } from '@/presentation/lib/routes'
+
+export const metadata: Metadata = { title: 'Certificado de inscripción | Sirius UNIMET' }
 
 interface ReceiptPageProps {
   searchParams: Promise<{ term?: string }>

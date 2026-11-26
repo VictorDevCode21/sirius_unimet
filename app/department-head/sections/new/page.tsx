@@ -1,8 +1,11 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowLeft } from 'lucide-react'
 import { getSectionFormOptions } from '@/control/controllers/section-management.queries'
 import { PageHeading } from '@/presentation/components/shared/page-heading'
 import { SectionForm } from '@/presentation/portals/department-head/sections/section-form'
+
+export const metadata: Metadata = { title: 'Nueva sección | Sirius UNIMET' }
 
 interface NewSectionPageProps {
   searchParams: Promise<{ term?: string }>

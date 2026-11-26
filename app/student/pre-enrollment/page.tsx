@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import { CalendarClock } from 'lucide-react'
 import { getEnrollmentAvailability } from '@/control/controllers/enrollment-availability'
 import { listOffer } from '@/control/controllers/enrollment.controller'
@@ -5,6 +6,8 @@ import { GlossaryTerm } from '@/presentation/components/shared/glossary'
 import { PageHeading } from '@/presentation/components/shared/page-heading'
 import { formatDateOnly } from '@/presentation/lib/format'
 import { PreEnrollmentCatalog } from '@/presentation/portals/student/pre-enrollment/pre-enrollment-catalog'
+
+export const metadata: Metadata = { title: 'Pre-inscripción | Sirius UNIMET' }
 
 export default async function PreEnrollmentPage() {
   const offer = await listOffer()

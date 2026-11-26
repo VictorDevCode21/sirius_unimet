@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft, Info } from 'lucide-react'
@@ -6,6 +7,8 @@ import { PageHeading } from '@/presentation/components/shared/page-heading'
 import { ScheduleEditor } from '@/presentation/portals/department-head/sections/schedule-editor'
 import { SectionEditor } from '@/presentation/portals/department-head/sections/section-editor'
 import { SectionStudents } from '@/presentation/portals/department-head/sections/section-students'
+
+export const metadata: Metadata = { title: 'Editar sección | Sirius UNIMET' }
 
 interface SectionDetailPageProps {
   params: Promise<{ sectionId: string }>

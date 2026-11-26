@@ -1,8 +1,11 @@
+import type { Metadata } from 'next'
 import { getAcademicRecord } from '@/control/controllers/academic-record.controller'
 import { getFlowchart } from '@/control/controllers/flowchart.controller'
 import { PageHeading } from '@/presentation/components/shared/page-heading'
 import { formatGrade } from '@/presentation/lib/format'
 import { cn } from '@/presentation/lib/utils'
+
+export const metadata: Metadata = { title: 'Histórico académico | Sirius UNIMET' }
 
 export default async function HistoryPage() {
   const [{ history, average }, { stats }] = await Promise.all([getAcademicRecord(), getFlowchart()])
@@ -49,12 +52,12 @@ export default async function HistoryPage() {
               {term.records.map((record) => (
                 <div key={record.code} className="flex items-center justify-between gap-4 border-b border-border py-3.5 last:border-0">
                   <div className="min-w-0">
-                    <p className="truncate text-sm font-semibold">{record.name}</p>
+                    <p className="[overflow-wrap:anywhere] text-sm font-semibold">{record.name}</p>
                     <p className="font-mono text-[0.7rem] text-muted-foreground">
                       {record.code} · {record.credits} UC · {record.passed ? 'Aprobada' : 'Reprobada'}
                     </p>
                   </div>
-                  <span className={cn('font-display text-xl font-extrabold', !record.passed && 'text-red-500')}>{record.value}</span>
+                  <span className={cn('font-display text-xl font-extrabold', !record.passed && 'text-[var(--status-failed)]')}>{record.value}</span>
                 </div>
               ))}
             </div>

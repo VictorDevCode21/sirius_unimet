@@ -108,7 +108,7 @@ function ThemeToggle() {
 
   return (
     <button type="button" className="icon-button" onClick={toggle} aria-label={dark ? 'Activar modo claro' : 'Activar modo oscuro'}>
-      {dark ? <Sun /> : <Moon />}
+      {dark ? <Sun aria-hidden="true" /> : <Moon aria-hidden="true" />}
     </button>
   )
 }
@@ -133,36 +133,43 @@ function ProfileMenu({ user, roleLabel, showSettings }: { user: PortalShellProps
         className="flex items-center gap-2.5 rounded-full border border-border bg-card p-1 transition hover:shadow-[var(--shadow-soft)] sm:pr-3"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
-        aria-haspopup="menu"
+        aria-controls="profile-menu"
       >
-        <span className="avatar h-9 w-9 text-[0.72rem]">{initialsOf(user.name)}</span>
+        <span className="avatar h-9 w-9 text-[0.72rem]" aria-hidden="true">
+          {initialsOf(user.name)}
+        </span>
+        <span className="sr-only sm:hidden">
+          {user.name} {roleLabel}
+        </span>
         <span className="hidden text-left sm:block">
           <strong className="block text-[0.8rem] leading-tight">{user.name}</strong>
           <small className="block text-[0.68rem] text-muted-foreground">{roleLabel}</small>
         </span>
-        <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition max-sm:hidden', open && 'rotate-180')} />
+        <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition max-sm:hidden', open && 'rotate-180')} aria-hidden="true" />
       </button>
       {open && (
-        <div className="profile-menu reveal" role="menu">
+        <div id="profile-menu" className="profile-menu reveal">
           <div className="flex items-center gap-3 border-b border-border p-3">
-            <span className="avatar h-10 w-10">{initialsOf(user.name)}</span>
+            <span className="avatar h-10 w-10" aria-hidden="true">
+              {initialsOf(user.name)}
+            </span>
             <div className="min-w-0">
-              <strong className="block truncate text-sm">{user.name}</strong>
-              <small className="block truncate text-xs text-muted-foreground">{user.email}</small>
+              <strong className="block [overflow-wrap:anywhere] text-sm">{user.name}</strong>
+              <small className="block [overflow-wrap:anywhere] text-xs text-muted-foreground">{user.email}</small>
             </div>
           </div>
           <div className="pt-1.5">
-            <Link href="/microsoft-365" className="menu-item" role="menuitem" onClick={() => setOpen(false)}>
-              <ExternalLink /> Microsoft 365
+            <Link href="/microsoft-365" className="menu-item" onClick={() => setOpen(false)}>
+              <ExternalLink aria-hidden="true" /> Microsoft 365
             </Link>
             {showSettings && (
-              <Link href="/student/settings" className="menu-item" role="menuitem" onClick={() => setOpen(false)}>
-                <Settings /> Ajustes
+              <Link href="/student/settings" className="menu-item" onClick={() => setOpen(false)}>
+                <Settings aria-hidden="true" /> Ajustes
               </Link>
             )}
             <form action={logout}>
-              <button type="submit" className="menu-item" role="menuitem">
-                <LogOut /> Cerrar sesión
+              <button type="submit" className="menu-item">
+                <LogOut aria-hidden="true" /> Cerrar sesión
               </button>
             </form>
           </div>
@@ -196,13 +203,16 @@ export function PortalShell({ portal = 'student', user, currentTermCode, preEnro
 
   return (
     <div className="app-shell">
-      {mobileOpen && <div className="mobile-backdrop lg:hidden" onClick={() => setMobileOpen(false)} />}
+      <a href="#contenido" className="skip-link">
+        Saltar al contenido
+      </a>
+      {mobileOpen && <div className="mobile-backdrop lg:hidden" aria-hidden="true" onClick={() => setMobileOpen(false)} />}
 
       <aside className={cn('sidebar', collapsed && 'sidebar-collapsed', mobileOpen && 'sidebar-mobile-open')}>
         <div className="flex items-center justify-between px-5 pb-6 pt-6">
           <UnimetLogo compact={collapsed} className={cn(collapsed && 'lg:mx-auto')} />
           <button type="button" className="icon-button lg:hidden" onClick={() => setMobileOpen(false)} aria-label="Cerrar menú">
-            <X />
+            <X aria-hidden="true" />
           </button>
         </div>
 
@@ -222,6 +232,7 @@ export function PortalShell({ portal = 'student', user, currentTermCode, preEnro
                 <span className={cn(collapsed && 'lg:hidden')}>{item.label}</span>
                 {item.href === '/student/pre-enrollment' && cartCount > 0 && (
                   <span
+                    aria-label={`${cartCount} ${cartCount === 1 ? 'sección seleccionada' : 'secciones seleccionadas'}`}
                     className={cn(
                       'ml-auto flex h-5 min-w-5 items-center justify-center rounded-full bg-[#f68629] px-1.5 text-[0.65rem] font-bold text-[var(--on-orange)]',
                       collapsed && 'lg:absolute lg:right-2.5 lg:top-1.5 lg:h-4 lg:min-w-4 lg:px-1 lg:text-[0.58rem]',
@@ -241,13 +252,13 @@ export function PortalShell({ portal = 'student', user, currentTermCode, preEnro
           className="sidebar-toggle max-lg:hidden"
           aria-label={collapsed ? 'Expandir menú' : 'Contraer menú'}
         >
-          {collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
+          {collapsed ? <PanelLeftOpen aria-hidden="true" /> : <PanelLeftClose aria-hidden="true" />}
         </button>
 
         {portal === 'student' && !collapsed && preEnrollmentTermCode && pathname !== '/student' && (
           <div className="mt-auto p-4">
             <div className="relative overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-[#003087] to-[#1859a9] p-5 text-white">
-              <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[#f68629]/40 blur-2xl" />
+              <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[#f68629]/40 blur-2xl" aria-hidden="true" />
               <p className="relative text-[0.65rem] font-bold uppercase tracking-[0.16em] text-[#ffb36b]">Período {preEnrollmentTermCode}</p>
               <p className="relative mt-1.5 font-display text-xl font-extrabold uppercase leading-none">Pre-inscripciones abiertas</p>
               <Link
@@ -265,9 +276,9 @@ export function PortalShell({ portal = 'student', user, currentTermCode, preEnro
         <header className="topbar">
           <div className="flex min-w-0 items-center gap-2 sm:gap-3">
             <button type="button" className="icon-button lg:hidden" onClick={() => setMobileOpen(true)} aria-label="Abrir menú">
-              <Menu />
+              <Menu aria-hidden="true" />
             </button>
-            <p className="flex min-w-0 flex-col text-xs leading-snug sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-2 sm:text-sm">
+            <p className="flex min-w-0 flex-col text-xs leading-normal sm:flex-row sm:flex-wrap sm:items-baseline sm:gap-x-2 sm:text-sm">
               <span className="sm:whitespace-nowrap">
                 <span className="text-muted-foreground">Período en curso: </span>
                 <strong className="font-display text-sm font-extrabold sm:text-base">{currentTermCode ?? '—'}</strong>
@@ -287,7 +298,9 @@ export function PortalShell({ portal = 'student', user, currentTermCode, preEnro
             <ProfileMenu user={user} roleLabel={roleLabel} showSettings={portal === 'student'} />
           </div>
         </header>
-        {children}
+        <main id="contenido" tabIndex={-1} className="outline-none">
+          {children}
+        </main>
       </div>
     </div>
   )

@@ -40,7 +40,7 @@ export function HelpPanel() {
   return (
     <>
       <button type="button" className="icon-button" onClick={() => setOpen(true)} aria-label="Ayuda" aria-haspopup="dialog">
-        <CircleHelp />
+        <CircleHelp aria-hidden="true" />
       </button>
 
       {open &&
@@ -61,7 +61,7 @@ export function HelpPanel() {
                   </h2>
                 </div>
                 <button type="button" className="icon-button" onClick={() => setOpen(false)} aria-label="Cerrar ayuda">
-                  <X />
+                  <X aria-hidden="true" />
                 </button>
               </div>
 
@@ -95,7 +95,7 @@ export function HelpPanel() {
 
               <section className="mt-8" aria-labelledby="help-glossary">
                 <h3 id="help-glossary" className="flex items-center gap-2 text-sm font-bold">
-                  <BookOpen className="h-4 w-4" /> Glosario
+                  <BookOpen className="h-4 w-4" aria-hidden="true" /> Glosario
                 </h3>
                 <dl className="mt-3 flex flex-col gap-2">
                   {Object.values(GLOSSARY).map((entry) => (
@@ -109,7 +109,7 @@ export function HelpPanel() {
 
               <section className="mt-8 rounded-[1.25rem] bg-[#003087]/6 p-4 dark:bg-white/5" aria-labelledby="help-contact">
                 <h3 id="help-contact" className="flex items-center gap-2 text-sm font-bold text-[#003087] dark:text-[#8fb8ff]">
-                  <Landmark className="h-4 w-4" /> Contacto
+                  <Landmark className="h-4 w-4" aria-hidden="true" /> Contacto
                 </h3>
                 <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">
                   Para dudas sobre tu inscripción, permisos de acceso o correcciones de tu historial, comunícate con{' '}

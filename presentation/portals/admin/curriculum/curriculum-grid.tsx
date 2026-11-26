@@ -91,8 +91,8 @@ export function CurriculumGrid({ careers, career, subjects, terms, branches }: C
                       onClick={() => setEditingId(subject.id)}
                     >
                       <span className="subject-code">{subject.code}</span>
-                      <p className="mt-2 line-clamp-3 text-[0.8rem] font-semibold leading-tight">{subject.name}</p>
-                      <span className="mt-auto flex justify-between gap-2 pt-3 text-[0.66rem] font-semibold opacity-70">
+                      <p className="mt-2 text-[0.8rem] [overflow-wrap:anywhere] font-semibold leading-tight">{subject.name}</p>
+                      <span className="mt-auto flex justify-between gap-2 pt-3 text-[0.66rem] font-semibold text-muted-foreground">
                         <span>{subject.credits} UC</span>
                         {(subject.prerequisiteIds.length > 0 || subject.minCredits) && (
                           <span>

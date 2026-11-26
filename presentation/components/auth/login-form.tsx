@@ -58,7 +58,7 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
             className="-mr-1 flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition hover:bg-muted hover:text-foreground"
             aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
           >
-            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {showPassword ? <EyeOff className="h-4 w-4" aria-hidden="true" /> : <Eye className="h-4 w-4" aria-hidden="true" />}
           </button>
         </div>
       </div>
@@ -67,11 +67,11 @@ export function LoginForm({ callbackUrl }: { callbackUrl?: string }) {
       <button type="submit" className="brand-button mt-1" disabled={isPending}>
         {isPending ? (
           <>
-            <LoaderCircle className="animate-spin" /> Verificando…
+            <LoaderCircle className="animate-spin" aria-hidden="true" /> Verificando…
           </>
         ) : (
           <>
-            Iniciar sesión <ArrowRight className="arrow" />
+            Iniciar sesión <ArrowRight className="arrow" aria-hidden="true" />
           </>
         )}
       </button>

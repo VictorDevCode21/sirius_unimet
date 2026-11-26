@@ -1,7 +1,10 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowRight } from 'lucide-react'
 import { getCorrectableSections } from '@/control/controllers/grade-correction.queries'
 import { PageHeading } from '@/presentation/components/shared/page-heading'
+
+export const metadata: Metadata = { title: 'Notas | Sirius UNIMET' }
 
 export default async function GradeCorrectionPage({ searchParams }: { searchParams: Promise<{ term?: string }> }) {
   const { term } = await searchParams

@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { CalendarClock } from 'lucide-react'
 import { getRegistration } from '@/control/controllers/registration.queries'
@@ -5,6 +6,8 @@ import { PageHeading } from '@/presentation/components/shared/page-heading'
 import { ROUTES } from '@/presentation/lib/routes'
 import { RegistrationPanel } from '@/presentation/portals/student/registration/registration-panel'
 import { TurnCard } from '@/presentation/portals/student/registration/turn-card'
+
+export const metadata: Metadata = { title: 'Inscripción | Sirius UNIMET' }
 
 export default async function EnrollmentPage() {
   const registration = await getRegistration()

@@ -14,7 +14,7 @@ export function PublishGradesButton({ sectionId }: { sectionId: string }) {
       <p className="text-sm text-muted-foreground">Los estudiantes verán sus notas en el histórico cuando las publiques.</p>
       <div className="flex flex-wrap items-center gap-4">
         <button type="button" className="primary-button" disabled={pending} onClick={() => run(() => publishGrades(sectionId))}>
-          {pending ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" aria-hidden="true" />}
+          {pending ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Send className="h-4 w-4" aria-hidden="true" />}
           Publicar notas
         </button>
         <FormMessage result={result} />

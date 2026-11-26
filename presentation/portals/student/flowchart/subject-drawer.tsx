@@ -48,7 +48,7 @@ export function SubjectDrawer({ subject, onClose, showEnrollLink = true }: Subje
             <p className="mt-2 font-mono text-xs font-bold text-muted-foreground">{subject.code}</p>
           </div>
           <button type="button" className="icon-button" onClick={onClose} aria-label="Cerrar detalle">
-            <X />
+            <X aria-hidden="true" />
           </button>
         </div>
 
@@ -92,9 +92,9 @@ export function SubjectDrawer({ subject, onClose, showEnrollLink = true }: Subje
                   )}
                   <div className="requirement-row">
                     {requirement.met ? (
-                      <Check className="text-[var(--status-passed)]" />
+                      <Check className="text-[var(--status-passed)]" aria-hidden="true" />
                     ) : (
-                      <CircleSlash className="text-[var(--status-blocked)]" />
+                      <CircleSlash className="text-[var(--status-blocked)]" aria-hidden="true" />
                     )}
                     <span className={requirement.met ? '' : 'text-muted-foreground'}>{requirement.label}</span>
                   </div>
@@ -122,7 +122,7 @@ export function SubjectDrawer({ subject, onClose, showEnrollLink = true }: Subje
         <div className="mt-auto pt-8">
           {subject.status === 'AVAILABLE' && showEnrollLink ? (
             <Link href="/student/pre-enrollment" className="primary-button w-full">
-              Ir a pre-inscripción <ArrowRight />
+              Ir a pre-inscripción <ArrowRight aria-hidden="true" />
             </Link>
           ) : (
             <button type="button" className="secondary-button w-full" onClick={onClose}>

@@ -1,6 +1,9 @@
+import type { Metadata } from 'next'
 import { getPaymentsOverview } from '@/control/controllers/payment.queries'
 import { PageHeading } from '@/presentation/components/shared/page-heading'
 import { PaymentsCenter } from '@/presentation/portals/student/payments/payments-center'
+
+export const metadata: Metadata = { title: 'Pagos | Sirius UNIMET' }
 
 export default async function PaymentsPage() {
   const overview = await getPaymentsOverview()

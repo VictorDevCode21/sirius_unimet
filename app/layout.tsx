@@ -14,7 +14,7 @@ const robotoCondensed = Roboto_Condensed({
 })
 
 export const metadata: Metadata = {
-  title: 'Sirius UNIMET | Inscripciones',
+  title: 'Inscripciones | Sirius UNIMET',
   description: 'Portal de inscripciones para estudiantes de la Universidad Metropolitana.',
   icons: {
     icon: [

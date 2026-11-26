@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
@@ -5,6 +6,8 @@ import { getCorrectableGrades } from '@/control/controllers/grade-correction.que
 import { PageHeading } from '@/presentation/components/shared/page-heading'
 import { GradeForm } from '@/presentation/portals/professor/sections/grade-form'
 import { GradeOutcomeBadge } from '@/presentation/portals/professor/sections/grade-outcome-badge'
+
+export const metadata: Metadata = { title: 'Notas de la sección | Sirius UNIMET' }
 
 export default async function SectionGradeCorrectionPage({ params }: { params: Promise<{ sectionId: string }> }) {
   const { sectionId } = await params

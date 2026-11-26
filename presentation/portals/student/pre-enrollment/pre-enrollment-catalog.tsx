@@ -192,33 +192,33 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
             <p className="text-sm font-bold">Sección {section.number}</p>
             <div className="mt-1 flex flex-wrap gap-x-3 gap-y-1 text-[0.72rem] text-muted-foreground">
               <span className="inline-flex items-center gap-1">
-                <UserRound className="h-3.5 w-3.5" /> {section.professor}
+                <UserRound className="h-3.5 w-3.5" aria-hidden="true" /> {section.professor}
               </span>
               <span className="inline-flex items-center gap-1">
-                <Clock3 className="h-3.5 w-3.5" /> {formatSchedule(section.blocks)}
+                <Clock3 className="h-3.5 w-3.5" aria-hidden="true" /> {formatSchedule(section.blocks)}
               </span>
-              <span className={cn('inline-flex items-center gap-1', isFull && 'font-bold text-red-500')}>
-                <UsersRound className="h-3.5 w-3.5" /> {isFull ? 'Llena' : `${section.seatsLeft} cupos`}
+              <span className={cn('inline-flex items-center gap-1', isFull && 'font-bold text-[var(--status-failed)]')}>
+                <UsersRound className="h-3.5 w-3.5" aria-hidden="true" /> {isFull ? 'Llena' : `${section.seatsLeft} cupos`}
               </span>
             </div>
           </div>
           {isSelected ? (
             <button
               type="button"
-              className="secondary-button group !px-3.5 !py-2 text-xs hover:border-red-500/40 hover:text-red-600 focus:border-red-500/40 focus:text-red-600"
+              className="secondary-button group !px-3.5 !py-2 text-xs hover:border-[var(--status-failed)] hover:text-[var(--status-failed)] focus:border-[var(--status-failed)] focus:text-[var(--status-failed)]"
               disabled={isLocked || pendingId === section.id}
               onClick={() => removeWithUndo(section.id)}
               aria-label={`Quitar ${subject.name}`}
             >
               {pendingId === section.id ? (
-                <LoaderCircle className="animate-spin" />
+                <LoaderCircle className="animate-spin" aria-hidden="true" />
               ) : (
                 <>
                   <span className="inline-flex items-center gap-1.5 group-hover:hidden group-focus:hidden">
-                    <CheckCircle2 className="text-[var(--status-passed)]" /> Agregada
+                    <CheckCircle2 className="text-[var(--status-passed)]" aria-hidden="true" /> Agregada
                   </span>
                   <span className="hidden items-center gap-1.5 group-hover:inline-flex group-focus:inline-flex">
-                    <X /> Quitar
+                    <X aria-hidden="true" /> Quitar
                   </span>
                 </>
               )}
@@ -232,7 +232,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
               aria-expanded={confirmingReplace}
               aria-controls={`replace-${section.id}`}
             >
-              <ArrowLeftRight /> Reemplazar
+              <ArrowLeftRight aria-hidden="true" /> Reemplazar
             </button>
           ) : (
             <button
@@ -242,14 +242,14 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
               onClick={() => run(section.id, addSection)}
               aria-describedby={disabledReason ? `reason-${section.id}` : undefined}
             >
-              {pendingId === section.id ? <LoaderCircle className="animate-spin" /> : <Plus />}
+              {pendingId === section.id ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <Plus aria-hidden="true" />}
               {isFull ? 'Llena' : 'Agregar'}
             </button>
           )}
         </div>
         {canReplace && !confirmingReplace && (
-          <p className="mt-2 flex items-start gap-1.5 text-[0.72rem] font-semibold leading-snug text-muted-foreground">
-            <Info className="mt-px h-3.5 w-3.5 shrink-0" /> Ya tienes la sección {otherSection!.number} de esta materia.
+          <p className="mt-2 flex items-start gap-1.5 text-[0.72rem] font-semibold leading-normal text-muted-foreground">
+            <Info className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden="true" /> Ya tienes la sección {otherSection!.number} de esta materia.
           </p>
         )}
         {confirmingReplace && (
@@ -259,7 +259,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
             aria-label="Confirmar reemplazo"
             className="mt-3 rounded-xl border border-[var(--brand-orange)] bg-card p-3"
           >
-            <p className="text-xs font-semibold leading-snug">
+            <p className="text-xs font-semibold leading-normal">
               Ya tienes la sección {otherSection!.number} de {subject.name}. ¿Quieres reemplazarla por la sección{' '}
               {section.number}?
             </p>
@@ -270,7 +270,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
                 disabled={pendingId === section.id}
                 onClick={() => confirmReplacement(otherSection!.id, section.id)}
               >
-                {pendingId === section.id ? <LoaderCircle className="animate-spin" /> : <ArrowLeftRight />} Reemplazar
+                {pendingId === section.id ? <LoaderCircle className="animate-spin" aria-hidden="true" /> : <ArrowLeftRight aria-hidden="true" />} Reemplazar
               </button>
               <button type="button" className="secondary-button !px-3.5 !py-2 text-xs" onClick={() => setReplaceTarget(null)}>
                 Cancelar
@@ -283,10 +283,10 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
             id={`reason-${section.id}`}
             className={cn(
               'mt-2 flex items-start gap-1.5 text-[0.72rem] font-semibold leading-snug',
-              clash && !isFull && !isLocked ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground',
+              clash && !isFull && !isLocked ? 'text-[var(--status-failed)]' : 'text-muted-foreground',
             )}
           >
-            <Info className="mt-px h-3.5 w-3.5 shrink-0" /> {disabledReason}
+            <Info className="mt-px h-3.5 w-3.5 shrink-0" aria-hidden="true" /> {disabledReason}
           </p>
         )}
       </li>
@@ -298,7 +298,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
       <div className="min-w-0">
         <div className="reveal reveal-1 mb-6 flex flex-wrap items-center gap-3">
           <div className="search-box basis-full">
-            <Search />
+            <Search aria-hidden="true" />
             <input
               ref={searchRef}
               value={query}
@@ -355,13 +355,13 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
                     </span>
                   </div>
                   <div className="mt-3 flex items-start justify-between gap-3">
-                    <h3 className="font-display text-xl font-bold uppercase leading-tight">{subject.name}</h3>
+                    <h2 className="font-display text-xl font-bold uppercase leading-tight">{subject.name}</h2>
                     <button
                       type="button"
                       className="inline-flex min-h-[max(1.5rem,var(--tap-min))] shrink-0 items-center gap-0.5 text-xs font-bold text-[#003087] dark:text-[#8fb8ff]"
                       onClick={() => setDetail(subject)}
                     >
-                      Prelaciones <ChevronRight className="h-3.5 w-3.5" />
+                      Prelaciones <ChevronRight className="h-3.5 w-3.5" aria-hidden="true" />
                     </button>
                   </div>
 
@@ -370,7 +370,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
                   ) : (
                     <div className="mt-4 flex items-start justify-between gap-3 rounded-2xl bg-muted p-3">
                       <p className="flex items-start gap-1.5 text-xs leading-relaxed text-muted-foreground">
-                        <LockKeyhole className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                        <LockKeyhole className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden="true" />
                         {subject.status === 'BLOCKED'
                           ? `Te falta: ${missing.join(', ')}${alternative ? ` (o ${alternative.label})` : ''}`
                           : `Sin secciones en el período ${offer.term.name}.`}
@@ -394,10 +394,10 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3">
             <span className="stat-icon bg-[#f68629]/15 text-[var(--orange-text)]">
-              <CalendarDays />
+              <CalendarDays aria-hidden="true" />
             </span>
             <div>
-              <p className="font-bold">Tu selección</p>
+              <h2 className="font-bold">Tu selección</h2>
               <p className="text-xs text-muted-foreground">Período {offer.term.name}</p>
             </div>
           </div>
@@ -409,7 +409,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
             {selected.map((section) => (
               <li key={section.id} className="flex items-center gap-3 rounded-2xl bg-muted p-3">
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold">{section.subject.name}</p>
+                  <p className="[overflow-wrap:anywhere] text-sm font-semibold">{section.subject.name}</p>
                   <p className="text-[0.68rem] text-muted-foreground">
                     Secc. {section.number} · {formatSchedule(section.blocks)}
                   </p>
@@ -417,12 +417,12 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
                 {!isLocked && (
                   <button
                     type="button"
-                    className="flex h-[max(2rem,var(--tap-min))] w-[max(2rem,var(--tap-min))] shrink-0 items-center justify-center rounded-full text-muted-foreground transition hover:bg-red-500/10 hover:text-red-500"
+                    className="flex h-[max(2rem,var(--tap-min))] w-[max(2rem,var(--tap-min))] shrink-0 items-center justify-center rounded-full text-muted-foreground transition hover:bg-red-500/10 hover:text-[var(--status-failed)]"
                     onClick={() => removeWithUndo(section.id)}
                     disabled={pendingId === section.id}
                     aria-label={`Quitar ${section.subject.name}`}
                   >
-                    {pendingId === section.id ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                    {pendingId === section.id ? <LoaderCircle className="h-4 w-4 animate-spin" aria-hidden="true" /> : <Trash2 className="h-4 w-4" aria-hidden="true" />}
                   </button>
                 )}
               </li>
@@ -456,7 +456,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
         </div>
 
         <Link href={ROUTES.studentPreEnrollmentSummary} className="primary-button mt-5 w-full">
-          <ClipboardList /> Ver resumen
+          <ClipboardList aria-hidden="true" /> Ver resumen
         </Link>
         <p className="mt-2 text-center text-[0.68rem] text-muted-foreground">Revisa el monto y paga desde el resumen.</p>
       </aside>
@@ -468,7 +468,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
           role="status"
           className="reveal fixed bottom-5 left-1/2 z-[70] flex w-[min(calc(100%-2rem),26rem)] -translate-x-1/2 items-center gap-3 rounded-[1.25rem] border border-border bg-card p-4 shadow-[var(--shadow-lift)]"
         >
-          <CheckCircle2 className="h-5 w-5 shrink-0 text-[var(--status-passed)]" />
+          <CheckCircle2 className="h-5 w-5 shrink-0 text-[var(--status-passed)]" aria-hidden="true" />
           <p className="flex-1 text-sm font-semibold">{toast.message}</p>
           {toast.undoSectionId && (
             <button
@@ -476,7 +476,7 @@ export function PreEnrollmentCatalog({ offer }: { offer: Offer }) {
               className="secondary-button shrink-0 !px-3 !py-1.5 text-xs"
               onClick={() => undoRemoval(toast.undoSectionId!)}
             >
-              <RotateCcw /> Deshacer
+              <RotateCcw aria-hidden="true" /> Deshacer
             </button>
           )}
         </div>

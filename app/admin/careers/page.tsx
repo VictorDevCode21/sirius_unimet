@@ -1,7 +1,10 @@
+import type { Metadata } from 'next'
 import { getCareers } from '@/control/controllers/career.queries'
 import { PageHeading } from '@/presentation/components/shared/page-heading'
 import { CareerCard } from '@/presentation/portals/admin/careers/career-card'
 import { CareerForm } from '@/presentation/portals/admin/careers/career-form'
+
+export const metadata: Metadata = { title: 'Carreras | Sirius UNIMET' }
 
 export default async function CareersPage() {
   const { careers, departments } = await getCareers()

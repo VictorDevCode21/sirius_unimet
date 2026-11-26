@@ -145,7 +145,7 @@ export function SectionEditor({ detail, backHref }: { detail: ManagedSectionDeta
           <p className="mt-2 text-sm text-muted-foreground">Las secciones de períodos finalizados no se pueden eliminar.</p>
         ) : confirmingDelete ? (
           <div className="mt-3 rounded-2xl bg-red-500/10 p-4" role="group" aria-label="Confirmar eliminación">
-            <p className="text-sm font-semibold text-red-700 dark:text-red-300">
+            <p className="text-sm font-semibold text-[var(--status-failed)]">
               Se eliminará la sección {section.number} y su horario. Esta acción no se puede deshacer.
             </p>
             <div className="mt-3 flex flex-wrap gap-2">
@@ -166,7 +166,7 @@ export function SectionEditor({ detail, backHref }: { detail: ManagedSectionDeta
         ) : (
           <>
             <p className="mt-2 text-sm leading-relaxed text-muted-foreground">La sección no tiene inscritos. Al eliminarla también se borra su horario.</p>
-            <button type="button" className="secondary-button mt-4 !text-red-700 dark:!text-red-300" onClick={() => setConfirmingDelete(true)}>
+            <button type="button" className="secondary-button mt-4 !text-[var(--status-failed)]" onClick={() => setConfirmingDelete(true)}>
               <Trash2 aria-hidden="true" /> Eliminar sección
             </button>
           </>

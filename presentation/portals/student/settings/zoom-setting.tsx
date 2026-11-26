@@ -76,7 +76,7 @@ export function ZoomSetting() {
             onClick={() => changeZoom(DEFAULT_UI_ZOOM)}
             disabled={zoom === DEFAULT_UI_ZOOM}
           >
-            <RotateCcw /> Restablecer
+            <RotateCcw aria-hidden="true" /> Restablecer
           </button>
         </div>
         <p className="mt-3 text-xs text-muted-foreground">
@@ -92,7 +92,7 @@ export function ZoomSetting() {
           aria-hidden="true"
           className="reveal fixed bottom-5 left-1/2 z-[70] flex w-[min(calc(100%-2rem),22rem)] -translate-x-1/2 items-center gap-3 rounded-[1.25rem] border border-border bg-card p-4 shadow-[var(--shadow-lift)]"
         >
-          <CheckCircle2 className="h-5 w-5 shrink-0 text-[var(--status-passed)]" />
+          <CheckCircle2 className="h-5 w-5 shrink-0 text-[var(--status-passed)]" aria-hidden="true" />
           <p className="text-sm font-semibold">{notice}</p>
         </div>
       )}

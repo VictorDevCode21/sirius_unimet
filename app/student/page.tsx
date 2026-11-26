@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { ArrowRight, BookOpen, CalendarClock, CalendarDays, GraduationCap, Sparkles, Trophy } from 'lucide-react'
 import { getAcademicRecord } from '@/control/controllers/academic-record.controller'
@@ -5,6 +6,8 @@ import { getEnrollmentAvailability } from '@/control/controllers/enrollment-avai
 import { listOffer } from '@/control/controllers/enrollment.controller'
 import { getFlowchart } from '@/control/controllers/flowchart.controller'
 import { firstName, formatDateOnly, formatGrade, formatLongDate, toRoman } from '@/presentation/lib/format'
+
+export const metadata: Metadata = { title: 'Resumen | Sirius UNIMET' }
 
 const courseColors = ['bg-[#003087]', 'bg-[#f68629] text-[var(--on-orange)]', 'bg-[#1859a9]', 'bg-[#0b7a55]', 'bg-[#ff8200] text-[var(--on-orange)]', 'bg-[#5b4bd6]']
 
@@ -50,7 +53,7 @@ export default async function SummaryPage() {
                   href="/student/pre-enrollment"
                   className="inline-flex items-center gap-2 rounded-full bg-[#f68629] px-5 py-2.5 text-sm font-bold text-[var(--on-orange)] shadow-lg shadow-orange-950/30 transition hover:-translate-y-0.5 hover:bg-[#ff8200]"
                 >
-                  Pre-inscribir materias <ArrowRight className="h-4 w-4" />
+                  Pre-inscribir materias <ArrowRight className="h-4 w-4" aria-hidden="true" />
                 </Link>
               )}
               <Link
@@ -83,7 +86,7 @@ export default async function SummaryPage() {
             </div>
             <div>
               <p className="flex items-center gap-1.5 text-xs font-bold uppercase tracking-[0.14em] text-white/70">
-                <Trophy className="h-3.5 w-3.5 text-[#ffb36b]" /> Avance
+                <Trophy className="h-3.5 w-3.5 text-[#ffb36b]" aria-hidden="true" /> Avance
               </p>
               <p className="mt-1 text-sm font-semibold">
                 {stats.passedCredits} de {stats.planCredits} créditos
@@ -106,7 +109,7 @@ export default async function SummaryPage() {
       <div className="card-grid grid sm:grid-cols-2 xl:grid-cols-4">
         <Link href="/student/flowchart" className="stat-card reveal reveal-1 block">
           <div className="stat-icon bg-[#003087]/10 text-[#003087] dark:bg-[#1859a9]/25 dark:text-[#8fb8ff]">
-            <GraduationCap />
+            <GraduationCap aria-hidden="true" />
           </div>
           <p className="mt-5 text-xs font-semibold text-muted-foreground">Carrera</p>
           <p className="mt-1 text-lg font-bold leading-tight">{career.name}</p>
@@ -114,7 +117,7 @@ export default async function SummaryPage() {
         </Link>
         <Link href="/student/history" className="stat-card reveal reveal-2 block">
           <div className="stat-icon bg-[#f68629]/15 text-[var(--orange-text)]">
-            <Sparkles />
+            <Sparkles aria-hidden="true" />
           </div>
           <p className="mt-5 text-xs font-semibold text-muted-foreground">Índice acumulado</p>
           <p className="mt-1 font-display text-4xl font-extrabold">{formatGrade(record.average)}</p>
@@ -122,7 +125,7 @@ export default async function SummaryPage() {
         </Link>
         <Link href="/student/flowchart" className="stat-card reveal reveal-3 block">
           <div className="stat-icon bg-emerald-500/12 text-emerald-600 dark:text-emerald-400">
-            <BookOpen />
+            <BookOpen aria-hidden="true" />
           </div>
           <p className="mt-5 text-xs font-semibold text-muted-foreground">Créditos aprobados</p>
           <p className="mt-1 font-display text-4xl font-extrabold">
@@ -135,7 +138,7 @@ export default async function SummaryPage() {
         </Link>
         <Link href="/student/flowchart" className="stat-card reveal reveal-4 block">
           <div className="stat-icon bg-violet-500/12 text-violet-600 dark:text-violet-400">
-            <CalendarDays />
+            <CalendarDays aria-hidden="true" />
           </div>
           <p className="mt-5 text-xs font-semibold text-muted-foreground">Trimestre de la carrera</p>
           <p className="mt-1 font-display text-4xl font-extrabold">{toRoman(stats.currentCurriculumTerm)}</p>
@@ -160,7 +163,7 @@ export default async function SummaryPage() {
                 <div className="course-row" key={course.id}>
                   <div className={`course-mark ${courseColors[index % courseColors.length]}`}>{course.name[0]}</div>
                   <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-bold">{course.name}</p>
+                    <p className="[overflow-wrap:anywhere] text-sm font-bold">{course.name}</p>
                     <p className="mt-0.5 font-mono text-xs text-muted-foreground">
                       {course.code} · {course.credits} UC
                     </p>

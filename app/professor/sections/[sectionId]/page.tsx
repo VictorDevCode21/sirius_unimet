@@ -1,3 +1,4 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
@@ -5,6 +6,8 @@ import { getMySectionRoster } from '@/control/controllers/professor-section.quer
 import { PageHeading } from '@/presentation/components/shared/page-heading'
 import { formatSchedule } from '@/presentation/lib/format'
 import { StudentRoster } from '@/presentation/portals/professor/sections/student-roster'
+
+export const metadata: Metadata = { title: 'Notas de la sección | Sirius UNIMET' }
 
 export default async function ProfessorSectionPage({ params }: { params: Promise<{ sectionId: string }> }) {
   const { sectionId } = await params

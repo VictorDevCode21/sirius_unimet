@@ -5,6 +5,10 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  /* Body text sizes keep a line height of at least 1.5 (WCAG 1.4.12). */
+  --text-xs--line-height: 1.5;
+  --text-sm--line-height: 1.5;
+  --text-base--line-height: 1.5;
   --font-sans: var(--font-roboto-flex), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-roboto-condensed), var(--font-roboto-flex), ui-sans-serif, sans-serif;
   --color-border: var(--border);
@@ -89,6 +93,10 @@
   --status-failed-bg: rgb(217 45 32 / 10%);
   --relation-prerequisite: #7c3aed;
   --relation-unlock: #db2777;
+  --relation-prerequisite-text: #ffffff;
+  --relation-unlock-text: #ffffff;
+  /* Border of form controls and other interactive boundaries (WCAG 1.4.11, at least 3:1). */
+  --control-border: #7e89a0;
 }
 
 .dark {
@@ -120,6 +128,9 @@
   --status-failed-bg: rgb(249 112 102 / 14%);
   --relation-prerequisite: #a78bfa;
   --relation-unlock: #f472b6;
+  --relation-prerequisite-text: #0b1631;
+  --relation-unlock-text: #0b1631;
+  --control-border: #5f6d8c;
 }
 
 @layer base {
@@ -134,6 +145,7 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-sans);
+    line-height: 1.5;
     font-optical-sizing: auto;
     transition: background-color 0.3s ease;
   }
@@ -349,7 +361,7 @@
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  border: 1.5px solid var(--border);
+  border: 1.5px solid var(--control-border);
   border-radius: 1.1rem;
   background: var(--card);
   padding: 0 1rem;
@@ -574,7 +586,7 @@ select.field:disabled {
   transform: translateX(-50%);
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   border-radius: 999px;
   background: var(--card);
   color: var(--muted-foreground);
@@ -941,7 +953,7 @@ select.field:disabled {
 .segmented {
   display: inline-flex;
   gap: 0.25rem;
-  border: 1px solid var(--border);
+  border: 1px solid var(--control-border);
   border-radius: 999px;
   background: var(--card);
   padding: 0.3rem;
@@ -1399,6 +1411,31 @@ select.field:disabled {
 
 .shake {
   animation: shake 0.4s ease;
+}
+
+/* ---------- Skip link ---------- */
+
+.skip-link {
+  position: fixed;
+  top: 0.75rem;
+  left: 0.75rem;
+  z-index: 100;
+  transform: translateY(-200%);
+  border-radius: 999px;
+  background: var(--brand-blue);
+  padding: 0.75rem 1.25rem;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 700;
+  box-shadow: var(--shadow-lift);
+  transition: transform 0.15s ease;
+}
+
+.skip-link:focus,
+.skip-link:focus-visible {
+  transform: none;
+  outline: 3px solid var(--brand-orange);
+  outline-offset: 2px;
 }
 
 /* ---------- Toasts ---------- */

@@ -29,18 +29,18 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <div className="login-float login-float-top glass-card float-a p-4">
           <div className="flex items-center justify-between">
             <span className="font-mono text-[0.7rem] font-bold text-white/70">FPTSP07</span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-[#f68629] px-2 py-1 text-[0.62rem] font-bold">
-              <LockKeyholeOpen className="h-3 w-3" /> Disponible
+            <span className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-orange)] px-2 py-1 text-[0.62rem] font-bold text-[var(--on-orange)]">
+              <LockKeyholeOpen className="h-3 w-3" aria-hidden="true" /> Disponible
             </span>
           </div>
           <p className="mt-2 font-display text-lg font-bold uppercase leading-tight">Ingeniería de Software</p>
           <div className="mt-3 flex items-center gap-2 text-[0.7rem] text-white/70">
-            <GitBranch className="h-3.5 w-3.5" /> Prela: Bases de Datos I · Sist. de Información
+            <GitBranch className="h-3.5 w-3.5" aria-hidden="true" /> Prela: Bases de Datos I · Sist. de Información
           </div>
         </div>
         <div className="login-float login-float-bottom glass-card float-b items-center gap-3 p-4">
           <span className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-400/20 text-emerald-300">
-            <CheckCircle2 className="h-5 w-5" />
+            <CheckCircle2 className="h-5 w-5" aria-hidden="true" />
           </span>
           <div>
             <p className="text-sm font-bold">Prelaciones verificadas</p>
@@ -75,7 +75,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
           ].map((item) => (
             <div key={item.label} className="glass-card px-4 py-3.5">
               <p className="font-display text-2xl font-extrabold">{item.value}</p>
-              <p className="mt-0.5 text-[0.72rem] leading-snug text-white/70">{item.label}</p>
+              <p className="mt-0.5 text-[0.72rem] leading-normal text-white/70">{item.label}</p>
             </div>
           ))}
         </div>
@@ -85,7 +85,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <div className="login-card reveal reveal-2">
           <div className="mb-8 hidden lg:block">
             <span className="inline-flex items-center gap-2 rounded-full bg-[#003087]/8 px-3 py-1.5 text-xs font-bold text-[#003087] dark:bg-white/8 dark:text-[#8fb8ff]">
-              <CalendarCheck2 className="h-3.5 w-3.5" /> Portal estudiantil
+              <CalendarCheck2 className="h-3.5 w-3.5" aria-hidden="true" /> Portal estudiantil
             </span>
           </div>
           <p className="eyebrow lg:hidden">Portal estudiantil</p>
