@@ -10,7 +10,7 @@ import {
   replaceSectionWithSeatLock,
 } from '@/data-access/repositories/enrollment.repository'
 import { findOfferByTerm, findSectionById } from '@/data-access/repositories/section.repository'
-import { findNextTerm, findOpenTerm } from '@/data-access/repositories/term.repository'
+import { findOpenTerm } from '@/data-access/repositories/term.repository'
 import { calculateAmount } from '@/domain/billing/amount-calculator'
 import {
   validateCapacity,
@@ -211,13 +211,6 @@ export async function removeSection(rawSectionId: string): Promise<ActionResult>
     await removeEnrollmentSection(enrollment.id, parsed.data, (credits) => calculateAmount(credits, Number(term!.ratePerCredit)))
     return `${detail.section.subject.name} se retiró de tu pre-inscripción.`
   })
-}
-
-// Next term that has not started yet, shown when no term is open for pre-enrollment.
-export async function getUpcomingTerm() {
-  await getStudentContext()
-  const term = await findNextTerm(new Date())
-  return term ? { name: term.name, startsAt: term.startsAt, endsAt: term.endsAt } : null
 }
 
 // Confirmed enrollment of the current term, used by the enrollment receipt.
