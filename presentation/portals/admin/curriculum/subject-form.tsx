@@ -31,6 +31,10 @@ export function SubjectForm({ careerId, cell, subject, onClose }: SubjectFormPro
     branch: String(cell.branch),
   })
   const [errors, setErrors] = useState<string[]>([])
+  // Cell picked in the form; while editing, a different cell means the subject is being moved there.
+  const targetTerm = Number(form.term) || cell.term
+  const targetBranch = Number(form.branch) || cell.branch
+  const moving = Boolean(subject) && (targetTerm !== cell.term || targetBranch !== cell.branch)
   const { pending, result, run } = useAction()
 
   useEffect(() => {
@@ -70,8 +74,16 @@ export function SubjectForm({ careerId, cell, subject, onClose }: SubjectFormPro
       >
         <div className="flex items-start justify-between gap-4">
           <div>
-            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground">
-              Trimestre {toRoman(cell.term)} · Rama {cell.branch}
+            <p className="text-xs font-bold uppercase tracking-widest text-muted-foreground" aria-live="polite">
+              {moving ? (
+                <>
+                  Trimestre {toRoman(cell.term)} · Rama {cell.branch} → Trimestre {toRoman(targetTerm)} · Rama {targetBranch}
+                </>
+              ) : (
+                <>
+                  Trimestre {toRoman(targetTerm)} · Rama {targetBranch}
+                </>
+              )}
             </p>
             <h2 id="subject-form-title" className="mt-2 font-display text-3xl font-extrabold uppercase leading-[0.95]">
               {subject ? 'Editar materia' : 'Registrar materia'}
