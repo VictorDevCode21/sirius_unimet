@@ -20,6 +20,7 @@ import {
   findSubject,
   replaceSubjectRequirements,
   updateSubject,
+  type SubjectWriteConflict,
 } from '@/data-access/repositories/curriculum-management.repository'
 import { createCurriculumRepository } from '@/data-access/repositories/curriculum.repository'
 import { importCurriculum, previewCurriculumCsv } from '@/domain/curriculum/csv-importer'
@@ -27,6 +28,13 @@ import { blockedRemovalMessage, compareCurriculum } from '@/domain/curriculum/cu
 import { validateRequirements } from '@/domain/curriculum/prerequisite-rules'
 import { assertValidSubject, validateTermOrder } from '@/domain/curriculum/subject-rules'
 import { DomainError } from '@/domain/shared/domain-error'
+
+// Message for a write refused by the database, naming the value that is already taken.
+function conflictMessage(conflict: SubjectWriteConflict, data: { code: string; term: number; branch: number }) {
+  if (conflict === 'career') return 'La carrera seleccionada no existe. Recarga la página y elige otra carrera.'
+  if (conflict === 'code') return `El código ${data.code} ya pertenece a otra materia de la carrera.`
+  return `El trimestre ${data.term}, rama ${data.branch} ya tiene otra materia.`
+}
 
 // Registers a subject in a cell of the curriculum grid of a career.
 export async function registerSubject(input: SubjectInput): Promise<ActionResult> {
@@ -36,9 +44,11 @@ export async function registerSubject(input: SubjectInput): Promise<ActionResult
   const { careerId, ...data } = parsed.data
 
   return runAction(async () => {
+    if (!(await findCareer(careerId))) throw new DomainError(conflictMessage('career', data))
     assertValidSubject(await findCareerSubjects(careerId), data)
-    const subject = await createSubject(careerId, data)
-    if (!subject) throw new DomainError(`El código ${data.code} o la celda del trimestre ${data.term}, rama ${data.branch} ya están ocupados.`)
+    const result = await createSubject(careerId, data)
+    if (!result.ok) throw new DomainError(conflictMessage(result.conflict, data))
+    const { subject } = result
     return `La materia ${subject.code} se registró en el trimestre ${subject.term}, rama ${subject.branch}.`
   }, ['/admin/curriculum'])
 }
@@ -61,8 +71,9 @@ export async function editSubject(input: SubjectUpdateInput): Promise<ActionResu
     )
     if (orderErrors.length) throw new DomainError(orderErrors.join(' '))
 
-    const subject = await updateSubject(subjectId, data)
-    if (!subject) throw new DomainError(`El código ${data.code} o la celda del trimestre ${data.term}, rama ${data.branch} ya están ocupados.`)
+    const result = await updateSubject(subjectId, current.careerId, data)
+    if (!result.ok) throw new DomainError(conflictMessage(result.conflict, data))
+    const { subject } = result
     const moved = subject.term !== current.term || subject.branch !== current.branch
     return moved
       ? `La materia ${subject.code} se movió al trimestre ${subject.term}, rama ${subject.branch}.`
