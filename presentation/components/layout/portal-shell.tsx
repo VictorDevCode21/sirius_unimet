@@ -11,6 +11,7 @@ import {
   Clock3,
   ExternalLink,
   FileText,
+  GraduationCap,
   LayoutDashboard,
   LogOut,
   Menu,
@@ -48,6 +49,7 @@ const portals: Record<Portal, { home: string; roleLabel: string; navItems: { lab
       { label: 'Periodos', href: '/admin/terms', icon: CalendarDays },
       { label: 'Usuarios', href: '/admin/users', icon: UsersRound },
       { label: 'Departamentos', href: '/admin/departments', icon: Building2 },
+      { label: 'Carreras', href: '/admin/careers', icon: GraduationCap },
     ],
   },
 }
