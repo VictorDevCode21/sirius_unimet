@@ -22,3 +22,5 @@ export const createTermSchema = z.object({
   startsAt: dateOnly('Ingresa la fecha de inicio.'),
   endsAt: dateOnly('Ingresa la fecha de fin.'),
 })
+
+export const termIdSchema = z.string().uuid('Periodo inválido.')

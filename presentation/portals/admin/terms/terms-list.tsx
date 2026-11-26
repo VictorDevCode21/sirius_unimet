@@ -1,5 +1,6 @@
 import type { TermView } from '@/control/controllers/term.queries'
 import { formatDateOnly } from '@/presentation/lib/format'
+import { EnrollmentToggle } from '@/presentation/portals/admin/terms/enrollment-toggle'
 
 // List of academic periods with their dates and enrollment status.
 export function TermsList({ terms }: { terms: TermView[] }) {
@@ -10,14 +11,17 @@ export function TermsList({ terms }: { terms: TermView[] }) {
   return (
     <ul className="flex flex-col gap-3">
       {terms.map((term) => (
-        <li key={term.id} className="surface reveal flex flex-col gap-3 p-5 sm:flex-row sm:items-center sm:justify-between">
-          <div className="min-w-0">
-            <p className="font-display text-xl font-extrabold">{term.name}</p>
-            <p className="mt-0.5 text-sm text-muted-foreground">
-              {formatDateOnly(term.startsAt)} – {formatDateOnly(term.endsAt)}
-            </p>
+        <li key={term.id} className="surface reveal flex flex-col gap-3 p-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0">
+              <p className="font-display text-xl font-extrabold">{term.name}</p>
+              <p className="mt-0.5 text-sm text-muted-foreground">
+                {formatDateOnly(term.startsAt)} – {formatDateOnly(term.endsAt)}
+              </p>
+            </div>
+            <span className="pill self-start sm:self-auto">{term.open ? 'Abierto' : 'Cerrado'}</span>
           </div>
-          <span className="pill self-start sm:self-auto">{term.open ? 'Abierto' : 'Cerrado'}</span>
+          <EnrollmentToggle termId={term.id} open={term.open} />
         </li>
       ))}
     </ul>
