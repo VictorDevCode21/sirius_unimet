@@ -18,6 +18,7 @@ import {
   PanelLeftOpen,
   Settings,
   Sun,
+  UsersRound,
   X,
 } from 'lucide-react'
 import { UnimetLogo } from '@/presentation/components/brand/unimet-logo'
@@ -42,7 +43,10 @@ const portals: Record<Portal, { home: string; roleLabel: string; navItems: { lab
   admin: {
     home: '/admin',
     roleLabel: 'Administrador',
-    navItems: [{ label: 'Periodos', href: '/admin/terms', icon: CalendarDays }],
+    navItems: [
+      { label: 'Periodos', href: '/admin/terms', icon: CalendarDays },
+      { label: 'Usuarios', href: '/admin/users', icon: UsersRound },
+    ],
   },
 }
 
