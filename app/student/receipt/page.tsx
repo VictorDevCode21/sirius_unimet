@@ -1,9 +1,10 @@
 import Link from 'next/link'
-import { Download, ShieldCheck } from 'lucide-react'
+import { CreditCard, Download, ShieldCheck } from 'lucide-react'
 import { getStudentReceipts } from '@/control/controllers/receipt.controller'
 import { UnimetLogo } from '@/presentation/components/brand/unimet-logo'
 import { PageHeading } from '@/presentation/components/shared/page-heading'
 import { formatCurrency, formatSchedule, formatShortDate } from '@/presentation/lib/format'
+import { ROUTES } from '@/presentation/lib/routes'
 
 interface ReceiptPageProps {
   searchParams: Promise<{ term?: string }>
@@ -11,7 +12,33 @@ interface ReceiptPageProps {
 
 export default async function ReceiptPage({ searchParams }: ReceiptPageProps) {
   const { term } = await searchParams
-  const { terms, selected: enrollment } = await getStudentReceipts(term)
+  const { terms, selected: enrollment, pendingPayment } = await getStudentReceipts(term)
+
+  if (pendingPayment && !term) {
+    return (
+      <div className="content-container">
+        <PageHeading eyebrow="Comprobante" title="Primero debes completar el pago para ver tu comprobante." />
+        <section className="surface card-pad reveal reveal-1 flex flex-wrap items-center justify-between gap-4" aria-live="polite">
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            Tu inscripción del período <strong className="text-foreground">{pendingPayment}</strong> todavía no está pagada. El comprobante
+            aparece cuando el pago queda aprobado.
+          </p>
+          <Link href={ROUTES.studentPayment} className="primary-button">
+            <CreditCard aria-hidden="true" /> Ir a pagar
+          </Link>
+        </section>
+        {terms.length > 0 && (
+          <nav className="reveal reveal-2 mt-5 flex flex-wrap gap-2" aria-label="Comprobantes de períodos anteriores">
+            {terms.map((name) => (
+              <Link key={name} href={`/student/receipt?term=${encodeURIComponent(name)}`} className="pill text-muted-foreground hover:text-foreground">
+                Comprobante {name}
+              </Link>
+            ))}
+          </nav>
+        )}
+      </div>
+    )
+  }
 
   if (!enrollment) {
     return (

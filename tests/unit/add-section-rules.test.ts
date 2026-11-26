@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import { describe, it } from 'node:test'
 import {
+  isAwaitingPayment,
   isEnrollmentEditable,
   joinList,
   validateEnrollmentEditable,
@@ -96,5 +97,18 @@ describe('editable enrollment', () => {
   it('rejects changes to a confirmed enrollment', () => {
     assert.equal(isEnrollmentEditable('CONFIRMED'), false)
     assert.throws(() => validateEnrollmentEditable({ status: 'CONFIRMED' }), /ya está confirmada/)
+  })
+})
+
+describe('receipt availability', () => {
+  it('asks for the payment while the enrollment is pre-enrolled or pending', () => {
+    assert.equal(isAwaitingPayment({ status: 'PRE_ENROLLED', sectionCount: 2 }), true)
+    assert.equal(isAwaitingPayment({ status: 'PENDING', sectionCount: 1 }), true)
+  })
+
+  it('does not ask once the enrollment is confirmed, empty or missing', () => {
+    assert.equal(isAwaitingPayment({ status: 'CONFIRMED', sectionCount: 2 }), false)
+    assert.equal(isAwaitingPayment({ status: 'PRE_ENROLLED', sectionCount: 0 }), false)
+    assert.equal(isAwaitingPayment(null), false)
   })
 })

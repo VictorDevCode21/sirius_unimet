@@ -31,6 +31,11 @@ export function isEnrollmentEditable(status: string) {
   return EDITABLE_ENROLLMENT_STATUSES.includes(status)
 }
 
+// A saved selection that still has to be paid: pre-enrolled or with a rejected payment attempt.
+export function isAwaitingPayment(enrollment: { status: string; sectionCount: number } | null) {
+  return Boolean(enrollment && enrollment.sectionCount > 0 && isEnrollmentEditable(enrollment.status))
+}
+
 export function validateEnrollmentEditable(enrollment: { status: string } | null) {
   if (enrollment && !isEnrollmentEditable(enrollment.status)) {
     throw new DomainError('Tu inscripción ya está confirmada y no admite cambios.')
