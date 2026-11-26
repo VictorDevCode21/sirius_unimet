@@ -29,7 +29,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <div className="login-float login-float-top glass-card float-a p-4">
           <div className="flex items-center justify-between">
             <span className="font-mono text-[0.7rem] font-bold text-white/70">FPTSP07</span>
-            <span className="inline-flex items-center gap-1 rounded-full bg-[#f68629] px-2 py-1 text-[0.62rem] font-bold">
+            <span className="inline-flex items-center gap-1 rounded-full bg-[var(--brand-orange)] px-2 py-1 text-[0.62rem] font-bold text-[var(--on-orange)]">
               <LockKeyholeOpen className="h-3 w-3" /> Disponible
             </span>
           </div>

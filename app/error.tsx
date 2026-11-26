@@ -15,7 +15,7 @@ export default function RouteError({ error, reset }: { error: Error & { digest?:
   return (
     <div className="flex min-h-[70dvh] items-center justify-center p-6">
       <div className="surface card-pad reveal w-full max-w-md text-center">
-        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-[1.25rem] bg-red-500/12 text-red-600 dark:text-red-400">
+        <span className="mx-auto flex h-14 w-14 items-center justify-center rounded-[1.25rem] bg-red-500/12 text-[var(--status-failed)]">
           <TriangleAlert className="h-6 w-6" aria-hidden="true" />
         </span>
         <h1 className="page-title mt-6">Algo salió mal</h1>

@@ -33,7 +33,7 @@ export function CsvPreview({ preview }: { preview: CurriculumPreview }) {
             <CheckCircle2 className="h-4 w-4" aria-hidden="true" /> Sin errores.
           </p>
         ) : (
-          <div role="alert" className="rounded-[1.25rem] bg-red-500/10 p-4 text-sm text-red-700 dark:text-red-300">
+          <div role="alert" className="rounded-[1.25rem] bg-red-500/10 p-4 text-sm text-[var(--status-failed)]">
             <p className="flex items-center gap-2 font-bold">
               <AlertTriangle className="h-4 w-4" aria-hidden="true" /> {issues.length} {issues.length === 1 ? 'error' : 'errores'}
             </p>
@@ -77,7 +77,7 @@ export function CsvPreview({ preview }: { preview: CurriculumPreview }) {
                 </td>
                 <td className="px-4 py-2.5 text-xs font-semibold">
                   {row.errors.length ? (
-                    <ul className="flex flex-col gap-0.5 text-red-600 dark:text-red-400">
+                    <ul className="flex flex-col gap-0.5 text-[var(--status-failed)]">
                       {row.errors.map((error) => (
                         <li key={error}>{error}</li>
                       ))}

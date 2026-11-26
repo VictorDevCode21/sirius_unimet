@@ -57,7 +57,7 @@ export default async function HistoryPage() {
                       {record.code} · {record.credits} UC · {record.passed ? 'Aprobada' : 'Reprobada'}
                     </p>
                   </div>
-                  <span className={cn('font-display text-xl font-extrabold', !record.passed && 'text-red-500')}>{record.value}</span>
+                  <span className={cn('font-display text-xl font-extrabold', !record.passed && 'text-[var(--status-failed)]')}>{record.value}</span>
                 </div>
               ))}
             </div>

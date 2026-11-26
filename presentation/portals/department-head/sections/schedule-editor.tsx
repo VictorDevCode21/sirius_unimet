@@ -79,7 +79,7 @@ export function ScheduleEditor({ section }: { section: ManagedSectionView }) {
               {!locked && (
                 <button
                   type="button"
-                  className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition hover:bg-red-500/10 hover:text-red-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--ring)]"
+                  className="flex h-9 w-9 items-center justify-center rounded-full text-muted-foreground transition hover:bg-red-500/10 hover:text-[var(--status-failed)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-[var(--ring)]"
                   onClick={() => run(block.id, () => removeScheduleBlock({ sectionId: section.id, blockId: block.id }))}
                   disabled={pending !== null}
                   aria-label={`Quitar bloque del ${describeBlock(block)}`}

@@ -94,7 +94,7 @@ export function RegistrationPanel({ registration }: { registration: Registration
                     <strong className="block text-sm">{section.subject.credits} UC</strong>
                     {!enrolled &&
                       (section.full ? (
-                        <span className="inline-flex items-center gap-1 text-[0.68rem] font-bold text-red-700 dark:text-red-300">
+                        <span className="inline-flex items-center gap-1 text-[0.68rem] font-bold text-[var(--status-failed)]">
                           <XCircle className="h-3 w-3" aria-hidden="true" /> Sin cupo
                         </span>
                       ) : (
