@@ -12,6 +12,9 @@ import { resolveGradeStatus } from '../domain/grades/academic-progress'
 
 const STUDENT_EMAIL = 'r.victor@correo.unimet.edu.ve'
 const STUDENT_PASSWORD = 'Test123**'
+const ADMIN_EMAIL = 'admin@unimet.edu.ve'
+const ADMIN_PASSWORD = 'Test123**'
+const UNCONFIGURED_TERM = { name: '2627-3', startsAt: new Date(Date.UTC(2027, 3, 20)), endsAt: new Date(Date.UTC(2027, 6, 20)) }
 const RATE_PER_CREDIT = 45
 const MAX_CREDITS = 21
 
@@ -230,6 +233,21 @@ async function seedOpenTermOffer(careerId: string, professorIds: string[]) {
   console.log(`Open term ${OPEN_TERM}: ${index} sections`)
 }
 
+// Sample admin account and a closed, not yet configured period for the admin portal.
+async function seedAdminConfig() {
+  const passwordHash = await bcrypt.hash(ADMIN_PASSWORD, 12)
+  await prisma.user.upsert({
+    where: { email: ADMIN_EMAIL },
+    update: { passwordHash, role: 'ADMIN', active: true },
+    create: { email: ADMIN_EMAIL, name: 'Administración UNIMET', passwordHash, role: 'ADMIN' },
+  })
+  await prisma.term.upsert({
+    where: { name: UNCONFIGURED_TERM.name },
+    update: {},
+    create: UNCONFIGURED_TERM,
+  })
+}
+
 async function main() {
   await reset()
   await seedAcademicStructure()
@@ -237,6 +255,7 @@ async function main() {
   const { professorIds, studentId } = await seedUsers(career.id)
   await seedStudentHistory(career.id, studentId, professorIds)
   await seedOpenTermOffer(career.id, professorIds)
+  await seedAdminConfig()
   console.log('Seed completed')
 }
 

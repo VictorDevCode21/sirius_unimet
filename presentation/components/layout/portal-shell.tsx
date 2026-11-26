@@ -25,15 +25,29 @@ import { HelpPanel } from '@/presentation/components/shared/help-panel'
 import { logout } from '@/control/controllers/authentication.controller'
 import { cn } from '@/presentation/lib/utils'
 
-const navItems = [
-  { label: 'Resumen', href: '/student', icon: LayoutDashboard },
-  { label: 'Mi flujograma', href: '/student/flowchart', icon: BookOpen },
-  { label: 'Pre-inscripción', href: '/student/pre-enrollment', icon: CalendarDays },
-  { label: 'Histórico', href: '/student/history', icon: Clock3 },
-  { label: 'Comprobante', href: '/student/receipt', icon: FileText },
-]
+export type Portal = 'student' | 'admin'
+
+const portals: Record<Portal, { home: string; roleLabel: string; navItems: { label: string; href: string; icon: typeof FileText }[] }> = {
+  student: {
+    home: '/student',
+    roleLabel: 'Estudiante',
+    navItems: [
+      { label: 'Resumen', href: '/student', icon: LayoutDashboard },
+      { label: 'Mi flujograma', href: '/student/flowchart', icon: BookOpen },
+      { label: 'Pre-inscripción', href: '/student/pre-enrollment', icon: CalendarDays },
+      { label: 'Histórico', href: '/student/history', icon: Clock3 },
+      { label: 'Comprobante', href: '/student/receipt', icon: FileText },
+    ],
+  },
+  admin: {
+    home: '/admin',
+    roleLabel: 'Administrador',
+    navItems: [{ label: 'Periodos', href: '/admin/terms', icon: CalendarDays }],
+  },
+}
 
 interface PortalShellProps {
+  portal?: Portal
   user: { name: string; email: string }
   currentTermCode: string | null
   preEnrollmentTermCode: string | null
@@ -71,7 +85,7 @@ function ThemeToggle() {
   )
 }
 
-function ProfileMenu({ user }: { user: PortalShellProps['user'] }) {
+function ProfileMenu({ user, roleLabel, showSettings }: { user: PortalShellProps['user']; roleLabel: string; showSettings: boolean }) {
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -96,7 +110,7 @@ function ProfileMenu({ user }: { user: PortalShellProps['user'] }) {
         <span className="avatar h-9 w-9 text-[0.72rem]">{initialsOf(user.name)}</span>
         <span className="hidden text-left sm:block">
           <strong className="block text-[0.8rem] leading-tight">{user.name}</strong>
-          <small className="block text-[0.68rem] text-muted-foreground">Estudiante</small>
+          <small className="block text-[0.68rem] text-muted-foreground">{roleLabel}</small>
         </span>
         <ChevronDown className={cn('h-4 w-4 text-muted-foreground transition max-sm:hidden', open && 'rotate-180')} />
       </button>
@@ -113,9 +127,11 @@ function ProfileMenu({ user }: { user: PortalShellProps['user'] }) {
             <Link href="/microsoft-365" className="menu-item" role="menuitem" onClick={() => setOpen(false)}>
               <ExternalLink /> Microsoft 365
             </Link>
-            <Link href="/student/settings" className="menu-item" role="menuitem" onClick={() => setOpen(false)}>
-              <Settings /> Ajustes
-            </Link>
+            {showSettings && (
+              <Link href="/student/settings" className="menu-item" role="menuitem" onClick={() => setOpen(false)}>
+                <Settings /> Ajustes
+              </Link>
+            )}
             <form action={logout}>
               <button type="submit" className="menu-item" role="menuitem">
                 <LogOut /> Cerrar sesión
@@ -128,8 +144,9 @@ function ProfileMenu({ user }: { user: PortalShellProps['user'] }) {
   )
 }
 
-export function PortalShell({ user, currentTermCode, preEnrollmentTermCode, cartCount, children }: PortalShellProps) {
+export function PortalShell({ portal = 'student', user, currentTermCode, preEnrollmentTermCode, cartCount, children }: PortalShellProps) {
   const pathname = usePathname()
+  const { home, roleLabel, navItems } = portals[portal]
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
 
@@ -164,7 +181,7 @@ export function PortalShell({ user, currentTermCode, preEnrollmentTermCode, cart
         <nav className="flex flex-col gap-1.5 px-3" aria-label="Navegación principal">
           {navItems.map((item) => {
             const Icon = item.icon
-            const active = item.href === '/student' ? pathname === item.href : pathname.startsWith(item.href)
+            const active = item.href === home ? pathname === item.href : pathname.startsWith(item.href)
             return (
               <Link
                 key={item.href}
@@ -199,7 +216,7 @@ export function PortalShell({ user, currentTermCode, preEnrollmentTermCode, cart
           {collapsed ? <PanelLeftOpen /> : <PanelLeftClose />}
         </button>
 
-        {!collapsed && preEnrollmentTermCode && pathname !== '/student' && (
+        {portal === 'student' && !collapsed && preEnrollmentTermCode && pathname !== '/student' && (
           <div className="mt-auto p-4">
             <div className="relative overflow-hidden rounded-[1.5rem] bg-gradient-to-br from-[#003087] to-[#1859a9] p-5 text-white">
               <div className="absolute -right-6 -top-6 h-24 w-24 rounded-full bg-[#f68629]/40 blur-2xl" />
@@ -237,9 +254,9 @@ export function PortalShell({ user, currentTermCode, preEnrollmentTermCode, cart
             </p>
           </div>
           <div className="flex shrink-0 items-center gap-1.5 sm:gap-3">
-            <HelpPanel />
+            {portal === 'student' && <HelpPanel />}
             <ThemeToggle />
-            <ProfileMenu user={user} />
+            <ProfileMenu user={user} roleLabel={roleLabel} showSettings={portal === 'student'} />
           </div>
         </header>
         {children}
