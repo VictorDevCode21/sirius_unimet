@@ -4,10 +4,11 @@ import {
   isAwaitingPayment,
   isEnrollmentEditable,
   joinList,
-  validateEnrollmentEditable,
   missingPrerequisitesMessage,
+  validateEnrollmentEditable,
   validatePrerequisites,
   validateReplacement,
+  validateSectionHasSchedule,
   validateSingleSectionPerSubject,
   type SectionCandidate,
 } from '@/domain/enrollment/enrollment-validator'
@@ -110,5 +111,12 @@ describe('receipt availability', () => {
     assert.equal(isAwaitingPayment({ status: 'CONFIRMED', sectionCount: 2 }), false)
     assert.equal(isAwaitingPayment({ status: 'PRE_ENROLLED', sectionCount: 0 }), false)
     assert.equal(isAwaitingPayment(null), false)
+  })
+})
+
+describe('section schedule', () => {
+  it('rejects a section without schedule blocks and accepts one with blocks', () => {
+    assert.throws(() => validateSectionHasSchedule({ blocks: [] }), /todavía no tiene horario asignado/)
+    assert.doesNotThrow(() => validateSectionHasSchedule({ blocks: [{ weekday: 'MON', startMinutes: 420, endMinutes: 510 }] }))
   })
 })

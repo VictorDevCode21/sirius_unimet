@@ -23,6 +23,11 @@ export function validateTermOpen(term: { open: boolean } | null) {
   if (!term?.open) throw new DomainError('No hay un período de pre-inscripción abierto. Revisa el calendario académico y vuelve a intentarlo cuando se abra.')
 }
 
+// A section enters a pre-enrollment only once the department head has given it a schedule.
+export function validateSectionHasSchedule(section: { blocks: unknown[] }) {
+  if (!section.blocks.length) throw new DomainError('Esta sección todavía no tiene horario asignado.')
+}
+
 // Enrollment statuses whose selection the student can still change: saved but unpaid, including after a rejected
 // payment. A confirmed enrollment is final.
 export const EDITABLE_ENROLLMENT_STATUSES: readonly string[] = ['PRE_ENROLLED', 'PENDING']

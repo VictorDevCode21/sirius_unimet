@@ -10,7 +10,8 @@ export const sectionInclude = {
 
 export function findOfferByTerm(termId: string, careerId: string) {
   return prisma.section.findMany({
-    where: { termId, subject: { careerId } },
+    // A section without schedule blocks is not open for enrollment yet.
+    where: { termId, subject: { careerId }, scheduleBlocks: { some: {} } },
     include: sectionInclude,
     orderBy: [{ subject: { term: 'asc' } }, { subject: { branch: 'asc' } }, { number: 'asc' }],
   })
