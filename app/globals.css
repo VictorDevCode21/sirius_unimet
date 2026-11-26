@@ -85,6 +85,8 @@
   --status-available-bg: rgb(246 134 41 / 12%);
   --status-blocked: #5b6884;
   --status-blocked-bg: #f1f3f8;
+  --status-failed: #b42318;
+  --status-failed-bg: rgb(217 45 32 / 10%);
 }
 
 .dark {
@@ -112,6 +114,8 @@
   --status-available-bg: rgb(246 134 41 / 14%);
   --status-blocked: #8a97b5;
   --status-blocked-bg: rgb(255 255 255 / 3%);
+  --status-failed: #f97066;
+  --status-failed-bg: rgb(249 112 102 / 14%);
 }
 
 @layer base {
@@ -550,12 +554,13 @@
   top: 0;
   z-index: 30;
   display: flex;
-  height: 5rem;
+  min-height: 5rem;
   align-items: center;
   justify-content: space-between;
   gap: 1rem;
   background: color-mix(in srgb, var(--background) 82%, transparent);
-  padding: 0 clamp(0.75rem, calc(3vw * var(--ui-scale)), 2.5rem);
+  padding-block: 0.5rem;
+  padding-inline: clamp(0.75rem, calc(3vw * var(--ui-scale)), 2.5rem);
   backdrop-filter: blur(16px) saturate(1.4);
 }
 
@@ -1055,6 +1060,25 @@
   border-style: dashed;
   background: var(--status-blocked-bg);
   color: var(--muted-foreground);
+}
+
+/* Failed mark on a pending subject: icon and text, so it does not depend on color alone. */
+.subject-failed-badge {
+  display: inline-flex;
+  align-self: flex-start;
+  align-items: center;
+  gap: 0.25rem;
+  border-radius: 999px;
+  background: var(--status-failed-bg);
+  padding: 0.1rem 0.45rem;
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--status-failed);
+}
+
+.subject-failed-badge svg {
+  width: 0.7rem;
+  height: 0.7rem;
 }
 
 .subject-card[data-dimmed='true'] {
