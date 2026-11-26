@@ -51,7 +51,11 @@ describe('grades in the flowchart', () => {
     requirementId = dependent.prerequisites[0].requirementId
 
     termId = (await prisma.term.create({ data: { name, startsAt: new Date('2096-01-08T00:00:00Z'), endsAt: new Date('2096-04-05T00:00:00Z') } })).id
-    const professor = await prisma.user.findFirstOrThrow({ where: { role: 'PROFESSOR' } })
+    // Seeded professor only: other test files create and delete temporary professors at the same time.
+    const professor = await prisma.user.findFirstOrThrow({
+      where: { role: 'PROFESSOR', email: { not: { endsWith: '@test.local' } } },
+      orderBy: { email: 'asc' },
+    })
     sectionId = (await prisma.section.create({ data: { number: 1, capacity: 10, subjectId: requirementId, termId, professorId: professor.id } })).id
     studentId = (await prisma.user.create({ data: { name: 'Estudiante', email, passwordHash: 'x', role: 'STUDENT', careerId } })).id
     await prisma.enrollment.create({ data: { studentId, termId, status: 'CONFIRMED', details: { create: { sectionId } } } })
