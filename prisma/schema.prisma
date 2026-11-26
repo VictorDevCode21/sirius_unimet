@@ -31,6 +31,22 @@ enum PaymentStatus {
   REJECTED
 }
 
+enum PaymentMethod {
+  PAGO_MOVIL
+  BANK_TRANSFER_VES
+  IMMEDIATE_DEBIT
+  ONLINE_CARD
+  ZELLE
+  BINANCE_PAY
+  US_BANK_TRANSFER
+}
+
+enum PaymentCurrency {
+  VES
+  USD
+  USDT
+}
+
 // Outcome of a grade.
 enum GradeStatus {
   PASSED
@@ -59,11 +75,11 @@ model User {
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 
-  career            Career?       @relation(fields: [careerId], references: [id])
-  headedDepartment  Department?   @relation("DepartmentHead")
-  taughtSections    Section[]
-  enrollments       Enrollment[]
-  grades            Grade[]
+  career           Career?      @relation(fields: [careerId], references: [id])
+  headedDepartment Department?  @relation("DepartmentHead")
+  taughtSections   Section[]
+  enrollments      Enrollment[]
+  grades           Grade[]
 
   @@index([careerId])
 }
@@ -108,10 +124,10 @@ model Subject {
   alternativeCreditBlock String?
   createdAt              DateTime @default(now())
 
-  career         Career         @relation(fields: [careerId], references: [id], onDelete: Restrict)
-  prerequisites  Prerequisite[] @relation("SubjectPrerequisites")
-  requiredBy     Prerequisite[] @relation("PrerequisiteRequirement")
-  sections       Section[]
+  career        Career         @relation(fields: [careerId], references: [id], onDelete: Restrict)
+  prerequisites Prerequisite[] @relation("SubjectPrerequisites")
+  requiredBy    Prerequisite[] @relation("PrerequisiteRequirement")
+  sections      Section[]
 
   @@unique([careerId, code])
   @@unique([careerId, term, branch])
@@ -131,14 +147,16 @@ model Prerequisite {
 // End after start, a single open term at a time. A rate or max credits of 0 means not configured yet;
 // both must be greater than zero before the term can be opened.
 model Term {
-  id              String   @id @default(uuid()) @db.Uuid
-  name            String   @unique
-  startsAt        DateTime @db.Date
-  endsAt          DateTime @db.Date
-  open            Boolean  @default(false)
-  ratePerCredit   Decimal  @default(0) @db.Decimal(10, 2)
-  maxCredits      Int      @default(0)
-  createdAt       DateTime @default(now())
+  id                 String    @id @default(uuid()) @db.Uuid
+  name               String    @unique
+  startsAt           DateTime  @db.Date
+  endsAt             DateTime  @db.Date
+  open               Boolean   @default(false)
+  ratePerCredit      Decimal   @default(0) @db.Decimal(10, 2)
+  maxCredits         Int       @default(0)
+  // First of the two enrollment days; each student enrolls from the turn assigned by academic index.
+  enrollmentStartsAt DateTime? @db.Date
+  createdAt          DateTime  @default(now())
 
   sections    Section[]
   enrollments Enrollment[]
@@ -180,13 +198,15 @@ model ScheduleBlock {
 
 // One per student and term.
 model Enrollment {
-  id        String           @id @default(uuid()) @db.Uuid
-  studentId String           @db.Uuid
-  termId    String           @db.Uuid
-  status    EnrollmentStatus @default(PRE_ENROLLED)
-  amount    Decimal          @default(0) @db.Decimal(10, 2)
-  createdAt DateTime         @default(now())
-  updatedAt DateTime         @updatedAt
+  id         String           @id @default(uuid()) @db.Uuid
+  studentId  String           @db.Uuid
+  termId     String           @db.Uuid
+  status     EnrollmentStatus @default(PRE_ENROLLED)
+  amount     Decimal          @default(0) @db.Decimal(10, 2)
+  // When the pre-enrollment became an enrollment with seats (status CONFIRMED).
+  enrolledAt DateTime?
+  createdAt  DateTime         @default(now())
+  updatedAt  DateTime         @updatedAt
 
   student  User               @relation(fields: [studentId], references: [id], onDelete: Restrict)
   term     Term               @relation(fields: [termId], references: [id], onDelete: Restrict)
@@ -211,15 +231,26 @@ model EnrollmentDetail {
 
 // Unique reference; a confirmed enrollment is not paid again.
 model SimulatedPayment {
-  id           String        @id @default(uuid()) @db.Uuid
-  enrollmentId String        @db.Uuid
-  reference    String        @unique
-  amount       Decimal       @db.Decimal(10, 2)
-  status       PaymentStatus
-  createdAt    DateTime      @default(now())
+  id             String          @id @default(uuid()) @db.Uuid
+  enrollmentId   String          @db.Uuid
+  reference      String          @unique
+  // Amount credited to the enrollment, in USD.
+  amount         Decimal         @db.Decimal(10, 2)
+  status         PaymentStatus
+  method         PaymentMethod   @default(ONLINE_CARD)
+  currency       PaymentCurrency @default(USD)
+  // Amount in the payment currency (bolívares for VES methods) and the BCV rate used to convert it.
+  paidAmount     Decimal?        @db.Decimal(14, 2)
+  exchangeRate   Decimal?        @db.Decimal(14, 4)
+  // Reference the payer reports from their bank, Zelle, Binance or card authorization.
+  payerReference String?
+  // Masked payer data shown in the statement (bank, phone, last card digits…).
+  details        Json?
+  createdAt      DateTime        @default(now())
 
   enrollment Enrollment @relation(fields: [enrollmentId], references: [id], onDelete: Cascade)
 
+  @@unique([method, payerReference])
   @@index([enrollmentId])
 }
 
