@@ -37,6 +37,16 @@ async function audit(page: Page, name: string) {
   return summary
 }
 
+// Audits the current page in the light theme and again in the dark theme.
+async function auditBothThemes(page: Page, name: string) {
+  const light = await audit(page, name)
+  await page.emulateMedia({ colorScheme: 'dark' })
+  await page.reload()
+  const dark = await audit(page, `${name} (dark)`)
+  await page.emulateMedia({ colorScheme: 'light' })
+  return [...light, ...dark]
+}
+
 const blocking = (violations: Awaited<ReturnType<typeof audit>>) =>
   violations.filter((violation) => violation.impact === 'serious' || violation.impact === 'critical')
 
@@ -47,7 +57,7 @@ test.describe('accessibility (axe, WCAG 2.2 AA)', () => {
 
   test('login', async ({ page }) => {
     await page.goto('/login')
-    expect(blocking(await audit(page, '/login'))).toEqual([])
+    expect(blocking(await auditBothThemes(page, '/login'))).toEqual([])
   })
 
   for (const { account, paths } of VIEWS) {
@@ -65,7 +75,7 @@ test.describe('accessibility (axe, WCAG 2.2 AA)', () => {
           await page.getByRole('button', { name: 'Agregar' }).first().click()
           await expect(page.locator('[role=status]').filter({ hasText: /agreg/i }).first()).toBeVisible()
         }
-        const serious = blocking(await audit(page, view))
+        const serious = blocking(await auditBothThemes(page, view))
         if (serious.length) failures[view] = serious
       }
       expect(failures).toEqual({})
