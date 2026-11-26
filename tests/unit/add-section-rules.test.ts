@@ -7,6 +7,7 @@ import {
   missingPrerequisitesMessage,
   validatePrerequisites,
   validateReplacement,
+  validateSectionHasSchedule,
   validateSingleSectionPerSubject,
   type SectionCandidate,
 } from '@/domain/enrollment/enrollment-validator'
@@ -96,5 +97,12 @@ describe('editable enrollment', () => {
   it('rejects changes to a confirmed enrollment', () => {
     assert.equal(isEnrollmentEditable('CONFIRMED'), false)
     assert.throws(() => validateEnrollmentEditable({ status: 'CONFIRMED' }), /ya está confirmada/)
+  })
+})
+
+describe('section schedule', () => {
+  it('rejects a section without schedule blocks and accepts one with blocks', () => {
+    assert.throws(() => validateSectionHasSchedule({ blocks: [] }), /todavía no tiene horario asignado/)
+    assert.doesNotThrow(() => validateSectionHasSchedule({ blocks: [{ weekday: 'MON', startMinutes: 420, endMinutes: 510 }] }))
   })
 })
