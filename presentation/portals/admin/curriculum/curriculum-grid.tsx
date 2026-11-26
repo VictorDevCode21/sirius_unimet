@@ -1,0 +1,99 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { GraduationCap, Plus } from 'lucide-react'
+import type { CurriculumEditor } from '@/control/controllers/curriculum.queries'
+import { SubjectForm } from '@/presentation/portals/admin/curriculum/subject-form'
+import { toRoman } from '@/presentation/lib/format'
+
+interface CurriculumGridProps extends CurriculumEditor {
+  terms: number
+  branches: number
+}
+
+// Curriculum grid of a career: one column per term and one row per branch; empty cells register a subject.
+export function CurriculumGrid({ careers, career, subjects, terms, branches }: CurriculumGridProps) {
+  const router = useRouter()
+  const [cell, setCell] = useState<{ term: number; branch: number } | null>(null)
+  const cellMap = new Map(subjects.map((subject) => [`${subject.term}-${subject.branch}`, subject]))
+  const totalCredits = subjects.reduce((sum, subject) => sum + subject.credits, 0)
+
+  if (!career) {
+    return <p className="surface card-pad text-center text-sm text-muted-foreground">Registra una carrera antes de cargar su pensum.</p>
+  }
+
+  return (
+    <>
+      <section className="surface reveal reveal-1 overflow-hidden" aria-labelledby="curriculum-title">
+        <div className="flex flex-col gap-4 border-b border-border p-5 sm:p-6 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <h2 id="curriculum-title" className="text-lg font-bold">
+              Pensum de {career.name}
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {subjects.length} materias · {totalCredits} UC. Selecciona una celda vacía para registrar una materia.
+            </p>
+          </div>
+          <label className="flex min-w-0 flex-col gap-1.5 text-sm font-bold lg:w-80">
+            Carrera
+            <span className="field">
+              <GraduationCap aria-hidden="true" />
+              <select
+                className="min-w-0 flex-1 border-0 bg-transparent py-3.5 text-[0.95rem] text-foreground outline-0"
+                value={career.id}
+                onChange={(event) => router.push(`/admin/curriculum?career=${event.target.value}`)}
+              >
+                {careers.map((option) => (
+                  <option key={option.id} value={option.id}>
+                    {option.name}
+                  </option>
+                ))}
+              </select>
+            </span>
+          </label>
+        </div>
+
+        <div className="overflow-x-auto p-4 sm:p-6" style={{ scrollbarWidth: 'thin' }}>
+          <div className="flow-board min-w-max" style={{ '--periods': terms } as React.CSSProperties}>
+            {Array.from({ length: terms }, (_, index) => (
+              <div key={`head-${index}`} className="flow-period-head">
+                <strong>{toRoman(index + 1)}</strong>
+                <small>TRIMESTRE</small>
+              </div>
+            ))}
+            {Array.from({ length: branches }, (_, rowIndex) =>
+              Array.from({ length: terms }, (_, termIndex) => {
+                const term = termIndex + 1
+                const branch = rowIndex + 1
+                const subject = cellMap.get(`${term}-${branch}`)
+                if (subject) {
+                  return (
+                    <div key={subject.id} className="subject-card border-border bg-card">
+                      <span className="subject-code">{subject.code}</span>
+                      <p className="mt-2 line-clamp-3 text-[0.8rem] font-semibold leading-tight">{subject.name}</p>
+                      <span className="mt-auto pt-3 text-[0.66rem] font-semibold opacity-70">{subject.credits} UC</span>
+                    </div>
+                  )
+                }
+                return (
+                  <button
+                    key={`empty-${term}-${branch}`}
+                    type="button"
+                    className="flex min-h-[var(--subject-card-height)] items-center justify-center rounded-[var(--card-radius-sm)] border border-dashed border-border text-muted-foreground transition hover:border-[var(--brand-sky)] hover:text-[var(--brand-sky)] focus-visible:border-[var(--brand-sky)]"
+                    aria-label={`Registrar materia en el trimestre ${term}, rama ${branch}`}
+                    onClick={() => setCell({ term, branch })}
+                  >
+                    <Plus className="h-5 w-5" aria-hidden="true" />
+                  </button>
+                )
+              }),
+            )}
+          </div>
+        </div>
+      </section>
+
+      {cell && <SubjectForm careerId={career.id} cell={cell} onClose={() => setCell(null)} />}
+    </>
+  )
+}
